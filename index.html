@@ -312,11 +312,19 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
   .btn,.tile{transition:none}
   .fx{display:none}
 }
+.ans{margin-top:12px;font-size:16px}
+.ans summary{cursor:pointer;font-weight:700;color:var(--m,#B12A29)}
+.ans b{display:block;margin-top:8px;font-size:20px}
 </style>
 </head>
 <body>
 <main id="app"></main>
 
+<script src="games-a.js"></script>
+<script src="games-b.js"></script>
+<script src="games-c.js"></script>
+<script src="games-d.js"></script>
+<script src="games-e.js"></script>
 <script>
 /* =====================================================================
    КАТАЛОГ. Три механики: cards (карти), quiz (викторина), match (двама).
@@ -1388,6 +1396,7 @@ const KIND_CLASS = {A:"c-gold",V:"c-mint",Q:"c-hot",D:"c-lilac"};
 function poolOf(g){
   return g.cards.filter(([k,t,l]) => (!g.levels || (l >= Math.max(1,S.level-1) && l <= S.level)) && (!g.modes || S.kinds[k]));
 }
+(window.MEIVI_MORE || []).forEach(g => { GAMES.push(g); if(g.ico) ICON[g.id] = g.ico; });
 GAMES.forEach(g => { g.grp = g.grp ?? GRP[g.id] ?? 0; });
 
 const KIND = {
@@ -1461,11 +1470,11 @@ function viewHome(){
   <header class="stack hero">
     <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">Дигитални игри</span>
     <h1>Избери игра за тази вечер</h1>
-    <p class="note">${GAMES.length} игри в 8 категории. Още ${56 - GAMES.length} идват скоро.</p>
+    <p class="note">${GAMES.length} игри в 8 категории.${GAMES.length < 56 ? ` Още ${56 - GAMES.length} идват скоро.` : ""}</p>
   </header>
   <nav class="cats" aria-label="Категории">${ORDER.map(i => `<button data-act="cat" data-i="${i}">${CATS[i]}</button>`).join("")}</nav>
   ${ORDER.map(ci => {
-    const c = CATS[ci], gs = GAMES.filter(g => g.grp===ci), soon = PLANNED[ci] || [];
+    const c = CATS[ci], gs = GAMES.filter(g => g.grp===ci), soon = (PLANNED[ci] || []).filter(n => !GAMES.some(x => x.name === n));
     return `<section class="shelf" id="cat-${ci}">
       <div class="headrow"><h2>${c}</h2><span class="cnt">${gs.length} от 7</span></div>
       <div class="grid">${gs.map((g,i) => tile(g, i===0)).join("")}</div>
@@ -1546,13 +1555,16 @@ function viewCards(){
   const g = game(), c = S.deck[S.i], k = KIND[c.k];
   const pen = g.drinkOpt && S.drink;
   const group = c.k==="A" || c.k==="V" || c.k==="G";
-  const text = fill(c.t, c);
+  const parts = String(c.t).split("||");
+  const text = fill(parts[0], c);
+  const ans = parts[1] ? `<details class="ans"><summary>Виж отговора</summary><b>${h(parts[1])}</b></details>` : "";
   let body, rule, actions;
   if(c.k==="A"){ body = `<p class="q">${text}</p>`; rule = g.ruleA || ("Който го е правил, си признава. Маркирайте всички признали." + (pen ? " Те отпиват по глътка." : "")); }
   else if(c.k==="V"){ body = `<p class="lead">${h(g.lead)}</p><p class="q">…${text}</p>`; rule = g.ruleV || ("Бройте до три и посочете едновременно. Маркирайте избрания." + (pen ? " Той отпива глътка." : "")); }
   else if(c.k==="G"){ body = `<p class="q">${text}</p>`; rule = `Всички казват предположенията си, после ${h(S.players[0])} разкрива истината. Маркирайте кой позна.`; }
-  else if(c.k==="Q"){ body = `<p class="who">Въпрос към <b>${h(S.players[c.p])}</b></p><p class="q">${text}</p>`; rule = pen ? "Отговорът носи 1 точка. Пас означава една глътка." : "Отговорът носи 1 точка. Пасът не носи нищо."; }
-  else { body = `<p class="who">Задача за <b>${h(S.players[c.p])}</b></p><p class="q">${text}</p>`; rule = "Изпълнената задача носи 2 точки. Ако включва друг човек, той може да откаже." + (pen ? " Пас означава една глътка." : ""); }
+  else if(c.k==="Q"){ body = `<p class="who">Въпрос към <b>${h(S.players[c.p])}</b></p><p class="q">${text}</p>`; rule = g.ruleQ || (pen ? "Отговорът носи 1 точка. Пас означава една глътка." : "Отговорът носи 1 точка. Пасът не носи нищо."); }
+  else { body = `<p class="who">Задача за <b>${h(S.players[c.p])}</b></p><p class="q">${text}</p>`; rule = g.ruleD || ("Изпълнената задача носи 2 точки. Ако включва друг човек, той може да откаже." + (pen ? " Пас означава една глътка." : "")); }
+  body += ans;
   if(group){
     const ask = c.k==="A" ? (g.askA || "Кой си призна?") : c.k==="V" ? "Кого посочихте?" : "Кой позна?";
     actions = `<div class="stack"><h2>${ask}</h2>
