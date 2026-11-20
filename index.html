@@ -145,7 +145,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .seg.times small{font-size:11.5px;font-weight:500;line-height:1.2;opacity:.8}
 /* Play */
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.top .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;text-align:center}
+.top .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;text-align:center;flex:1;min-width:0;white-space:nowrap}
+.top .grp{display:flex;gap:6px;flex:none}
+.top .btn.small{padding:8px 13px}
+@media (max-width:359px){.top{gap:6px}.top .btn.small{padding:8px 10px;font-size:13px}.top .count{font-size:13px}}
 .bar{height:8px;border-radius:999px;background:#F1DEDD;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--hot),var(--coral))}
 .deck{position:relative;margin:30px 0 10px}
@@ -1434,7 +1437,7 @@ function saveNames(){ try{ localStorage.setItem("meivi.games.players", JSON.stri
 /* ---------- Подготовка на тесте ---------- */
 function begin(){
   const g = game(), n = S.players.length;
-  S.i = 0; S.sel = []; S.flash = ""; S.sheet = false; S.copied = false; S.picked = null; S.answered = 0;
+  S.i = 0; S.sel = []; S.flash = ""; S.sheet = false; S.copied = false; S.picked = null; S.answered = 0; S.hist = [];
   S.stats = S.players.map(() => ({a:0,b:0,pass:0}));
   if(g.eng === "cards"){
     let deck = poolOf(g).map(([k,t,l]) => ({k,t,l}));
@@ -1534,13 +1537,35 @@ function viewSetup(){
 }
 
 /* ---------- Общи части ---------- */
+/* Назад: при карти и „За двама“ връща състоянието отпреди последното действие (точките също).
+   При викторина само показва предишния въпрос – отговорът и точките остават. */
+function keep(){
+  (S.hist = S.hist || []).push(JSON.stringify({screen:S.screen, i:S.i, sel:S.sel, picked:S.picked, stats:S.stats, m:S.m, flash:S.flash}));
+}
+function canBack(){
+  const g = game();
+  if(S.screen === "end") return !!S.deck.length && (g.eng === "quiz" || !!(S.hist && S.hist.length));
+  return g.eng === "quiz" ? S.i > 0 : !!(S.hist && S.hist.length);
+}
+function goBack(){
+  const g = game();
+  if(!canBack()) return;
+  if(g.eng === "quiz"){
+    if(S.screen === "end") S.screen = "play"; else S.i--;
+    S.picked = S.deck[S.i].pick ?? null;
+  }else{
+    Object.assign(S, JSON.parse(S.hist.pop()));
+    if(g.eng === "cards") S.flash = "Върнахте картата. Отбележете я отново.";
+  }
+  S.sheet = false; S.copied = false;
+}
 function topBar(total){
   const g = game();
   return `<div class="stack">
     <div class="top">
-      <button class="btn ghost small" data-act="quit">Край</button>
+      <button class="btn ghost small" data-act="back" aria-label="Назад към предишната карта" ${canBack() ? "" : "disabled"}><span aria-hidden="true">←</span> Назад</button>
       <span class="count">${S.i+1} от ${total}</span>
-      ${g.eng==="match" ? `<span style="width:64px"></span>` : `<button class="btn ghost small" data-act="sheet">Точки</button>`}
+      <span class="grp">${g.eng==="match" ? "" : `<button class="btn ghost small" data-act="sheet">Точки</button>`}<button class="btn ghost small" data-act="quit">Край</button></span>
     </div>
     <div class="bar"><i style="width:${Math.round(S.i/total*100)}%"></i></div>
   </div>`;
@@ -1730,6 +1755,7 @@ function viewEnd(){
   <div class="stack">
     <button class="btn" data-act="copy">${S.copied ? "Копирано" : "Копирай резултата за споделяне"}</button>
     <div class="row"><button class="btn ghost" data-act="again">Играй пак</button><button class="btn ghost" data-act="home">Всички игри</button></div>
+    ${canBack() ? `<button class="btn ghost small" data-act="back" style="align-self:center"><span aria-hidden="true">←</span> Назад към играта</button>` : ""}
     <p class="note" style="text-align:center">Направи снимка на картата и я пусни в стори.</p>
   </div>`;
 }
@@ -1768,7 +1794,7 @@ function advance(){
     busy = false;
     S.sel = []; S.picked = null;
     if(S.i + 1 >= S.deck.length){ S.screen = "end"; S.flash = ""; S.copied = false; fx = true; }
-    else S.i++;
+    else{ S.i++; S.picked = S.deck[S.i].pick ?? null; }
     render(); window.scrollTo(0,0);
   };
   const el = document.querySelector?.(".card");
@@ -1782,7 +1808,7 @@ app.addEventListener("submit", e => {
 });
 app.addEventListener("click", e => {
   const b = e.target.closest("[data-act]");
-  if(!b || busy) return;
+  if(!b || busy || b.disabled) return;
   const act = b.dataset.act;
   if(act==="sheet-close" && b.classList.contains("sheet") && e.target !== b) return;
   switch(act){
@@ -1797,25 +1823,28 @@ app.addEventListener("click", e => {
     case "front": { const i = +b.dataset.i; S.players.unshift(S.players.splice(i,1)[0]); saveNames(); break; }
     case "start": case "again": begin(); window.scrollTo(0,0); break;
     case "pick": { const i = +b.dataset.i, k = S.sel.indexOf(i); if(k>=0) S.sel.splice(k,1); else S.sel.push(i); break; }
+    case "back": goBack(); window.scrollTo(0,0); break;
     case "next": {
+      keep();
       const c = S.deck[S.i], key = c.k==="G" ? "b" : "a";
       S.sel.forEach(i => S.stats[i][key]++);
       const names = S.sel.map(i => S.players[i]).join(", ");
       S.flash = names ? (c.k==="G" ? `Познаха: ${names}` : `Отбелязани: ${names}`) : "";
       return advance();
     }
-    case "done": { const c = S.deck[S.i], pts = c.k==="D" ? 2 : 1; S.stats[c.p].b += pts; S.flash = `${S.players[c.p]}: +${pts}`; return advance(); }
-    case "pass": { const c = S.deck[S.i]; S.stats[c.p].pass++; S.flash = `${S.players[c.p]} каза пас`; return advance(); }
+    case "done": { keep(); const c = S.deck[S.i], pts = c.k==="D" ? 2 : 1; S.stats[c.p].b += pts; S.flash = `${S.players[c.p]}: +${pts}`; return advance(); }
+    case "pass": { keep(); const c = S.deck[S.i]; S.stats[c.p].pass++; S.flash = `${S.players[c.p]} каза пас`; return advance(); }
     case "q-pick": {
       if(S.picked !== null) return;
-      S.picked = +b.dataset.i;
+      S.picked = +b.dataset.i; S.deck[S.i].pick = S.picked;
       S.answered = (S.answered||0) + 1;
       if(S.deck[S.i].opts[S.picked].ok){ S.stats[S.i % S.players.length].b++; fx = true; }
       break;
     }
     case "q-next": return advance();
-    case "m-ready": S.m.step++; break;
+    case "m-ready": keep(); S.m.step++; break;
     case "m-pick": {
+      keep();
       const m = S.m, I = matchInfo();
       m.ans[(m.step-1)/2] = +b.dataset.i; m.step++;
       if(m.step === 4){
@@ -1826,10 +1855,10 @@ app.addEventListener("click", e => {
       }
       break;
     }
-    case "m-next": S.m.step = 0; S.m.ans = [null,null]; return advance();
+    case "m-next": keep(); S.m.step = 0; S.m.ans = [null,null]; return advance();
     case "sheet": S.sheet = true; break;
     case "sheet-close": S.sheet = false; break;
-    case "quit": S.screen = "end"; S.sheet = false; S.copied = false; fx = true; break;
+    case "quit": if(game().eng !== "quiz") keep(); S.screen = "end"; S.sheet = false; S.copied = false; fx = true; break;
     case "copy":
       navigator.clipboard.writeText(shareText()).then(() => { S.copied = true; render(); }).catch(() => {});
       return;
