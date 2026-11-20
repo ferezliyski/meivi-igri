@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Игри от Meivi</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FBF1F0">
+<link rel="icon" href="logo-ink.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Golos+Text:wght@400;500;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Meivi games, modern: soft blush canvas, white floating surfaces, colour-rich game covers, one share poster. */
+  color-scheme: light;
+  --bg:#FBF1F0;
+  --surface:#FFFFFF;
+  --ink:#1F1F1F;
+  --muted:#7A6767;
+  --line:#F0DFDE;
+  --hot:#B12A29;
+  --coral:#EF8F61;
+  --gold:#C2611F;
+  --mint:#1E7F6B;
+  --lilac:#6B4FB3;
+  --sky:#1F6FB5;
+  --sh:0 14px 34px -16px rgba(122,40,38,.38), 0 2px 6px rgba(122,40,38,.06);
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --hand:"Caveat","Segoe Script",cursive;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:
+    radial-gradient(70% 38% at 100% 0%, #FFDDD0 0, transparent 70%) fixed,
+    radial-gradient(60% 32% at 0% 14%, #F7D6E2 0, transparent 70%) fixed,
+    var(--bg);
+  color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;
+}
+#app{max-width:480px;min-height:100%;margin:0 auto;padding:20px 18px 36px;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;color:var(--ink)}
+h1{font-size:26px;font-weight:800;line-height:1.12;letter-spacing:-.01em}
+h2{font-size:15px;font-weight:600;line-height:1.2}
+p{margin:0}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.c-hot{--m:var(--hot)} .c-gold{--m:var(--gold)} .c-mint{--m:var(--mint)} .c-lilac{--m:var(--lilac)} .c-sky{--m:var(--sky)}
+
+.btn{
+  border:0;border-radius:999px;padding:15px 22px;min-height:56px;font-weight:700;font-size:17px;color:#fff;
+  background:linear-gradient(180deg,#CB3A33,#A92423);box-shadow:0 14px 24px -12px rgba(177,42,41,.75), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .1s;
+}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:var(--sh)}
+.btn.small{min-height:40px;padding:8px 15px;font-size:14px;flex:none}
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+.stack{display:flex;flex-direction:column;gap:12px}
+.note{color:var(--muted);font-size:14px}
+.brand{font-family:var(--hand);font-weight:700;font-size:25px;line-height:1;color:var(--hot)}
+.logo{display:block;width:120px;height:auto}
+.logo.sm{width:66px}
+.req{font-size:13px;font-weight:700;color:#8A3A12;background:#FDE3D6;border-radius:999px;padding:5px 12px;white-space:nowrap}
+.headrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.cnt{font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap}
+
+/* Home */
+.hero{align-items:center;text-align:center;gap:8px}
+.hero .logo{margin:0 auto}
+.hero h1{margin-top:6px}
+.cats{display:flex;gap:8px;overflow-x:auto;margin:0 -18px;padding:4px 18px 10px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cats button{
+  flex:none;border:0;border-radius:999px;background:var(--surface);box-shadow:var(--sh);padding:10px 16px;font-weight:700;font-size:14px;white-space:nowrap;
+}
+.cats button:active{transform:scale(.96)}
+.shelf{display:flex;flex-direction:column;gap:12px;scroll-margin-top:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{
+  position:relative;text-align:left;border:0;border-radius:24px;padding:14px;min-height:132px;overflow:hidden;
+  background:linear-gradient(155deg, color-mix(in srgb, var(--m) 17%, #fff) 0%, #fff 72%);
+  box-shadow:var(--sh);display:flex;flex-direction:column;justify-content:space-between;gap:14px;transition:transform .1s;
+}
+.tile:active{transform:scale(.97)}
+.tile .ico{
+  width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:27px;line-height:1;
+  background:color-mix(in srgb, var(--m) 20%, #fff);
+}
+.tile .tx{display:flex;flex-direction:column;gap:5px}
+.tile b{font-family:var(--display);font-weight:600;font-size:14.5px;line-height:1.22;overflow-wrap:anywhere}
+.tile small{font-size:12.5px;color:var(--muted);font-weight:500}
+.tile .age{font-style:normal;font-weight:700;color:var(--hot)}
+.tile.big{
+  grid-column:1/-1;flex-direction:row-reverse;align-items:flex-end;min-height:158px;padding:20px;color:#fff;
+  background:
+    radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--m) 55%, #FFC2A6) 0, transparent 62%),
+    linear-gradient(150deg, var(--m), color-mix(in srgb, var(--m) 64%, #000));
+  box-shadow:0 22px 36px -20px color-mix(in srgb, var(--m) 80%, #000);
+}
+.tile.big .ico{width:72px;height:72px;border-radius:24px;font-size:40px;background:rgba(255,255,255,.2);flex:none;align-self:flex-start}
+.tile.big .tx{flex:1;min-width:0}
+.tile.big b{font-size:19px;font-weight:800}
+.tile.big .d{font-size:14px;line-height:1.35;opacity:.92}
+.tile.big small{color:rgba(255,255,255,.85)}
+.tile.big .age{color:#fff;background:rgba(255,255,255,.22);padding:1px 7px;border-radius:999px}
+.grid .tile:last-child:nth-child(even){grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;justify-content:flex-start}
+.soon{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.soon b{font-weight:700;margin-right:2px}
+.soon span{background:rgba(255,255,255,.7);border:1px dashed #DDBFBE;border-radius:999px;padding:4px 10px}
+
+/* Setup */
+.ghead{gap:8px}
+.ico.lg{width:64px;height:64px;border-radius:22px;display:grid;place-items:center;font-size:34px;background:color-mix(in srgb, var(--m) 18%, #fff);box-shadow:var(--sh)}
+.seg{display:flex;gap:4px;background:var(--surface);box-shadow:var(--sh);padding:5px;border-radius:999px}
+.seg button{flex:1;border:0;border-radius:999px;background:transparent;padding:10px 6px;min-height:42px;font-weight:500;font-size:15px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--surface);box-shadow:var(--sh);padding:6px 6px 6px 15px;font-weight:700;max-width:100%}
+.chip.first{background:#FDE3D6}
+.chip > span,.chip .nm{overflow-wrap:anywhere}
+.chip .nm{border:0;background:none;padding:0;text-align:left;font-weight:700}
+.chip button:not(.nm){border:0;background:#F4E6E5;color:var(--muted);width:28px;height:28px;border-radius:50%;font-size:16px;line-height:1;flex:none}
+.add{display:flex;gap:8px}
+.add input{flex:1;min-width:0;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);padding:12px 18px;min-height:50px}
+.add input:focus{outline:none;border-color:var(--hot)}
+.add input::placeholder{color:#A99494}
+.how{background:rgba(255,255,255,.72);border-radius:20px;padding:14px 16px;font-size:15px;color:#4A3D3D}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{
+  text-align:left;border:2px solid transparent;border-radius:20px;padding:12px 14px;min-height:70px;background:var(--surface);box-shadow:var(--sh);
+  display:flex;flex-direction:column;gap:3px;opacity:.55;
+}
+.mode b{font-family:var(--display);font-weight:600;font-size:13.5px;color:var(--m)}
+.mode small{color:var(--muted);font-size:12.5px;line-height:1.3}
+.mode[aria-pressed="true"]{opacity:1;border-color:var(--m);background:color-mix(in srgb, var(--m) 8%, #fff)}
+
+.seg.times{border-radius:26px}
+.seg.times button{display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:21px;padding:9px 4px 10px}
+.seg.times b{font-size:17px;font-weight:700;line-height:1.1}
+.seg.times small{font-size:11.5px;font-weight:500;line-height:1.2;opacity:.8}
+/* Play */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.top .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;text-align:center}
+.bar{height:8px;border-radius:999px;background:#F1DEDD;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--hot),var(--coral))}
+.deck{position:relative;margin:30px 0 10px}
+.deck::before,.deck::after{content:"";position:absolute;inset:10px 10px 0;border-radius:30px;background:#fff}
+.deck::before{transform:rotate(3deg) translateY(6px);opacity:.75;box-shadow:var(--sh)}
+.deck::after{transform:rotate(-3.5deg) translateY(9px);opacity:.45}
+.card{
+  position:relative;z-index:1;color:var(--ink);border-radius:30px;padding:22px 22px 24px;min-height:290px;
+  display:flex;flex-direction:column;gap:14px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--m, var(--hot)) 13%, #fff) 0, #fff 46%);
+  box-shadow:0 30px 50px -26px color-mix(in srgb, var(--m, var(--hot)) 70%, #000), 0 2px 8px rgba(122,40,38,.08);
+  transform:rotate(var(--tilt,-1.2deg));
+  animation:deal .46s cubic-bezier(.2,.9,.3,1.15) both, float 4.6s ease-in-out .5s infinite alternate;
+}
+.card > :last-child{padding-right:62px}
+.card::after{content:"";position:absolute;bottom:14px;right:18px;width:46px;height:36px;background:url(logo-ink.png) center/contain no-repeat;opacity:.9}
+.card .tag{
+  align-self:flex-start;font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  background:var(--m);color:#fff;padding:8px 14px;border-radius:999px;
+}
+.card .heat{position:absolute;top:30px;right:24px;display:flex;gap:5px}
+.card .heat i{width:11px;height:11px;border-radius:50%;background:color-mix(in srgb, var(--m) 22%, #fff)}
+.card .heat i.on{background:var(--m)}
+.card .who{font-weight:500;font-size:15px;color:var(--muted)}
+.card .who b{color:var(--ink);font-size:18px;font-weight:700}
+.card .lead{font-weight:700;color:var(--muted);font-size:16px}
+.card .q{font-size:25px;line-height:1.22;font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:auto 0;overflow-wrap:anywhere}
+.card .q u{text-decoration:none;color:var(--m);background:color-mix(in srgb, var(--m) 12%, #fff);border-radius:8px;padding:0 6px}
+.card .rule{font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.card .ans{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:10px}
+.card .ans span{color:var(--muted);font-weight:500;overflow-wrap:anywhere}
+.card .ans b{text-align:right;overflow-wrap:anywhere}
+.verdict{font-family:var(--display);font-weight:800;font-size:20px}
+.pick{display:flex;flex-wrap:wrap;gap:8px}
+.pick button{border:0;border-radius:999px;padding:10px 17px;min-height:46px;font-weight:700;background:var(--surface);box-shadow:var(--sh);overflow-wrap:anywhere}
+.pick button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{
+  text-align:left;border:2px solid transparent;border-radius:20px;padding:14px 18px;min-height:54px;font-weight:700;font-size:16px;
+  background:var(--surface);box-shadow:var(--sh);overflow-wrap:anywhere;color:var(--ink);
+}
+.opt:active{transform:scale(.98)}
+.opt.ok{background:var(--mint);color:#fff}
+.opt.bad{background:#FCEBEA;border-color:#EDB7B5;color:var(--hot);text-decoration:line-through;box-shadow:none}
+.opt[disabled]{cursor:default}
+.flash{min-height:22px;text-align:center;font-weight:700;color:var(--hot);font-size:15px}
+.cover{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;text-align:center;min-height:340px}
+.cover b{font-family:var(--display);font-weight:800;font-size:34px;color:var(--hot);overflow-wrap:anywhere}
+
+/* Scores */
+table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;background:var(--surface);border-radius:22px;box-shadow:var(--sh);overflow:hidden}
+th,td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th:first-child,td:first-child{text-align:left;overflow-wrap:anywhere;font-weight:700}
+th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sheet{position:fixed;inset:0;background:rgba(31,31,31,.5);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet > div{width:100%;max-width:480px;max-height:85%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:24px 18px 26px;display:flex;flex-direction:column;gap:16px}
+
+/* Share poster */
+.poster{
+  position:relative;overflow:hidden;border-radius:34px;padding:24px 22px 22px;min-height:540px;color:#fff;
+  display:flex;flex-direction:column;gap:18px;
+  background:
+    radial-gradient(95% 60% at 100% 0%, color-mix(in srgb, var(--m) 50%, #FFC2A6) 0, transparent 62%),
+    radial-gradient(80% 50% at 0% 100%, color-mix(in srgb, var(--m) 55%, #000) 0, transparent 70%),
+    linear-gradient(160deg, var(--m), color-mix(in srgb, var(--m) 66%, #000));
+  box-shadow:0 34px 60px -28px color-mix(in srgb, var(--m) 80%, #000);
+  animation:deal .5s cubic-bezier(.2,.9,.3,1.15) both;--tilt:0deg;
+}
+.poster::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:
+    radial-gradient(circle at 12% 30%, #fff 0 3px, transparent 4px), radial-gradient(circle at 88% 44%, #FFD9B8 0 4px, transparent 5px),
+    radial-gradient(circle at 70% 16%, #fff 0 2px, transparent 3px), radial-gradient(circle at 24% 78%, #FFD9B8 0 3px, transparent 4px),
+    radial-gradient(circle at 92% 82%, #fff 0 2px, transparent 3px), radial-gradient(circle at 48% 8%, #FFD9B8 0 2px, transparent 3px);
+}
+.poster > *{position:relative}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.plogo{background:#fff;border-radius:20px;padding:9px 12px 7px;box-shadow:0 10px 22px -12px rgba(0,0,0,.55)}
+.phead .logo{width:60px}
+.phead span{font-family:var(--hand);font-weight:700;font-size:24px;line-height:1}
+.pgame{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.3);padding:8px 15px;border-radius:999px;font-weight:700;font-size:14.5px}
+.phero{margin:auto 0;display:flex;flex-direction:column;gap:10px}
+.plabel{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.88}
+.pname{font-family:var(--display);font-weight:800;font-size:46px;line-height:1.02;letter-spacing:-.02em;overflow-wrap:anywhere;text-wrap:balance}
+.pname.long{font-size:30px;line-height:1.1}
+.ring{position:relative;width:204px;height:204px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:conic-gradient(#fff calc(var(--p) * 1%), rgba(255,255,255,.22) 0)}
+.ring::before{content:"";position:absolute;inset:15px;border-radius:50%;background:color-mix(in srgb, var(--m) 78%, #000)}
+.ring > *{position:relative;grid-area:1/1;text-align:center}
+.ring b{font-family:var(--display);font-weight:800;font-size:50px;line-height:1;margin-top:-14px}
+.ring span{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.88;margin-top:52px}
+.ptitle{font-family:var(--display);font-weight:800;font-size:23px;line-height:1.15;text-align:center;text-wrap:balance}
+.pnames{text-align:center;font-weight:700;font-size:17px;opacity:.95;overflow-wrap:anywhere}
+.pnames i{font-family:var(--hand);font-style:normal;font-size:22px;opacity:.9}
+.podium{display:flex;align-items:flex-end;gap:10px;min-height:210px}
+.podium .p{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px}
+.podium .pn{font-weight:700;font-size:15px;text-align:center;overflow-wrap:anywhere;line-height:1.2}
+.podium .cr{font-size:26px;line-height:1}
+.podium i{display:grid;place-items:center;width:100%;border-radius:18px 18px 8px 8px;background:rgba(255,255,255,.2);font-style:normal;font-family:var(--display);font-weight:800;font-size:24px}
+.podium .p1 i{height:124px;background:#fff;color:var(--m)}
+.podium .p2 i{height:88px}
+.podium .p3 i{height:62px}
+.pchips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pchips > div{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.24);border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.pchips > :last-child:nth-child(odd){grid-column:1/-1}
+.pchips span{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.pchips b{font-family:var(--display);font-weight:600;font-size:15.5px;line-height:1.2;overflow-wrap:anywhere}
+.prank{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:6px 14px;font-variant-numeric:tabular-nums}
+.pr{display:grid;grid-template-columns:minmax(0,1fr) repeat(var(--c),58px);align-items:center;gap:6px;padding:9px 0;border-top:1px solid rgba(255,255,255,.16);font-weight:700;font-size:15px}
+.pr > span{text-align:right}
+.pr > span:first-child{text-align:left;display:flex;align-items:center;gap:9px;overflow-wrap:anywhere;min-width:0}
+.pr i{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.2);font-style:normal;font-size:12.5px}
+.pr:nth-child(2) i{background:#fff;color:var(--m)}
+.pr.ph{border-top:0;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;padding:8px 0 6px}
+.pfoot{text-align:center;font-size:14px;opacity:.92}
+.pfoot b{font-weight:700}
+
+/* Motion */
+@keyframes deal{
+  0%{transform:translate(75%,-8%) rotate(18deg) scale(.9);opacity:0}
+  65%{transform:translate(-3%,0) rotate(-4deg) scale(1.01);opacity:1}
+  100%{transform:rotate(var(--tilt,-1.2deg))}
+}
+@keyframes float{from{transform:rotate(var(--tilt,-1.2deg)) translateY(0)}to{transform:rotate(calc(var(--tilt,-1.2deg) * .3)) translateY(-5px)}}
+.card.out{animation:out .2s ease-in forwards}
+@keyframes out{to{transform:translate(-85%,8%) rotate(-20deg);opacity:0}}
+.card::before{
+  content:"";position:absolute;right:28px;top:-28px;width:74px;height:36.7px;
+  background:url(logo-ink.png) -15.6px -1.7px/105.4px auto no-repeat;
+  animation:peek .5s cubic-bezier(.3,1.4,.5,1) .45s both, bob 2.8s ease-in-out 1.2s infinite alternate;
+}
+@keyframes peek{from{clip-path:inset(100% 0 0 0);transform:translateY(60%)}to{clip-path:inset(0);transform:none}}
+@keyframes bob{from{transform:translateY(0) rotate(0)}to{transform:translateY(-3px) rotate(-3deg)}}
+.card > *{animation:rise .36s ease-out both}
+.card > :nth-child(1){animation-delay:.16s}
+.card > :nth-child(2){animation-delay:.22s}
+.card > :nth-child(3){animation-delay:.28s}
+.card > :nth-child(4){animation-delay:.34s}
+.card > :nth-child(n+5){animation-delay:.4s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes stamp{0%{opacity:0;transform:scale(1.5)}70%{opacity:1;transform:scale(.95)}100%{transform:none}}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.07)}100%{transform:none}}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.pick button[aria-pressed="true"]{animation:pop .22s ease-out}
+.opt.ok{animation:pop .3s ease-out}
+.opt.bad{animation:shake .32s ease-in-out}
+.verdict{animation:stamp .4s ease-out .5s both}
+.cover b{animation:pop .35s ease-out}
+.phero{animation:stamp .5s ease-out .35s both}
+.pchips > div{animation:rise .35s ease-out both}
+.pchips > :nth-child(1){animation-delay:.5s} .pchips > :nth-child(2){animation-delay:.6s} .pchips > :nth-child(3){animation-delay:.7s} .pchips > :nth-child(4){animation-delay:.8s}
+.fx{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+.fx i{position:absolute;top:56%;width:9px;height:13px;border-radius:3px;animation:burst 1.15s cubic-bezier(.15,.7,.3,1) both}
+@keyframes burst{
+  0%{transform:translate(0,0) scale(.5);opacity:1}
+  55%{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:1}
+  100%{transform:translate(calc(var(--x) * 1.15),calc(var(--y) + 28vh)) rotate(calc(var(--r) * 1.6));opacity:0}
+}
+.still .card{animation:float 4.6s ease-in-out infinite alternate}
+.still .card::before{animation:bob 2.8s ease-in-out infinite alternate}
+.still .card > *{animation:none}
+@media (prefers-reduced-motion:reduce){
+  .card,.card::before,.card > *,.pick button,.opt,.verdict,.cover b,.poster,.phero,.pchips > div{animation:none !important}
+  .btn,.tile{transition:none}
+  .fx{display:none}
+}
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+/* =====================================================================
+   КАТАЛОГ. Три механики: cards (карти), quiz (викторина), match (двама).
+   Нова игра = нов запис тук, без промяна в кода отдолу.
+   Карти: ["A" признание | "V" кой от нас | "Q" въпрос | "D" задача | "G" познай, текст]
+   Викторина: [въпрос, [верен, грешен, грешен, грешен]] (подреждат се разбъркано)
+   Двама: текст (избор между двете имена) или [за себе си, за другия с {n}, [варианти]]
+   ===================================================================== */
+const GAMES = [
+{
+  id:"couple", cat:"За двойки", c:"hot", eng:"match", n:[2,2],
+  name:"Кой познава другия",
+  desc:"Единият отговаря за себе си, другият познава. Накрая е ясно кой кого познава по-добре.",
+  qs:[
+    ["Идеалната ми вечер е…","Идеалната вечер за {n} е…",["Филм вкъщи","Вечеря навън","Парти с приятели","Разходка по тъмно"]],
+    ["Когато се ядосам, най-често следва…","Когато {n} се ядоса, най-често следва…",["Мълчание","Избухване","Разходка навън","Шега"]],
+    ["Мечтаната ми почивка е…","Мечтаната почивка на {n} е…",["Море и плаж","Планина и хижа","Голям град","Вкъщи без телефон"]],
+    ["Любимото ми време от деня е…","Любимото време от деня на {n} е…",["Ранна сутрин","Следобед","Вечер","Късна нощ"]],
+    ["Най-много ме дразни…","{n} най-много се дразни от…",["Закъснения","Безпорядък","Телефон на масата","Да не ме слушат"]],
+    ["Най-силно усещам любов чрез…","{n} най-силно усеща любов чрез…",["Думи","Докосване","Подаръци","Време заедно"]],
+    ["Ако спечеля от лотарията, първо…","Ако {n} спечели от лотарията, първо…",["Пътуване","Къща","Кола","Спестяване"]],
+    ["Любимата ми кухня е…","Любимата кухня на {n} е…",["Българска","Италианска","Азиатска","Бързо хранене"]],
+    ["На парти съм…","На парти {n} е…",["На дансинга","До храната","В разговор в ъгъла","Първият, който си тръгва"]],
+    ["Тайната ми слабост е…","Тайната слабост на {n} е…",["Сладко","Пазаруване","Сериали до сутринта","Спане до обяд"]],
+    ["В спор обикновено…","В спор {n} обикновено…",["Отстъпва","Държи на своето","Сменя темата","Чака да мине"]],
+    ["Най-романтичният жест за мен е…","Най-романтичният жест за {n} е…",["Изненада без повод","Писмо на ръка","Закуска в леглото","Пътуване изненада"]]
+  ]
+},
+{
+  id:"girls", cat:"За приятелки", c:"lilac", eng:"cards", n:[2,10],
+  name:"Най-добри приятелки",
+  desc:"Кой от нас, признания и въпроси, след които се познавате още по-добре.",
+  lead:"Коя от нас най-вероятно…", aw:["Най-обсъждана","Най-откровена"],
+  cards:[
+    ["V","ще забрави рождения ти ден, но помни с какво си била облечена преди пет години?"],
+    ["V","ще се омъжи следваща?"],
+    ["V","ще отговори на съобщение след три дни?"],
+    ["V","ще се разплаче на реклама?"],
+    ["V","ще закъснее за собствената си сватба?"],
+    ["V","научава всички клюки първа?"],
+    ["V","ще похарчи заплатата си за обувки?"],
+    ["V","ще се върне при бившия?"],
+    ["A","Никога не съм писала „тръгвам“, докато още съм по пижама."],
+    ["A","Никога не съм харесвала гаджето на приятелка."],
+    ["A","Никога не съм казвала, че роклята ѝ стои страхотно, без да го мисля."],
+    ["A","Никога не съм проучвала бившия на приятелка, за да докладвам."],
+    ["A","Никога не съм плакала заради мъж, който не го заслужава."],
+    ["A","Никога не съм трила снимка, защото приятелка е излязла по-добре от мен."],
+    ["Q","Коя е най-смешната ни обща случка?"],
+    ["Q","Какво си помисли за {o}, когато се запознахте?"],
+    ["Q","Какво никога не би простила на приятелка?"],
+    ["Q","Кое качество на {o} би си взела?"],
+    ["Q","Коя песен е нашата песен?"],
+    ["Q","Кой съвет от приятелка ти е помогнал най-много?"]
+  ]
+},
+{
+  id:"family", cat:"Семейна", c:"mint", eng:"cards", n:[2,10],
+  name:"Семеен съвет",
+  desc:"Игра за цялата маса, от децата до баба и дядо. Без неудобни теми.",
+  lead:"Кой у дома…", aw:["Звезда на семейството","Най-сладкодумен"],
+  cards:[
+    ["V","най-често губи дистанционното?"],
+    ["V","се бави най-дълго в банята?"],
+    ["V","яде тайно сладко нощем?"],
+    ["V","пее под душа?"],
+    ["V","пръв заспива пред телевизора?"],
+    ["V","е най-големият инат?"],
+    ["V","винаги знае къде е всичко?"],
+    ["V","се смее най-силно?"],
+    ["Q","Кой е любимият ти семеен спомен?"],
+    ["Q","Коя е най-голямата беля, която си правил/а като дете?"],
+    ["Q","Кое семейно ястие би ял/а всеки ден?"],
+    ["Q","Ако семейството ни беше отбор, как щеше да се казва?"],
+    ["Q","Къде искаш да отидем заедно догодина?"],
+    ["Q","Какво най-много харесваш у {o}?"],
+    ["Q","На какво те е научил/а {o}?"],
+    ["D","Имитирай {o}, докато другите познаят кой е."],
+    ["D","Прегърни всеки на масата."],
+    ["D","Разкажи деня си само с жестове."],
+    ["D","Изпей любимата песен на {o}."],
+    ["D","Кажи по едно хубаво нещо за всеки тук."]
+  ]
+},
+{
+  id:"zodiac", cat:"Зодии", c:"sky", eng:"quiz", n:[1,8],
+  name:"Зодиакален изпит",
+  desc:"Стихии, планети и дати. Проверете кой наистина разбира от зодии.",
+  qs:[
+    ["Коя зодия отваря зодиакалния кръг?",["Овен","Козирог","Водолей","Риби"]],
+    ["Кои са огнените зодии?",["Овен, Лъв, Стрелец","Телец, Дева, Козирог","Рак, Скорпион, Риби","Близнаци, Везни, Водолей"]],
+    ["Коя планета управлява Телец и Везни?",["Венера","Марс","Меркурий","Юпитер"]],
+    ["Коя е единствената зодия със символ предмет, а не живо същество?",["Везни","Водолей","Стрелец","Дева"]],
+    ["Кои са водните зодии?",["Рак, Скорпион, Риби","Риби, Водолей, Рак","Скорпион, Козирог, Риби","Водолей, Везни, Близнаци"]],
+    ["Роден си на 1 август. Коя зодия си?",["Лъв","Рак","Дева","Близнаци"]],
+    ["Коя зодия стои срещу Овен в кръга?",["Везни","Скорпион","Рак","Козирог"]],
+    ["Кое небесно тяло управлява Рак?",["Луната","Слънцето","Венера","Сатурн"]],
+    ["Какъв е символът на Козирог?",["Коза с рибя опашка","Овен с криле","Елен","Бик"]],
+    ["Коя планета управлява Близнаци и Дева?",["Меркурий","Венера","Марс","Нептун"]],
+    ["Роден си на 25 декември. Коя зодия си?",["Козирог","Стрелец","Водолей","Риби"]],
+    ["Кое небесно тяло управлява Лъв?",["Слънцето","Луната","Марс","Юпитер"]],
+    ["Коя е последната зодия в кръга?",["Риби","Водолей","Козирог","Овен"]]
+  ]
+},
+{
+  id:"xmas", cat:"Коледа и Нова година", c:"gold", eng:"quiz", n:[1,8],
+  name:"Празнична викторина",
+  desc:"Бъдни вечер, сурвакане и коледари. Колко добре знаете българските празници?",
+  qs:[
+    ["Какъв трябва да е броят на ястията на Бъдни вечер?",["Нечетен","Четен","Точно десет","Няма значение"]],
+    ["Какви са ястията на трапезата на Бъдни вечер?",["Постни","Само месни","Само сладки","Само печени"]],
+    ["Какво се слага в питата на Бъдни вечер?",["Пара","Орех","Пръстен","Зърно боб"]],
+    ["На коя дата е Бъдни вечер?",["24 декември","25 декември","31 декември","6 януари"]],
+    ["Как се казват момчетата, които обикалят къщите с песни на Коледа?",["Коледари","Кукери","Лазарки","Сурвакари"]],
+    ["От какво дърво се прави сурвачката?",["Дрян","Бор","Липа","Орех"]],
+    ["На коя дата се сурвака?",["1 януари","25 декември","6 януари","31 декември"]],
+    ["Как се нарича първият гост на Игнажден, по когото се гадае за годината?",["Полазник","Кум","Коледар","Сурвакар"]],
+    ["На коя дата е Игнажден?",["20 декември","6 декември","24 декември","27 декември"]],
+    ["Кой празник е на 1 януари по църковния календар?",["Васильовден","Йордановден","Ивановден","Стефановден"]],
+    ["Колко са елените на Дядо Коледа заедно с Рудолф?",["Девет","Осем","Седем","Дванайсет"]],
+    ["Как се казва дървото, което гори в огнището на Бъдни вечер?",["Бъдник","Сурвак","Полазник","Колак"]],
+    ["На коя дата е Стефановден?",["27 декември","26 декември","2 януари","7 януари"]]
+  ]
+},
+{
+  id:"hen", cat:"Моминско парти", c:"hot", eng:"cards", n:[3,12], hero:"булката",
+  name:"Последна свободна вечер",
+  desc:"Кой познава булката най-добре, плюс задачи и признания за цялата компания.",
+  lead:"Коя от нас…", aw:["Душата на партито","Най-добра приятелка на булката"],
+  cards:[
+    ["G","Къде беше първата среща на {h} с бъдещия ѝ съпруг?"],
+    ["G","Коя е любимата напитка на {h}?"],
+    ["G","Как {h} го нарича на галено?"],
+    ["G","Колко деца иска {h}?"],
+    ["G","Кой от двамата пръв каза „обичам те“?"],
+    ["G","Кой негов навик дразни {h} най-много?"],
+    ["G","Къде {h} иска да отиде на меден месец?"],
+    ["G","Какво {h} ще направи първо сутринта след сватбата?"],
+    ["V","ще хване букета?"],
+    ["V","ще се разплаче първа на сватбата?"],
+    ["V","ще танцува на масата тази вечер?"],
+    ["V","ще се прибере последна?"],
+    ["V","пази най-много тайни на булката?"],
+    ["A","Никога не съм плакала на чужда сватба."],
+    ["A","Никога не съм ловила булчински букет."],
+    ["A","Никога не съм хвалила рокля, която не ми харесва."],
+    ["D","Вдигни тост за {h} в три изречения."],
+    ["D","Покажи как {h} ще влезе в залата."],
+    ["D","Изиграй предложението за брак така, както си го представяш."],
+    ["D","Дай на {h} един съвет за брака. Несериозен."],
+    ["D","Изтанцувай първия сватбен танц с {o}."]
+  ]
+},
+{
+  id:"wedding", cat:"Сватба", c:"gold", eng:"match", n:[2,2],
+  name:"Играта с обувката",
+  desc:"Младоженците отговарят един по един, гостите гледат дали ще съвпаднат.",
+  note:"Въведете имената на младоженците. Въпросите се четат на глас пред гостите.",
+  qs:[
+    "пръв каза „обичам те“?","готви по-добре?","харчи повече?","винаги закъснява?","хърка по-силно?",
+    "е по-ревнив?","пръв се извинява след скарване?","шофира по-добре?","държи дистанционното?",
+    "е по-голям инат?","заспива пръв пред телевизора?","ще става нощем при бебето?",
+    "направи първата крачка?","ще планира почивките?","ще командва вкъщи?"
+  ]
+},
+{
+  id:"bday", cat:"Рожден ден", c:"lilac", eng:"cards", n:[3,12], hero:"рожденикът",
+  name:"Кой познава рожденика",
+  desc:"Гостите познават, рожденикът казва кой е прав. Има и тостове.",
+  lead:"Кой от нас…", aw:["Любимец на компанията","Най-добре познава рожденика"],
+  cards:[
+    ["G","Коя е любимата храна на {h}?"],
+    ["G","От какво {h} се страхува най-много?"],
+    ["G","Коя е мечтаната дестинация на {h}?"],
+    ["G","Какво искаше да работи {h} като дете?"],
+    ["G","Коя песен {h} пуска най-често?"],
+    ["G","Кой е любимият филм или сериал на {h}?"],
+    ["G","Какво {h} никога не би сложил/а в устата си?"],
+    ["G","В колко часа щеше да става {h}, ако нямаше будилник?"],
+    ["G","Кой е най-хубавият подарък, който {h} е получавал/а?"],
+    ["V","е приготвил най-добрия подарък?"],
+    ["V","познава {h} от най-отдавна?"],
+    ["V","ще забрави рождения ден догодина?"],
+    ["V","е правил най-големите бели заедно с {h}?"],
+    ["Q","Разкажи най-смешната си случка с {h}."],
+    ["Q","Опиши {h} с три думи."],
+    ["Q","Какво пожелаваш на {h} за следващата година?"],
+    ["D","Изпей „Честит рожден ден“ като оперен певец."],
+    ["D","Вдигни тост за {h} в рима."],
+    ["D","Имитирай {h}, докато останалите се засмеят."]
+  ]
+},
+{
+  id:"baby", cat:"Бебешко парти", c:"mint", eng:"quiz", n:[1,8],
+  name:"Бебешки изпит",
+  desc:"Викторина за бъдещите родители и гостите. Кой е готов за бебето?",
+  qs:[
+    ["Колко седмици продължава средно бременността?",["Около 40","Около 30","Около 36","Около 45"]],
+    ["Около колко кости има новороденото?",["Около 300","206","Около 150","Около 500"]],
+    ["Кога обикновено пробиват първите зъби?",["Около шестия месец","Първия месец","На една година","На две години"]],
+    ["Колко млечни зъба израстват общо?",["20","16","24","32"]],
+    ["На какво разстояние новороденото вижда най-ясно?",["20–30 см","1 метър","3 метра","Вижда навсякъде еднакво"]],
+    ["Колко спи новороденото на денонощие?",["Около 16 часа","Около 8 часа","Около 10 часа","Около 22 часа"]],
+    ["Кога бебетата обикновено започват да се усмихват в отговор?",["Към втория месец","Още първия ден","Към шестия месец","На една година"]],
+    ["Какво е фонтанелата?",["Мекото място на главичката","Първият зъб","Бебешка количка","Вид биберон"]],
+    ["Кога повечето бебета прохождат?",["Около първата година","На шест месеца","На две години","На три месеца"]],
+    ["Как бие сърцето на новороденото спрямо това на възрастен?",["По-бързо","По-бавно","Еднакво","Само докато спи"]],
+    ["Как се нарича първото мляко на майката?",["Коластра","Суроватка","Лактоза","Казеин"]]
+  ]
+},
+{
+  id:"class", cat:"Бал и среща на класа", c:"sky", eng:"cards", n:[3,12],
+  name:"Среща на класа",
+  desc:"Кой бягаше от час, кой преписваше и кой по кого си падаше.",
+  lead:"Кой от класа…", aw:["Легенда на класа","Най-откровен"],
+  cards:[
+    ["V","най-често бягаше от час?"],
+    ["V","се е променил най-малко?"],
+    ["V","беше любимецът на учителите?"],
+    ["V","преписваше най-майсторски?"],
+    ["V","ще дойде и на срещата след двайсет години?"],
+    ["V","изненада всички с това, което работи?"],
+    ["V","имаше най-много обожатели?"],
+    ["V","закъсняваше всяка сутрин?"],
+    ["A","Никога не съм преписвал/а на контролно."],
+    ["A","Никога не съм подправял/а подпис на родител."],
+    ["A","Никога не съм бил/а влюбен/а в учител."],
+    ["A","Никога не съм харесвал/а тайно някого от класа."],
+    ["A","Никога не съм лъгал/а, че съм болен/болна, за да не ме изпитат."],
+    ["A","Никога не съм писал/а по чина."],
+    ["Q","Кой е най-яркият ти спомен от училище?"],
+    ["Q","Кой учител ти повлия най-много?"],
+    ["Q","Какво би казал/а на себе си на шестнайсет?"],
+    ["Q","По кого от класа си падаше?"],
+    ["Q","Коя е най-голямата беля, за която не ни хванаха?"],
+    ["Q","Какво си мислеше, че ще работиш, а какво работиш?"]
+  ]
+},
+{
+  id:"auto", cat:"Авто", c:"hot", eng:"quiz", n:[1,8],
+  name:"Бензин в кръвта",
+  desc:"Емблеми, марки и модели. За хората, които разпознават кола по звука.",
+  qs:[
+    ["Кое животно е на емблемата на Lamborghini?",["Бик","Кон","Лъв","Ягуар"]],
+    ["Кое животно е на емблемата на Ferrari?",["Кон","Бик","Орел","Змия"]],
+    ["От коя държава е Škoda?",["Чехия","Полша","Германия","Словакия"]],
+    ["От коя държава е Volvo?",["Швеция","Норвегия","Германия","Финландия"]],
+    ["Какво означават четирите кръга на Audi?",["Четири обединени фирми","Четирите колела","Четири олимпийски игри","Четирима основатели"]],
+    ["В кой град е централата на BMW?",["Мюнхен","Щутгарт","Берлин","Волфсбург"]],
+    ["Кой е най-известният модел на Porsche?",["911","500","Golf","Mustang"]],
+    ["Какво прави системата ABS?",["Пречи на колелата да блокират при спиране","Пести гориво","Помага при паркиране","Следи налягането в гумите"]],
+    ["Коя марка се сглобяваше в Ловеч?",["Москвич","Трабант","Лада","Вартбург"]],
+    ["На кого е кръстена Tesla?",["Никола Тесла","Томас Едисон","Хенри Форд","Илон Мъск"]],
+    ["От коя държава е Dacia?",["Румъния","България","Сърбия","Турция"]],
+    ["Кой модел е най-продаваният в историята?",["Toyota Corolla","Volkswagen Golf","Ford Fiesta","Fiat Punto"]],
+    ["Какъв цвят са светлините за заден ход?",["Бели","Червени","Жълти","Сини"]]
+  ]
+},
+{
+  id:"team", cat:"Колеги и тиймбилдинг", c:"sky", eng:"cards", n:[3,12],
+  name:"Екипът отвътре",
+  desc:"Разчупване на леда за офис, тиймбилдинг или фирмено парти. Без неудобни въпроси.",
+  lead:"Кой от екипа…", aw:["Лицето на екипа","Най-активен"],
+  cards:[
+    ["V","би отговорил на имейл в три през нощта?"],
+    ["V","знае къде е всичко в офиса?"],
+    ["V","пие най-много кафе?"],
+    ["V","има най-много отворени табове?"],
+    ["V","би оцелял най-дълго на безлюден остров?"],
+    ["V","пръв забелязва нова прическа?"],
+    ["V","един ден ще е шеф на всички ни?"],
+    ["V","казва „само пет минути“ и говори половин час?"],
+    ["Q","Каква беше първата ти работа?"],
+    ["Q","Какво умееш, а никой тук не подозира?"],
+    ["Q","Коя е най-странната ти случка с клиент?"],
+    ["Q","Какво щеше да работиш, ако не беше това?"],
+    ["Q","Кое е най-хубавото, което ти се случи на работа тази година?"],
+    ["Q","Какво би променил/а в офиса още утре?"],
+    ["D","Обясни работата си така, че да я разбере петгодишно дете."],
+    ["D","Имитирай звука на най-досадната машина в офиса."],
+    ["D","Кажи какво цениш в работата на {o}."],
+    ["D","Изиграй как изглежда понеделник сутрин."],
+    ["D","Продай на {o} първия предмет, който видиш. Имаш 30 секунди."]
+  ]
+},
+{
+  id:"road", cat:"На път", c:"mint", eng:"cards", n:[2,7],
+  name:"Километри смях",
+  desc:"За дълъг път с кола. Телефонът е у пътник, шофьорът играе само на глас.",
+  lead:"Кой в колата…", aw:["Душата на пътуването","Най-добър спътник"],
+  cards:[
+    ["V","пръв ще поиска спирка?"],
+    ["V","ще заспи пръв?"],
+    ["V","ще обърка пътя?"],
+    ["V","е взел най-много багаж?"],
+    ["V","пуска най-добрата музика?"],
+    ["V","пръв ще попита „стигнахме ли“?"],
+    ["V","ще изяде всичко за из път още преди първия час?"],
+    ["Q","Назови пет града с първата буква от следващата табела."],
+    ["Q","Измисли история за хората в колата пред нас."],
+    ["Q","Изпей песен, в която се споменава град."],
+    ["Q","Имаш 20 секунди: изброй колкото можеш марки коли."],
+    ["Q","Коя е най-хубавата ти почивка досега?"],
+    ["Q","Къде би отишъл/отишла, ако резервоарът беше безкраен?"],
+    ["Q","Кое е най-странното нещо, което си ял/а на път?"],
+    ["D","Пей с пълен глас следващата песен по радиото."],
+    ["D","Говори като навигация до следващото село."],
+    ["D","Помахай на следващата кола. Брои се, ако ти отвърнат."],
+    ["D","Измисли име на това пътуване и го обяви тържествено."],
+    ["D","Опиши нещо, което виждаш, без да казваш цвета му. Останалите познават."]
+  ]
+},
+{
+  id:"date", cat:"Първа среща", c:"hot", eng:"cards", n:[2,2], ordered:true,
+  name:"Лед и пламък",
+  desc:"Осемнайсет въпроса за двама, от леки към лични. Редувате се.",
+  aw:["","По-откровен"],
+  cards:[
+    ["Q","Какво те разсмива всеки път?"],
+    ["Q","Как изглежда идеалната ти неделя?"],
+    ["Q","Коя храна би ял/а до края на живота си?"],
+    ["Q","Кое е последното, което гледа и ти хареса?"],
+    ["Q","Море или планина и защо?"],
+    ["Q","Какъв/каква беше като дете?"],
+    ["Q","С какво се гордееш, а рядко го казваш?"],
+    ["Q","Кое е най-спонтанното нещо, което си правил/а?"],
+    ["Q","Какво те дразни още на първа среща?"],
+    ["Q","Кой човек ти е повлиял най-много?"],
+    ["Q","Какво би правил/а, ако парите не бяха проблем?"],
+    ["Q","Кой е най-добрият съвет, който си получавал/а?"],
+    ["Q","Какво търсиш в човека до себе си?"],
+    ["Q","Какво първо забеляза в мен?"],
+    ["Q","От какво те е страх във връзките?"],
+    ["Q","Как личи, че харесваш някого?"],
+    ["Q","Как разбираш, че си влюбен/а?"],
+    ["Q","Ще има ли втора среща? Кажи го, гледайки {o} в очите."]
+  ]
+},
+{
+  id:"bg", cat:"Викторина", c:"gold", eng:"quiz", n:[1,8],
+  name:"Колко си българин",
+  desc:"История, география и малко кисело мляко. Тринайсет въпроса за България.",
+  qs:[
+    ["Кой е най-високият връх в България?",["Мусала","Вихрен","Ботев","Черни връх"]],
+    ["Коя година се приема за основаването на българската държава?",["681","863","1018","1185"]],
+    ["Коя е най-дългата река, която тече изцяло в България?",["Искър","Марица","Струма","Янтра"]],
+    ["Коя е столицата на Второто българско царство?",["Велико Търново","Плиска","Преслав","Охрид"]],
+    ["Кой е написал „Под игото“?",["Иван Вазов","Христо Ботев","Алеко Константинов","Йордан Йовков"]],
+    ["С какво е известна Казанлъшката долина?",["Маслодайната роза","Лозята","Лавандулата","Тютюна"]],
+    ["В кой град е Домът на хумора и сатирата?",["Габрово","Трявна","Севлиево","Ловеч"]],
+    ["На коя дата е Денят на Освобождението?",["3 март","6 септември","22 септември","24 май"]],
+    ["Колко букви има българската азбука?",["30","29","31","33"]],
+    ["Кой българин спечели „Златната топка“ през 1994 г.?",["Христо Стоичков","Димитър Бербатов","Красимир Балъков","Емил Костадинов"]],
+    ["Как се казва бактерията в българското кисело мляко?",["Lactobacillus bulgaricus","Bacillus balcanicus","Streptococcus sofia","Lactobacillus thracicus"]],
+    ["Кой град често се сочи за най-стария постоянно населен в Европа?",["Пловдив","Несебър","Созопол","Варна"]],
+    ["Коя валута замени лева през 2026 г.?",["Еврото","Доларът","Левът остана","Франкът"]]
+  ]
+}
+];
+
+/* ---------- Допълнително съдържание: всяка игра стига до поне 50 ---------- */
+const EXTRA = {
+couple:[
+  ["Сутрин първо посягам към…","Сутрин {n} първо посяга към…",["Телефона","Кафето","Душа","Копчето за дрямка"]],
+  ["Любимият ми сезон е…","Любимият сезон на {n} е…",["Пролет","Лято","Есен","Зима"]],
+  ["Идеалният подарък за мен е…","Идеалният подарък за {n} е…",["Нещо практично","Преживяване","Нещо ръчно направено","Пълна изненада"]],
+  ["Когато имам тежък ден, имам нужда от…","Когато {n} има тежък ден, има нужда от…",["Прегръдка","Тишина","Разговор","Нещо сладко"]],
+  ["Любимият ми жанр филми е…","Любимият жанр филми на {n} е…",["Комедия","Екшън","Романтика","Трилър"]],
+  ["Идеалната неделна сутрин за мен е…","Идеалната неделна сутрин за {n} е…",["Спане до късно","Закуска навън","Спорт","Разходка сред природата"]],
+  ["Мечтаният ми домашен любимец е…","Мечтаният домашен любимец на {n} е…",["Куче","Котка","Нещо екзотично","Никакъв"]],
+  ["Най-много харча за…","{n} най-много харчи за…",["Храна","Дрехи","Техника","Пътувания"]],
+  ["В колата най-често слушам…","В колата {n} най-често слуша…",["Поп и радио","Рок","Фолк","Подкаст или тишина"]],
+  ["Най-големият ми страх е…","Най-големият страх на {n} е…",["Височини","Паяци и змии","Самота","Провал"]],
+  ["Любимото ми питие е…","Любимото питие на {n} е…",["Кафе","Вино","Бира","Безалкохолно"]],
+  ["Когато готвя, най-често става…","Когато {n} готви, най-често става…",["Нещо вкусно","Нещо бързо","Пълен хаос","Поръчка на храна"]],
+  ["Почивният ми ден минава…","Почивният ден на {n} минава…",["Вкъщи","Сред природата","С приятели","По магазините"]],
+  ["Първото, което ме привлече в половинката ми, беше…","Първото, което привлече {n} в теб, беше…",["Усмивката","Очите","Чувството за хумор","Гласът"]],
+  ["Най-хубавото в нашата връзка за мен е…","Най-хубавото в нашата връзка за {n} е…",["Смехът","Спокойствието","Страстта","Подкрепата"]],
+  ["Мечтаният ми дом е…","Мечтаният дом на {n} е…",["Апартамент в центъра","Къща с двор","Вила в планината","Къща на морето"]],
+  ["Когато се разболея, съм…","Когато {n} се разболее, е…",["Герой, който не ляга","Драматичен пациент","Тих и кротък","Лекар сам на себе си"]],
+  ["Любимият ми десерт е…","Любимият десерт на {n} е…",["Шоколад","Сладолед","Торта","Плодове"]],
+  ["Телефонът ми най-често е отворен на…","Телефонът на {n} най-често е отворен на…",["Instagram","TikTok","YouTube","Чатове"]],
+  ["Преди сън при мен има…","Преди сън при {n} има…",["Сериал","Телефон","Книга","Заспиване на секундата"]],
+  ["Идеалната годишнина за мен е…","Идеалната годишнина за {n} е…",["Романтична вечеря","Пътуване","Вечер вкъщи","Голямо парти"]],
+  ["Най-трудно ми се удава…","На {n} най-трудно се удава…",["Ранното ставане","Извиненията","Пестенето","Чакането"]],
+  ["Мечтаната ми суперсила е…","Мечтаната суперсила на {n} е…",["Летене","Невидимост","Четене на мисли","Пътуване във времето"]],
+  ["Любимият ми празник е…","Любимият празник на {n} е…",["Коледа","Нова година","Рожден ден","Великден"]],
+  ["В магазина съм…","В магазина {n} е…",["Със списък","Без план","За пет минути","С пълна количка"]],
+  ["Идеалният брой деца за мен е…","Идеалният брой деца за {n} е…",["Нито едно","Едно","Две","Три или повече"]],
+  ["Най-често закъснявам заради…","{n} най-често закъснява заради…",["Избора на дрехи","Телефона","Трафика","Без закъснения"]],
+  ["Любимото ми общо занимание е…","Любимото общо занимание за {n} е…",["Гледане на филм","Готвене","Разходка","Пътуване"]],
+  ["Стресът при мен личи по…","При {n} стресът личи по…",["Мълчание","Нервност","Много храна","Безсъние"]],
+  ["Любимото ми българско ястие е…","Любимото българско ястие на {n} е…",["Баница","Мусака","Шопска салата","Кебапчета"]],
+  ["На почивка най-важно за мен е…","На почивка най-важно за {n} е…",["Хубавата храна","Плажът","Забележителностите","Пълното бездействие"]],
+  ["Мечтаната ми кола е…","Мечтаната кола на {n} е…",["Спортна","Джип","Малка градска","Все едно каква"]],
+  ["Тайната ми мечтана професия е…","Тайната мечтана професия на {n} е…",["Готвач","Музикант","Пътешественик","Собственик на бар"]],
+  ["В компания съм…","В компания {n} е…",["Душата на масата","Слушателят","Шегаджията","Организаторът"]],
+  ["В хората най-много ценя…","В хората {n} най-много цени…",["Честност","Чувство за хумор","Лоялност","Амбиция"]],
+  ["Най-много ме радва комплимент за…","{n} най-много се радва на комплимент за…",["Външния вид","Ума","Чувството за хумор","Постигнатото"]],
+  ["Идеалната среща за мен започва с…","Идеалната среща за {n} започва с…",["Кафе","Вечеря","Разходка","Кино"]],
+  ["На старини искам да живея…","На старини {n} иска да живее…",["На село","Край морето","В големия град","В чужбина"]],
+  ["Любимият ми начин да се извиня е…","Любимият начин на {n} да се извини е…",["Думи","Прегръдка","Подарък","Нещо вкусно"]]
+],
+wedding:[
+  "е по-романтичен?","се сърди по-дълго?","е по-подреден?","забравя годишнини?","прави по-хубаво кафе?","се приготвя по-бавно?",
+  "е по-добър танцьор?","пее по-фалшиво?","плаче на филми?","е по-стиснат?","пръв ще заспи довечера?","е по-спортен?",
+  "говори повече по телефона?","губи по-често ключовете?","е по-добър с децата?","пази спокойствие в криза?","глези повече другия?",
+  "избира филма вечер?","яде повече сладко?","е по-голям мърморко?","става по-рано сутрин?","е душата на компанията?",
+  "пръв заговори за сватба?","се губи дори с навигация?","е любимец на тъщата и свекървата?","ще изхвърля боклука?",
+  "помни всички рождени дни?","е по-суеверен?","е по-смел?","е по-голям работохолик?","ще прави закуската в неделя?",
+  "изяжда храната на другия?","знае паролите на другия?","дърпа завивката нощем?","ще държи семейния бюджет?","се пазари по-добре?"
+],
+girls:[
+  ["V","ще замине да живее в чужбина?"],["V","ще се прибере с бездомно коте?"],["V","ще стане известна?"],
+  ["V","ще проспи алармата и ще обвини телефона?"],["V","ще си смени прическата след раздяла?"],
+  ["V","ще се разплаче от смях първа тази вечер?"],["V","ще издаде тайна, без да иска?"],
+  ["V","ще отиде на среща и ще се върне с нова приятелка?"],["V","пази скрийншоти от всички чатове?"],
+  ["V","ще поръча десерт „само да опита“ и ще го изяде целия?"],["V","ще спори със сервитьора за сметката?"],["V","ще се влюби на почивка?"],
+  ["A","Никога не съм отменяла излизане в последния момент от мързел."],
+  ["A","Никога не съм правила скрийншот на чат, за да го пратя на приятелка."],
+  ["A","Никога не съм се преструвала на заета, за да не вдигна телефона."],
+  ["A","Никога не съм купувала дреха, която после крия."],
+  ["A","Никога не съм плакала в тоалетната на заведение."],
+  ["A","Никога не съм писала съобщение до мъж вместо приятелка."],
+  ["A","Никога не съм ходила на среща само заради вечерята."],
+  ["A","Никога не съм казвала „пет минути и съм готова“, без да съм започнала."],
+  ["A","Никога не съм звъняла на приятелка от тоалетната по време на лоша среща."],
+  ["Q","Кой момент от приятелството ни би изживяла пак?"],["Q","Какво научи от най-тежката си раздяла?"],
+  ["Q","Коя е най-лудата идея, която сме осъществили заедно?"],["Q","Какво още не сме правили заедно, а трябва?"],
+  ["Q","Какво ти се иска да ни казваш по-често?"],["Q","Кой подарък от приятелка няма да забравиш?"],
+  ["Q","Кой твой бивш харесвахме най-малко?"],["Q","За какво ни завиждаш по малко?"],
+  ["Q","Какво ще направиш, ако {o} ти звънне в три през нощта?"]
+],
+family:[
+  ["V","готви най-вкусно?"],["V","най-трудно става сутрин?"],["V","говори най-дълго по телефона?"],["V","разказва най-хубавите истории?"],
+  ["V","ще изяде последното парче торта?"],["V","пази най-много стари вещи?"],["V","пръв усеща, когато някой е тъжен?"],
+  ["V","се сърди, когато губи на карти?"],["V","не го свърта на едно място?"],["V","оставя лампите светнати?"],
+  ["V","винаги бави тръгването?"],["V","знае любимия си сериал наизуст?"],
+  ["Q","Кое е любимото ти място у дома?"],["Q","Коя семейна традиция ти е най-скъпа?"],["Q","Каква нова традиция да си измислим?"],
+  ["Q","Кой семеен празник помниш най-добре?"],["Q","Какво обичаше да правиш с баба и дядо?"],
+  ["Q","Кое е най-смешното нещо, което някой от нас е казвал?"],["Q","Какво искаш да научиш от {o}?"],
+  ["Q","Какво би подарил/а на {o}, ако можеше всичко?"],["Q","За какво си благодарен/благодарна тази година?"],
+  ["Q","Коя е любимата ти семейна снимка?"],
+  ["D","Нарисувай във въздуха някого от семейството. Другите познават."],["D","Покажи как {o} се събужда сутрин."],
+  ["D","Кажи скороговорка три пъти бързо."],["D","Измисли двустишие за {o}."],
+  ["D","Изиграй без думи любимото ястие на семейството."],["D","Направи най-смешната си физиономия за семейна снимка."],
+  ["D","Разкажи виц, който и баба да разбере."],["D","Изброй рождените дни на всички на масата."]
+],
+hen:[
+  ["G","Кой е любимият цвят на {h}?"],["G","Къде беше първата обща почивка на двамата?"],["G","Какво {h} готви най-добре?"],
+  ["G","Кой е любимият десерт на {h}?"],["G","Какво {h} би спасила първо при пожар: роклята или телефона?"],
+  ["G","Коя песен {h} иска за първия танц?"],["G","Кое е любимото място на {h} в града?"],["G","От колко време са заедно двамата?"],
+  ["G","Къде се запознаха двамата?"],["G","Какво {h} харесва най-много в него?"],["G","Къде беше предложението за брак?"],
+  ["V","ще плаче най-много, докато чете пожеланието си?"],["V","ще загуби обувките си до края на вечерта?"],
+  ["V","ще флиртува с кума?"],["V","ще води танците на сватбата?"],["V","е следващата булка?"],
+  ["V","ще каже нещо неудобно в тоста си?"],["V","ще направи най-много снимки тази вечер?"],
+  ["A","Никога не съм планирала сватбата си до последния детайл."],["A","Никога не съм пробвала булчинска рокля просто така."],
+  ["A","Никога не съм казвала „никога няма да се омъжа“."],["A","Никога не съм ходила на сватба заради храната."],
+  ["A","Никога не съм харесвала гост на чужда сватба."],
+  ["D","Разкажи най-лудия си спомен с {h} за 30 секунди."],["D","Покажи танца, с който ще излезеш на дансинга."],
+  ["D","Изпей на {h} припева на любовна песен."],["D","Напиши на салфетка пожелание за {h}."],
+  ["D","Изиграй {h} в шест сутринта в деня на сватбата."],["D","Обясни на {h} как се сгъва чаршаф с ластик, сякаш е брачен съвет."]
+],
+bday:[
+  ["G","Кой е любимият цвят на {h}?"],["G","Коя зодия е {h}?"],["G","Какво {h} поръчва най-често в заведение?"],
+  ["G","Кой е любимият сезон на {h}?"],["G","Кое е скритото умение на {h}?"],["G","Кой израз {h} повтаря най-често?"],
+  ["G","Как се казваше първият домашен любимец на {h}?"],["G","Кой е любимият отбор или изпълнител на {h}?"],
+  ["G","Какво {h} прави първо сутрин?"],["G","Кой предмет {h} не понасяше в училище?"],["G","Къде {h} иска да празнува догодина?"],
+  ["G","За какво {h} харчи най-много пари?"],
+  ["V","ще изяде най-много торта?"],["V","ще си тръгне последен?"],["V","ще направи най-смешната снимка с {h}?"],
+  ["V","дължи на {h} почерпка?"],["V","пее „Честит рожден ден“ най-фалшиво?"],["V","пръв поздрави {h} днес?"],
+  ["V","би организирал парти изненада?"],
+  ["Q","Как се запозна с {h}?"],["Q","Кое е най-хубавото, което {h} е правил/а за теб?"],
+  ["Q","Какво би подарил/а на {h}, ако парите не бяха проблем?"],["Q","На какво те е научил/а {h}?"],
+  ["Q","Кой общ спомен с {h} пазиш?"],["Q","Какъв/каква ще бъде {h} на осемдесет?"],
+  ["D","Направи комплимент на {h} без думи."],["D","Нарисувай портрет на {h} за 20 секунди."],
+  ["D","Изиграй как {h} отваря подарък, който не харесва."],["D","Кажи „Честит рожден ден“ на три езика."],
+  ["D","Измисли нов прякор за {h}."],["D","Изтанцувай танц в чест на {h}."]
+],
+class:[
+  ["V","спеше най-сладко в час?"],["V","имаше най-хубавия почерк?"],["V","никога нямаше химикалка?"],["V","измисляше най-добрите оправдания?"],
+  ["V","пръв научаваше кога има контролно?"],["V","беше царят на междучасието?"],["V","закусваше в час?"],
+  ["V","беше най-тихият, а днес не спира да говори?"],["V","организираше всички купони?"],["V","още пази тетрадките си?"],
+  ["V","се ожени пръв?"],["V","живее най-далеч оттук?"],
+  ["A","Никога не съм бягал/а през оградата на училището."],["A","Никога не съм пращал/а бележка в час."],
+  ["A","Никога не съм плакал/а заради оценка."],["A","Никога не съм казвал/а, че съм забравил/а домашното вкъщи, без да съм го писал/а."],
+  ["A","Никога не съм подсказвал/а на изпитван."],["A","Никога не са ме викали при директора."],
+  ["A","Никога не съм късал/а страница от бележника."],["A","Никога не съм спал/а в час."],
+  ["A","Никога не съм изкарвал/а цяла седмица, без да отворя учебник."],
+  ["Q","Коя е любимата ти случка от екскурзия или лагер?"],["Q","Кой предмет ти беше кошмарът?"],["Q","Какъв беше прякорът ти и защо?"],
+  ["Q","Какво имаше в чантата ти освен учебници?"],["Q","Коя песен ти напомня за бала?"],["Q","С кого от класа се чуваш най-често?"],
+  ["Q","Какво от училище наистина ти потрябва в живота?"],["Q","Кого от класа искаш да опознаеш отново?"],
+  ["Q","Какъв/каква си мислеше, че ще бъдеш на тази възраст?"]
+],
+team:[
+  ["V","идва пръв сутрин?"],["V","има най-подреденото бюро?"],["V","знае рождените дни на всички?"],["V","носи най-вкусния обяд?"],
+  ["V","говори на изключен микрофон?"],["V","е най-бодър в понеделник?"],["V","ще организира следващия тиймбилдинг?"],
+  ["V","оправя принтера?"],["V","има растение, което още е живо?"],["V","пише най-дългите имейли?"],["V","винаги има зарядно?"],
+  ["V","би спечелил офис караоке?"],
+  ["Q","Кой е най-добрият съвет, който си получавал/а в работата?"],["Q","На коя своя грешка в работата днес се смееш?"],
+  ["Q","С какво започва идеалният ти работен ден?"],["Q","Кое приложение не можеш да изтриеш от телефона си?"],
+  ["Q","Какво би учил/а, ако имаше свободна година?"],["Q","Кое е най-необичайното място, от което си работил/а?"],
+  ["Q","Кой колега те е научил на най-много?"],["Q","Какво правиш първо, щом свърши работният ден?"],
+  ["Q","Каква музика слушаш, докато работиш?"],["Q","Кое е мотото ти в работата?"],
+  ["D","Опиши фирмата с три думи."],["D","Нарисувай логото ни със затворени очи."],["D","Представи {o}, сякаш получава награда."],
+  ["D","Измисли слоган на екипа за 20 секунди."],["D","Изиграй онлайн среща с лоша връзка."],["D","Обясни с пантомима какво работиш."],
+  ["D","Разкажи за хобито си за 30 секунди, без да казваш името му."],["D","Благодари на {o} за нещо конкретно."],
+  ["D","Кажи две истини и една лъжа за себе си. Останалите познават лъжата."]
+],
+road:[
+  ["V","пее най-фалшиво?"],["V","ще забрави нещо на бензиностанцията?"],["V","ще похарчи най-много за сувенири?"],
+  ["V","пръв ще се оплаче от климатика?"],["V","знае текстовете на всички песни?"],["V","снима най-много по пътя?"],
+  ["V","ще заспи с отворена уста?"],["V","е най-добрият шофьор според самия себе си?"],["V","ще намери най-доброто място за ядене?"],
+  ["V","би тръгнал на околосветско още утре?"],
+  ["Q","Започни верига от държави. Всеки казва държава с последната буква на предишната."],
+  ["Q","Кое е най-красивото място, което си виждал/а в България?"],["Q","Коя песен задължително е в плейлиста за път?"],
+  ["Q","Кое е най-дългото ти пътуване?"],["Q","Ако колата можеше да говори, какво щеше да каже за нас?"],
+  ["Q","Изброй пет неща, които винаги взимаш на път."],["Q","Коя е най-лошата ти случка на път?"],
+  ["Q","Опиши пейзажа навън като поет."],["Q","Къде бихме спрели, ако имахме още един ден?"],
+  ["Q","Кой град в България още не си посетил/а?"],["Q","Измисли три правила за тази кола."],
+  ["Q","Каква е първата ти асоциация с думата „море“?"],["Q","Познай колко километра остават, преди да видиш навигацията."],
+  ["D","Брой червените коли до следващата табела."],["D","Мълчи до следващото населено място. Проговориш ли, губиш."],
+  ["D","Измисли реклама за следващото село."],["D","Изпей детска песничка с оперен глас."],
+  ["D","Опиши филм с три думи. Останалите познават."],["D","Кажи азбуката отзад напред, докъдето стигнеш."],
+  ["D","Разкажи приказка, в която участват всички в колата."],["D","Намери кола с номер от друга област и познай коя е."]
+],
+date:{
+  l1:[["Q","Кафе или чай и как го пиеш?"],["Q","Коя песен слушаш тайно?"],["Q","Кой е любимият ти сезон?"],
+      ["Q","Какво правиш, когато никой не те гледа?"],["Q","Кое е най-доброто, което можеш да сготвиш?"],
+      ["Q","Ранобудник или нощна птица си?"],["Q","Кое е любимото ти място в града?"],["Q","Котки или кучета?"],
+      ["Q","Кой филм можеш да гледаш безброй пъти?"],["Q","Какво винаги носиш със себе си?"],["Q","Коя е най-хубавата ти почивка?"]],
+  l2:[["Q","Какво те прави щастлив/а в най-обикновен ден?"],["Q","Кое свое решение смяташ за най-добро?"],
+      ["Q","За какво можеш да говориш с часове?"],["Q","Какво би опитал/а, ако знаеш, че няма да се провалиш?"],
+      ["Q","Кое е най-смелото нещо, което си правил/а?"],["Q","Какво казват приятелите ти за теб?"],
+      ["Q","Какво научи за себе си миналата година?"],["Q","Какво ти липсва от детството?"],["Q","Къде се виждаш след пет години?"],
+      ["Q","Кое качество цениш най-много у приятелите си?"],["Q","Кой комплимент помниш и до днес?"]],
+  l3:[["Q","Какво те кара да се чувстваш обичан/а?"],["Q","Какво научи от последната си връзка?"],["Q","Какво не би простил/а?"],
+      ["Q","Какво малко хора знаят за теб?"],["Q","Какво за теб е идеалната връзка?"],["Q","Кога за последно плака и защо?"],
+      ["Q","Какво ти хареса в мен тази вечер?"],["Q","От какво имаш нужда, когато ти е тежко?"],["Q","В какво вярваш силно?"],
+      ["Q","Какво искаш да ме попиташ, а не смееш?"]]
+},
+zodiac:[
+  ["Кои са земните зодии?",["Телец, Дева, Козирог","Овен, Лъв, Стрелец","Рак, Скорпион, Риби","Близнаци, Везни, Водолей"]],
+  ["Кои са въздушните зодии?",["Близнаци, Везни, Водолей","Телец, Дева, Козирог","Рак, Скорпион, Риби","Овен, Лъв, Стрелец"]],
+  ["Коя планета управлява Овен?",["Марс","Венера","Юпитер","Сатурн"]],
+  ["Коя планета управлява Стрелец?",["Юпитер","Марс","Меркурий","Венера"]],
+  ["Коя планета управлява Козирог?",["Сатурн","Юпитер","Марс","Уран"]],
+  ["Коя планета е съвременният управител на Водолей?",["Уран","Нептун","Плутон","Меркурий"]],
+  ["Коя планета е съвременният управител на Риби?",["Нептун","Уран","Плутон","Венера"]],
+  ["Кое небесно тяло е съвременният управител на Скорпион?",["Плутон","Нептун","Уран","Луната"]],
+  ["Кое животно е символ на Телец?",["Бик","Овен","Козел","Лъв"]],
+  ["Колко са зодиите?",["12","10","13","9"]],
+  ["Колко са стихиите в астрологията?",["4","3","5","12"]],
+  ["Колко зодии има във всяка стихия?",["3","2","4","6"]],
+  ["Роден си на 14 февруари. Коя зодия си?",["Водолей","Риби","Козирог","Овен"]],
+  ["Роден си на 1 април. Коя зодия си?",["Овен","Риби","Телец","Близнаци"]],
+  ["Роден си на 10 май. Коя зодия си?",["Телец","Овен","Близнаци","Рак"]],
+  ["Роден си на 1 юни. Коя зодия си?",["Близнаци","Телец","Рак","Лъв"]],
+  ["Роден си на 1 юли. Коя зодия си?",["Рак","Близнаци","Лъв","Дева"]],
+  ["Роден си на 10 септември. Коя зодия си?",["Дева","Лъв","Везни","Скорпион"]],
+  ["Роден си на 10 октомври. Коя зодия си?",["Везни","Дева","Скорпион","Стрелец"]],
+  ["Роден си на 10 ноември. Коя зодия си?",["Скорпион","Везни","Стрелец","Козирог"]],
+  ["Роден си на 5 декември. Коя зодия си?",["Стрелец","Скорпион","Козирог","Водолей"]],
+  ["Роден си на 10 март. Коя зодия си?",["Риби","Водолей","Овен","Телец"]],
+  ["Коя зодия стои срещу Телец?",["Скорпион","Лъв","Водолей","Везни"]],
+  ["Коя зодия стои срещу Близнаци?",["Стрелец","Дева","Риби","Козирог"]],
+  ["Коя зодия стои срещу Рак?",["Козирог","Везни","Овен","Водолей"]],
+  ["Коя зодия стои срещу Лъв?",["Водолей","Скорпион","Телец","Риби"]],
+  ["Коя зодия стои срещу Дева?",["Риби","Стрелец","Близнаци","Рак"]],
+  ["Кои са кардиналните зодии?",["Овен, Рак, Везни, Козирог","Телец, Лъв, Скорпион, Водолей","Близнаци, Дева, Стрелец, Риби","Овен, Лъв, Стрелец, Везни"]],
+  ["Кои са фиксираните зодии?",["Телец, Лъв, Скорпион, Водолей","Овен, Рак, Везни, Козирог","Близнаци, Дева, Стрелец, Риби","Телец, Дева, Козирог, Рак"]],
+  ["Кои са променливите зодии?",["Близнаци, Дева, Стрелец, Риби","Овен, Рак, Везни, Козирог","Телец, Лъв, Скорпион, Водолей","Рак, Скорпион, Риби, Дева"]],
+  ["Коя зодия идва след Лъв?",["Дева","Рак","Везни","Близнаци"]],
+  ["Коя зодия е преди Скорпион?",["Везни","Стрелец","Дева","Козирог"]],
+  ["Коя е шестата зодия в кръга?",["Дева","Лъв","Везни","Рак"]],
+  ["Коя е десетата зодия в кръга?",["Козирог","Стрелец","Водолей","Скорпион"]],
+  ["Как се нарича знакът, изгряващ на хоризонта в мига на раждането?",["Асцендент","Десцендент","Зенит","Възел"]],
+  ["Кое съзвездие често наричат „тринайсетата зодия“?",["Змиеносец","Орион","Касиопея","Пегас"]],
+  ["От коя стихия е Водолей?",["Въздух","Вода","Земя","Огън"]],
+  ["От коя стихия е Скорпион?",["Вода","Огън","Земя","Въздух"]],
+  ["Коя зодия започва около лятното слънцестоене?",["Рак","Лъв","Близнаци","Дева"]],
+  ["Коя зодия започва с астрономическата есен?",["Везни","Дева","Скорпион","Стрелец"]]
+],
+xmas:[
+  ["Какво се слага под трапезата на Бъдни вечер?",["Слама","Пясък","Сол","Вълна"]],
+  ["Кой прекадява трапезата на Бъдни вечер?",["Най-възрастният в дома","Най-малкото дете","Гостът","Кумът"]],
+  ["Какво се прави с трапезата на Бъдни вечер през нощта?",["Не се вдига","Изнася се на двора","Покрива се с черно","Раздава се на съседите"]],
+  ["Какво вещае парата в питата?",["Късмет и здраве през годината","Скорошна сватба","Дълъг път","Нова къща"]],
+  ["За кого се нарича първото парче от питата?",["За Богородица","За най-малкия","За госта","За стопанина"]],
+  ["Какво празнуваме на 25 декември?",["Рождество Христово","Богоявление","Въведение Богородично","Възнесение"]],
+  ["Кои имена празнуват на Коледа?",["Христо и Христина","Стефан и Стефка","Никола и Николина","Иван и Иванка"]],
+  ["Как се нарича водачът на коледарите?",["Станеник","Кум","Байрактар","Войвода"]],
+  ["С какво стопаните даряват коледарите?",["Кравай","Шарено яйце","Мартеница","Китка здравец"]],
+  ["Кога тръгват коледарите?",["В полунощ срещу Коледа","По обяд на Бъдни вечер","На Нова година","На Игнажден"]],
+  ["Как започва сурвакарската благословия?",["„Сурва, сурва година“","„Стани, стани, нине“","„Ой, Коледо“","„Честита Нова“"]],
+  ["Какво се слага в новогодишната баница?",["Късмети","Стафиди","Мед","Жълтици"]],
+  ["Какво се използва традиционно за късмети?",["Дрянови клонки с пъпки","Борови иглички","Житни класове","Орехови листа"]],
+  ["Кой празник е на 6 януари?",["Йордановден","Ивановден","Антоновден","Бабинден"]],
+  ["Какво хвърля свещеникът във водата на Йордановден?",["Кръст","Венец","Монета","Хляб"]],
+  ["Кой празник е на 7 януари?",["Ивановден","Йордановден","Васильовден","Атанасовден"]],
+  ["В кой град играят мъжко хоро в ледените води на река на Йордановден?",["Калофер","Копривщица","Банско","Трявна"]],
+  ["Кой празник е на 6 декември?",["Никулден","Игнажден","Андреевден","Варвара"]],
+  ["Каква риба се готви на Никулден?",["Шаран","Скумрия","Пъстърва","Цаца"]],
+  ["Колко дни продължават Коледните пости?",["40","7","14","30"]],
+  ["Кое хоро се играе в полунощ на Нова година?",["Дунавско","Пайдушко","Право","Еленино"]],
+  ["Кой е написал „Дунавско хоро“?",["Дико Илиев","Панчо Владигеров","Петко Стайнов","Добри Христов"]],
+  ["Къде живее Дядо Коледа според преданието?",["В Лапландия","В Сибир","В Исландия","В Алпите"]],
+  ["В коя държава е Рованиеми, градът на Дядо Коледа?",["Финландия","Норвегия","Швеция","Канада"]],
+  ["Кой е написал „Коледна песен“ със Скрудж?",["Чарлз Дикенс","Марк Твен","Оскар Уайлд","Жул Верн"]],
+  ["Как се казва еленът с червения нос?",["Рудолф","Комет","Купидон","Бързоног"]],
+  ["Какво оставят децата за Дядо Коледа в много страни?",["Мляко и курабийки","Чай и мед","Вино и сирене","Ябълки и орехи"]],
+  ["Какви дарове носят влъхвите?",["Злато, ливан и смирна","Злато, сребро и мед","Хляб, вино и сол","Вълна, мед и мляко"]],
+  ["Колко са влъхвите според традицията?",["Трима","Двама","Седмина","Дванайсет"]],
+  ["В кой град се ражда Иисус?",["Витлеем","Назарет","Йерусалим","Йерихон"]],
+  ["Какво води влъхвите към Витлеем?",["Звезда","Ангел","Гълъб","Река"]],
+  ["Как се казва маскарадният фестивал в Перник през януари?",["Сурва","Кукерландия","Старчевата","Пустове"]],
+  ["Как се наричат маскираните мъже със звънци, които гонят злото?",["Кукери","Коледари","Нестинари","Лазари"]],
+  ["Под кое растение се целуват по Коледа?",["Имел","Бръшлян","Бор","Чемшир"]],
+  ["От коя страна тръгва традицията на коледната елха?",["Германия","Русия","Англия","Финландия"]],
+  ["Кой е композирал балета „Лешникотрошачката“?",["Чайковски","Моцарт","Бетховен","Вивалди"]],
+  ["С какво се украсява сурвачката?",["Пуканки, сушени плодове и вълна","Свещи и камбанки","Мъниста и пера","Цветя и панделки"]],
+  ["За какво се гадае с орехи на Бъдни вечер?",["За здраве","За времето","За пари","За път"]]
+],
+baby:[
+  ["На колко триместъра се дели бременността?",["Три","Два","Четири","Девет"]],
+  ["Кой хормон откриват тестовете за бременност?",["hCG","Инсулин","Адреналин","Мелатонин"]],
+  ["Кой орган храни бебето в утробата?",["Плацентата","Черният дроб","Далакът","Диафрагмата"]],
+  ["Какво свързва бебето с плацентата?",["Пъпната връв","Околоплодният мехур","Ципата","Фонтанелата"]],
+  ["Как се нарича течността около бебето в утробата?",["Околоплодна","Лимфна","Гръбначна","Синовиална"]],
+  ["Колко хромозоми има човек?",["46","23","48","64"]],
+  ["Коя комбинация хромозоми означава момче?",["XY","XX","YY","XO"]],
+  ["Чия клетка определя пола на бебето?",["На бащата","На майката","И на двамата по равно","Зависи от месеца"]],
+  ["Как се наричат близнаците от една яйцеклетка?",["Еднояйчни","Двуяйчни","Сиамски","Разнояйчни"]],
+  ["Как се казва лекарят за новородени?",["Неонатолог","Невролог","Нефролог","Ортопед"]],
+  ["Как се казва лекарят за деца?",["Педиатър","Гериатър","Психиатър","Подиатър"]],
+  ["Какво оценява скалата на Апгар?",["Състоянието на новороденото след раждането","Теглото на бебето","Срока на бременността","Силата на контракциите"]],
+  ["Колко е най-високата оценка по Апгар?",["10","5","6","100"]],
+  ["Колко тежи средно новороденото?",["Около 3,3 кг","Около 1,5 кг","Около 5 кг","Около 6,5 кг"]],
+  ["Колко е средната дължина на новороденото?",["Около 50 см","Около 30 см","Около 70 см","Около 40 см"]],
+  ["Докога СЗО препоръчва изключително кърмене?",["До шестия месец","До първия месец","До втората година","До третия месец"]],
+  ["Кога обикновено започва захранването?",["Около шестия месец","Първата седмица","На една година","Вторият месец"]],
+  ["В каква поза се препоръчва да спи бебето?",["По гръб","По корем","Седнало","Все едно"]],
+  ["Каква трябва да е водата за къпане на бебе?",["Около 37 градуса","Около 25 градуса","Около 45 градуса","Около 50 градуса"]],
+  ["Какво не се дава на бебета под една година?",["Мед","Майчино мляко","Вода","Пюре от тиква"]],
+  ["Как се казва празникът за новородено с обреден хляб?",["Погача","Прощъпулник","Кръщене","Сватба"]],
+  ["Какво е прощъпулник?",["Празник за първите стъпки","Първото подстригване","Първият зъб","Първият рожден ден"]],
+  ["Какво прави детето на прощъпулника?",["Избира предмет, по който гадаят професията","Духа свещ","Реже лента","Сади дръвче"]],
+  ["Колко дни е отпускът за бременност и раждане в България?",["410","135","365","730"]],
+  ["Кога бебетата обикновено започват да седят сами?",["Между шестия и осмия месец","Втория месец","На година и половина","Първата седмица"]],
+  ["Кога бебетата обикновено пълзят?",["Около осмия до десетия месец","Третия месец","На две години","Втория месец"]],
+  ["Какво са коликите?",["Пристъпи на плач и болки в коремчето","Обрив по кожата","Никнене на зъби","Хълцане"]],
+  ["Какъв цвят са очите на много новородени със светла кожа?",["Сиво-сини","Зелени","Черни","Кехлибарени"]],
+  ["Как се казва рефлексът, при който бебето стиска пръста ти?",["Хватателен","Сукателен","Крачещ","Плувен"]],
+  ["Какво е мекониум?",["Първите изпражнения на бебето","Първото мляко","Бебешка каша","Мехлем за пъпчето"]],
+  ["Кое сетиво е най-слабо развито при раждането?",["Зрението","Слухът","Обонянието","Допирът"]],
+  ["Колко пъти на денонощие се храни новороденото?",["8 до 12","2 до 3","4 до 5","20 до 25"]],
+  ["Какво е „кенгуру грижа“?",["Контакт кожа до кожа","Носене в раница","Люлеене в кош","Скачане с бебето"]],
+  ["Кога бебето обикновено удвоява теглото си от раждането?",["Около петия месец","Първия месец","На една година","На две години"]],
+  ["Кога бебето обикновено утроява теглото си?",["Около първата година","Третия месец","На три години","На шест месеца"]],
+  ["Как наричаме в България ултразвуковия преглед при бременност?",["Видеозон","Скенер","Рентген","Томограф"]],
+  ["Какво се препоръчва да се приема преди и в началото на бременността?",["Фолиева киселина","Витамин А във високи дози","Кофеин","Аспирин"]],
+  ["Какво е боди?",["Бебешка дреха с копчета между крачетата","Вид количка","Бебешки сапун","Одеяло за изписване"]],
+  ["Кога обикновено идват първите думи?",["Около първата година","Третия месец","На три години","Шестата седмица"]]
+],
+auto:[
+  ["Кое животно е на емблемата на Peugeot?",["Лъв","Тигър","Кон","Орел"]],
+  ["В кой град е централата на Porsche?",["Щутгарт","Мюнхен","Хамбург","Кьолн"]],
+  ["Какво означават трите лъча на звездата на Mercedes?",["Земя, вода и въздух","Скорост, сила и стил","Трима основатели","Три завода"]],
+  ["Как се казва фигурката върху капака на Rolls-Royce?",["Духът на екстаза","Летящата дама","Сребърният ангел","Нощната фея"]],
+  ["От коя държава е SEAT?",["Испания","Италия","Португалия","Франция"]],
+  ["От коя държава е Fiat?",["Италия","Испания","Франция","Германия"]],
+  ["От коя държава е Toyota?",["Япония","Южна Корея","Китай","САЩ"]],
+  ["От коя държава е Hyundai?",["Южна Корея","Япония","Китай","Индия"]],
+  ["От коя държава е Renault?",["Франция","Белгия","Италия","Германия"]],
+  ["От коя държава е Jaguar?",["Великобритания","САЩ","Германия","Швеция"]],
+  ["Какво означава Volkswagen?",["Народна кола","Бърза кола","Вълча кола","Нова кола"]],
+  ["В кой град е централата на Volkswagen?",["Волфсбург","Щутгарт","Мюнхен","Инголщат"]],
+  ["В кой град е заводът на Ferrari?",["Маранело","Милано","Торино","Рим"]],
+  ["Къде е централата на Lamborghini?",["Сант'Агата Болонезе","Маранело","Торино","Модена"]],
+  ["Кой основава Ford?",["Хенри Форд","Джон Форд","Харисън Форд","Едсел Форд"]],
+  ["Кой автомобил пръв се произвежда масово на поточна линия?",["Ford Model T","VW Beetle","Fiat 500","Mini"]],
+  ["Кой патентова първия автомобил с бензинов двигател през 1886 г.?",["Карл Бенц","Хенри Форд","Рудолф Дизел","Фердинанд Порше"]],
+  ["Какво означава 4x4?",["Задвижване на четирите колела","Четири врати и четири места","Четири цилиндъра","Четири скорости"]],
+  ["Как се казва системата за 4x4 на Audi?",["quattro","xDrive","4MATIC","4Motion"]],
+  ["Как се казва системата за 4x4 на BMW?",["xDrive","quattro","4MATIC","AllTrack"]],
+  ["Как се казва системата за 4x4 на Mercedes?",["4MATIC","xDrive","quattro","Syncro"]],
+  ["Какво прави системата ESP?",["Стабилизира колата при поднасяне","Пести гориво","Заключва вратите","Затопля двигателя"]],
+  ["Какво показва оборотомерът?",["Оборотите на двигателя","Скоростта","Разхода","Температурата"]],
+  ["Какво показва одометърът?",["Изминатото разстояние","Оборотите","Налягането в гумите","Нивото на маслото"]],
+  ["Как се възпламенява горивото в дизеловия двигател?",["От сгъстяване","От свещ","От акумулатора","От катализатора"]],
+  ["Какво задвижва турбото?",["Изгорелите газове","Акумулаторът","Скоростната кутия","Климатикът"]],
+  ["Колко е максималната скорост на магистрала в България?",["140 км/ч","120 км/ч","130 км/ч","150 км/ч"]],
+  ["Колко е ограничението в населено място в България?",["50 км/ч","40 км/ч","60 км/ч","70 км/ч"]],
+  ["Колко е ограничението извън населено място в България?",["90 км/ч","80 км/ч","100 км/ч","110 км/ч"]],
+  ["Над колко промила алкохол е нарушение за шофьор в България?",["0,5","0,2","0,8","1,2"]],
+  ["Каква форма има знакът „Стоп“?",["Осмоъгълник","Триъгълник","Кръг","Квадрат"]],
+  ["Кой отбор има най-много конструкторски титли във Формула 1?",["Ferrari","McLaren","Mercedes","Williams"]],
+  ["Кой пилот има седем титли във Формула 1 също като Люис Хамилтън?",["Михаел Шумахер","Айртон Сена","Себастиан Фетел","Ален Прост"]],
+  ["В кой град е прочутото 24-часово състезание?",["Льо Ман","Монако","Монца","Спа"]],
+  ["Коя марка произвежда Mustang?",["Ford","Chevrolet","Dodge","Jeep"]],
+  ["Коя марка произвежда Golf?",["Volkswagen","Opel","Audi","Škoda"]],
+  ["Коя марка произвежда Civic?",["Honda","Toyota","Mazda","Nissan"]],
+  ["Коя е луксозната марка на Toyota?",["Lexus","Infiniti","Acura","Genesis"]],
+  ["Към коя група принадлежат Škoda, SEAT и Audi?",["Volkswagen","Stellantis","Renault","BMW"]],
+  ["От кой град е българската марка Sin Cars?",["Русе","Ловеч","Пловдив","Варна"]],
+  ["Какво означава „к.с.“?",["Конски сили","Километри в секунда","Кубически сантиметри","Клас на сигурност"]]
+],
+bg:[
+  ["Кой е вторият по големина град в България?",["Пловдив","Варна","Бургас","Русе"]],
+  ["Коя река е северната граница на България?",["Дунав","Искър","Марица","Тимок"]],
+  ["Кой е най-високият връх на Стара планина?",["Ботев","Мусала","Вихрен","Шипка"]],
+  ["Кой е най-високият връх на Пирин?",["Вихрен","Мусала","Ботев","Тодорка"]],
+  ["Кой е най-високият връх на Витоша?",["Черни връх","Камен дел","Мусала","Мальовица"]],
+  ["На колко области е разделена България?",["28","9","20","32"]],
+  ["Кое море мие бреговете на България?",["Черно","Егейско","Мраморно","Адриатическо"]],
+  ["С колко държави граничи България по суша?",["5","4","6","7"]],
+  ["Кой е най-големият манастир в България?",["Рилският","Бачковският","Троянският","Роженският"]],
+  ["Кой е основателят на Рилския манастир?",["Свети Иван Рилски","Свети Климент Охридски","Паисий Хилендарски","Патриарх Евтимий"]],
+  ["Кой хан основава българската държава на Дунав?",["Аспарух","Крум","Кубрат","Тервел"]],
+  ["Кой владетел покръства българите?",["Борис I","Симеон I","Крум","Петър I"]],
+  ["При кой владетел е Златният век на българската книжнина?",["Симеон Велики","Иван Асен II","Самуил","Калоян"]],
+  ["Кои създават първата славянска азбука?",["Кирил и Методий","Климент и Наум","Асен и Петър","Борис и Симеон"]],
+  ["Кога е Денят на славянската писменост и култура?",["24 май","1 ноември","3 март","11 май"]],
+  ["Кога е Денят на Съединението?",["6 септември","22 септември","3 март","6 май"]],
+  ["Кога е Денят на Независимостта?",["22 септември","6 септември","3 март","1 ноември"]],
+  ["Коя година е Освобождението?",["1878","1876","1885","1908"]],
+  ["Коя година е Съединението?",["1885","1878","1908","1912"]],
+  ["Коя година е обявена Независимостта?",["1908","1885","1878","1918"]],
+  ["Кого наричаме Апостола на свободата?",["Васил Левски","Христо Ботев","Георги Раковски","Любен Каравелов"]],
+  ["В кой град е роден Васил Левски?",["Карлово","Калофер","Сопот","Копривщица"]],
+  ["Кой е написал „История славянобългарска“?",["Паисий Хилендарски","Софроний Врачански","Неофит Рилски","Иван Вазов"]],
+  ["Как се казва химнът на България?",["„Мила Родино“","„Шуми Марица“","„Върви, народе възродени“","„Тих бял Дунав“"]],
+  ["Кой е създал Бай Ганьо?",["Алеко Константинов","Иван Вазов","Елин Пелин","Чудомир"]],
+  ["Кой е написал „Хаджи Димитър“?",["Христо Ботев","Иван Вазов","Пейо Яворов","Пенчо Славейков"]],
+  ["Какви са цветовете на знамето отгоре надолу?",["Бяло, зелено, червено","Бяло, червено, зелено","Зелено, бяло, червено","Червено, бяло, зелено"]],
+  ["Кое животно е на герба на България?",["Лъв","Орел","Мечка","Кон"]],
+  ["Какъв е девизът на герба?",["„Съединението прави силата“","„Свобода или смърт“","„Бог с нас“","„Напред, науката е слънце“"]],
+  ["Коя година България влиза в Европейския съюз?",["2007","2004","2010","2013"]],
+  ["Коя година България влиза в НАТО?",["2004","1999","2007","2009"]],
+  ["Коя песен на Валя Балканска лети в Космоса с „Вояджър“?",["„Излел е Дельо хайдутин“","„Притури се планината“","„Хубава си, моя горо“","„Лале ли си, зюмбюл ли си“"]],
+  ["На коя дата се връзват мартеници?",["1 март","3 март","22 март","1 май"]],
+  ["Кой е първият български космонавт?",["Георги Иванов","Александър Александров","Асен Йорданов","Юрий Гагарин"]],
+  ["В кой град е храм-паметникът „Свети Александър Невски“?",["София","Варна","Пловдив","Шипка"]],
+  ["Край кой град е открито най-старото обработено злато в света?",["Варна","Панагюрище","Казанлък","Враца"]],
+  ["В кой град е най-известният античен театър в България?",["Пловдив","София","Стара Загора","Сандански"]],
+  ["Коя е най-високата планина на Балканския полуостров?",["Рила","Пирин","Олимп","Стара планина"]],
+  ["Кой нос е най-източната точка на България?",["Шабла","Калиакра","Емине","Маслен нос"]],
+  ["Какво играят нестинарите?",["Танц върху жарава","Хоро във вода","Танц с мечове","Хоро на кокили"]]
+]
+};
+(function(){
+  for(const g of GAMES){
+    const e = EXTRA[g.id]; if(!e) continue;
+    if(g.id === "date"){
+      const b = g.cards;
+      g.cards = [...b.slice(0,6), ...e.l1, ...b.slice(6,12), ...e.l2, ...b.slice(12,17), ...e.l3, b[17]];
+    } else (g.cards || g.qs).push(...e);
+  }
+})();
+
+/* ---------- 7 категории по 7 игри ---------- */
+const ORDER = [0,7,1,2,3,4,5,6];
+const CATS = ["За двойки","Приятели","Семейство и деца","Поводи","Викторини","Празници през годината","Път, почивка и екип","18+"];
+const GRP = {spicy:7,couple:0,date:0,girls:1,family:2,hen:3,wedding:3,bday:3,baby:3,class:3,zodiac:4,auto:4,bg:4,xmas:5,road:6,team:6};
+const PLANNED = {
+  0:["Връзка от разстояние"],
+  1:["Никога не съм","Кой от нас","Истина или предизвикателство","Мъжка вечер","Две истини и една лъжа","Горещият стол"],
+  2:["Малки умници","Деца срещу родители","Познай без думи","Гатанки и скороговорки","Баба и дядо разказват","Кой познава мама и татко"],
+  3:["Ергенска вечер","Абитуриентски бал"],
+  4:["Футболна викторина","Българска музика","Кино и сериали","Обща култура"],
+  5:["Новогодишна нощ","Свети Валентин","Осми март","Великден","Осми декември","Имен ден"],
+  6:["На плажа","На хижа","Край огъня","На маса","Нови запознанства"]
+};
+const PARTY_URL = "https://claude.ai/artifact/RMgmF2f8FEMigiTzK3fdgj";
+const Qs = a => a.map(t => ["Q", t]);
+const Ds = a => a.map(t => ["D", t]);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+GAMES.push(
+{
+  id:"similar", cat:"За двойки", c:"mint", eng:"match", n:[2,2],
+  name:"Колко си приличаме",
+  desc:"Едно или друго? Двамата избирате поотделно и виждате колко често мислите еднакво.",
+  qs:[
+    ["Море","планина"],["Кафе","чай"],["Сладко","солено"],["Ранно ставане","късно лягане"],["Филм вкъщи","кино"],
+    ["Котка","куче"],["Лято","зима"],["Град","село"],["Готвене вкъщи","ресторант"],["Пица","дюнер"],
+    ["Вино","бира"],["Планирано пътуване","спонтанно тръгване"],["Хотел","къмпинг"],["Голяма сватба","малка сватба"],
+    ["Подарък изненада","подарък по желание"],["Обаждане","съобщение"],["Комедия","филм на ужасите"],
+    ["Дансинг","разговор на маса"],["Самолет","кола"],["Пестене","харчене"],["Душ","вана"],
+    ["Музика на глас","тишина в колата"],["Шоколад","чипс"],["Обилна закуска","само кафе"],["Уикенд навън","уикенд вкъщи"],
+    ["Плаж с шезлонг","див плаж"],["Много приятели","малък кръг"],["Сериал","книга"],["Апартамент","къща"],
+    ["Малко семейство","голямо семейство"],["Скъп подарък","мил жест"],["Спорт","диван"],["Подреденост","творчески хаос"],
+    ["Точно навреме","пет минути по-късно"],["Спор веднага","разговор на спокойна глава"],
+    ["Целувка за добро утро","целувка за лека нощ"],["Снимки на всичко","никакви снимки"],
+    ["Празник с компания","празник само двамата"],["Нова година вкъщи","Нова година на хижа"],
+    ["Пътуване в чужбина","обиколка на България"],["Баница","мекици"],["Шопска салата","снежанка"],["Фолк","рок"],
+    ["Караоке","настолни игри"],["Климатик","отворен прозорец"],["Думи","действия"],["Дълга разходка","дълъг сън"],
+    ["Изгрев","залез"],["Романтика","приключение"],["Домашен любимец","саксии с цветя"],["Мотор","колело"]
+  ].map(([a,b]) => [`${a} или ${b}?`, [a, cap(b)]])
+},
+{
+  id:"close", cat:"За двойки", c:"lilac", eng:"cards", n:[2,2], ordered:true,
+  name:"Въпроси за близост",
+  desc:"Петдесет въпроса за двойки, които вече се познават. Започват леко и стигат дълбоко.",
+  aw:["","По-откровен"],
+  cards:Qs([
+    "Кой наш спомен те кара да се усмихваш?","Какво си помисли, когато ме видя за първи път?","Кога разбра, че ме харесваш?",
+    "Коя наша среща ти е любима?","Кое мое малко нещо обичаш?","Коя песен ти напомня за нас?","Кое мое ястие ти е любимо?",
+    "Къде ти беше най-хубаво с мен?","Какво у мен те разсмива?","Кой мой навик ти е странно мил?",
+    "Какво обичаш да правим в неделя?","Кой наш смешен момент няма да забравиш?","Какво ти липсва, когато не сме заедно?",
+    "Кой подарък от мен помниш?","Какво искаш да правим по-често?","Как изглежда идеалният ни ден?","С какво те изненадах най-много?",
+    "Какво научи от мен?","В какво съм те променил/а?","Кога се почувства най-подкрепен/а от мен?","Какво ти е трудно да ми кажеш?",
+    "Кога за последно се гордя с мен?","Какво правя, без да знам, че те радва?","Какво правя, без да знам, че те наранява?",
+    "Как да те утешавам, когато ти е тежко?","Кое наше скарване ни научи на нещо?","Какво ти дава сигурност във връзката ни?",
+    "От какво имаш нужда повече от мен?","Какво можем да правим по-добре като двойка?","Кога се чувстваш най-близо до мен?",
+    "Какво мислиш, че не разбирам за теб?","Какво цениш в начина, по който те обичам?","Какво ти се иска да те бях попитал/а?",
+    "За какво си ми благодарен/благодарна, а не си го казвал/а?",
+    "От какво те е страх за нас?","Какво мечтаеш да постигнем заедно?","Как ни виждаш след десет години?",
+    "Какво искаш никога да не се променя между нас?","Кое е най-трудното, през което сме минали?",
+    "Какво ти трябва, за да се чувстваш обичан/а?","Какво не си ми простил/а докрай?","Какво искаш да ти простя?",
+    "Коя своя страна показваш само на мен?","Какво означава вярност за теб?",
+    "Какво би направил/а, ако знаеш, че ще те подкрепя за всичко?","Кога те е било страх да не ме загубиш?",
+    "Какво обещание искаш да си дадем?","Какво искаш да запомня завинаги?","Защо избра мен?",
+    "Кажи ми нещо, което никога не съм чувал/а от теб."
+  ])
+},
+{
+  id:"spicy", cat:"За двойки · 18+", c:"hot", eng:"cards", n:[2,2], adult:true,
+  name:"Пикантни предизвикателства",
+  desc:"Въпроси и задачи за двама зад затворена врата. Четете картата на глас на партньора си.",
+  aw:["","По-смел"],
+  cards:[
+    ...Qs([
+      "Какво те възбужда най-бързо?","Коя част от тялото ми харесваш най-много?","Коя наша нощ ти е любима?",
+      "Къде искаш да го направим, а още не сме?","Каква фантазия не си ми казвал/а?","Какво искаш да пробваме заедно?",
+      "Какво бельо ми отива най-много?","Сутрин или вечер?","Нежно или диво?","Кое мое докосване те побърква?",
+      "Кой наш момент още помниш с тръпка?","Каква дума искаш да ти шепна?","На светнато или на тъмно?",
+      "Какво си мислеше за мен преди първата ни нощ?","Къде обичаш да те целувам?","Каква роля би изиграл/а за мен?",
+      "Бърза страст или дълга вечер?","Какво у мен те възбужда, без да го знам?",
+      "Кое е най-смелото място, на което сме били близки?","Какво искаш да ти правя по-често?",
+      "Кой мой аромат те подлудява?","Какво съобщение искаш да получиш от мен посред работния ден?",
+      "Каква играчка би пробвал/а с мен?","С какво облекло съм най-секси?","Ако тази нощ изпълня едно твое желание, какво ще е то?"
+    ]),
+    ...Ds([
+      "Целуни ме както на първата ни среща.","Целувай ме по врата десет секунди.","Прошепни ми какво ще ми направиш довечера.",
+      "Свали една моя дреха само с една ръка.","Свали бавно една своя дреха.","Направи ми масаж на раменете за една минута.",
+      "Целуни три места по твой избор, но не устните.","Гледай ме в очите 30 секунди, без думи и без докосване.",
+      "Опиши с три думи последната ни нощ.","Покажи ми с пръст къде искаш да те целуна.","Изтанцувай ми нещо бавно за 20 секунди.",
+      "Седни в скута ми до следващата карта.","Целувай ме, докато преброя до двайсет.","Напиши ми пикантно съобщение и го изпрати сега.",
+      "Захапи леко ухото ми.","Прокарай пръсти по гърба ми със затворени очи.","Кажи ми три неща, които харесваш в тялото ми.",
+      "Избери какво да облека или съблека до края на играта.","Нахрани ме с нещо сладко, без да използваш ръце.",
+      "Целуни ме там, където посоча.","Затвори ми очите и ме целуни на неочаквано място.",
+      "Дай ми команда за следващите две минути. Изпълнявам.","Разкажи ми на ухо фантазия за нас двамата.",
+      "Сваляме по една дреха и двамата.","Избери къде да продължим тази вечер и ме заведи там."
+    ])
+  ]
+},
+{
+  id:"dreams", cat:"За двойки", c:"sky", eng:"cards", n:[2,2],
+  name:"Мечти и планове за двама",
+  desc:"Дом, пътувания, деца и пари. Въпроси за бъдещето, които рядко си задавате.",
+  aw:["","По-голям мечтател"],
+  cards:Qs([
+    "Къде искаш да живеем след десет години?","Коя държава да посетим първо?","Как изглежда мечтаният ни дом?",
+    "Какво искаш да имаме в двора или на терасата?","Искаш ли домашен любимец и какъв?","Как си представяш идеалната ни ваканция?",
+    "Какво ново да опитаме заедно тази година?","Какъв общ навик да си създадем?","За какво да спестяваме?",
+    "Какво би направил/а с неочаквани десет хиляди евро?","Как да празнуваме годишнините си?",
+    "Каква традиция да си измислим само за нас?","Какво искаш да научим заедно?","Какъв спорт или хоби да започнем двамата?",
+    "Как изглежда идеалната ни събота след пет години?","Колко деца си представяш и защо?","Какви родители искаш да бъдем?",
+    "На какво искаш да научим децата си?","Как да разпределяме домакинската работа?","Как да решаваме за големите покупки?",
+    "Къде да посрещнем следващата Нова година?","Кое пътуване отлагаме твърде дълго?",
+    "Какво искаш да постигнеш в работата и как да ти помогна?","Какъв собствен бизнес би започнал/а?",
+    "Кога би искал/а да спреш да работиш?","Как ни виждаш като пенсионери?",
+    "Какво да запазим от начина, по който са живели родителите ни?","Какво да правим различно от родителите си?",
+    "Каква да е следващата ни кола?","Град, село или море за постоянно?","Какво да запишем в общ списък с мечти?",
+    "На кой концерт или събитие да отидем заедно?","Какво приключение те плаши, но би го опитал/а с мен?",
+    "Как да пазим времето само за двама ни?","Колко често да излизаме на среща?","Какво искаш да правим, когато се скараме?",
+    "Какво да си обещаем за следващата година?","Какъв подарък мечтаеш да получиш някой ден?","Къде да е мечтаната ни вила?",
+    "Кое ястие да се научим да готвим заедно?","Какво да си подарим за десетата годишнина?",
+    "Какъв празник да организираме за приятелите си?","Какво искаш да разказваме на внуците?",
+    "Какво да снимаме всяка година на едно и също място?","Ако заминем за година в чужбина, къде да е?",
+    "Кое твое желание да изпълним до края на годината?","Какво да спрем да отлагаме?",
+    "Как изглежда щастието за теб след двайсет години?","Какво ще направим, ако спечелим от лотарията?",
+    "Кое малко нещо можем да направим още утре?"
+  ])
+},
+{
+  id:"anniv", cat:"За двойки", c:"gold", eng:"match", n:[2,2],
+  name:"Годишнина",
+  desc:"Кой пръв писа, кой пръв целуна, кой закъсня. Проверете дали помните историята си еднакво.",
+  qs:[
+    "пръв забеляза другия?","пръв писа?","направи първата крачка?","беше по-притеснен на първата среща?",
+    "закъсня за първата среща?","целуна пръв?","каза пръв „обичам те“?","запозна пръв другия с приятелите си?",
+    "запозна пръв другия с родителите си?","предложи да заживеете заедно?","плака пръв пред другия?",
+    "се извини пръв след първото скарване?","направи първия подарък?","помни датата на запознанството?",
+    "пази повече снимки от началото?","ревнуваше повече в началото?","пишеше по-дългите съобщения?",
+    "чакаше по-нетърпеливо следващата среща?","разказа пръв на приятелите си?","се влюби пръв?",
+    "избра мястото на първата среща?","плати първата сметка?","остана пръв да спи у другия?","сготви пръв за другия?",
+    "предложи първото общо пътуване?","се изгуби на първото ви пътуване?","нарече пръв другия на галено?",
+    "измисли първата ви обща шега?","се разболя пръв и беше гледан от другия?","подари първото цвете?",
+    "пусна първата обща снимка?","каза пръв „липсваш ми“?","заговори пръв за бъдещето?","се промени повече заради връзката?",
+    "направи най-голямата изненада досега?","е забравял важна дата?","организира най-хубавата ви ваканция?",
+    "заспа на първия ви общ филм?","избра първата ви обща песен?","е отстъпвал повече през годините?",
+    "помни с какво беше облечен другият на първата среща?","каза „извинявай“ последния път?",
+    "е правил повече компромиси за дома?","поиска пръв домашен любимец?","се сети пръв за тази годишнина?",
+    "пази най-много дреболии за спомен?","е по-романтичен днес, отколкото в началото?","разсмива другия от първия ден?",
+    "би повторил всичко отначало, без да се замисли?","ще каже пръв „обичам те“ след тази игра?"
+  ]
+}
+);
+GAMES.push({
+  id:"party", cat:"Парти · 18+", c:"hot", eng:"cards", n:[2,12], grp:7, adult:true, levels:true, modes:true, drinkOpt:true,
+  name:"Парти и компания 18+",
+  desc:"Никога не съм, Кой от нас, Истина и Предизвикателство в три нива на пикантност.",
+  lead:"Кой от нас най-вероятно би…", aw:["Грешник на вечерта","Най-смел","Светец на вечерта"],
+  tags:{A:"Никога не съм",V:"Кой от нас",Q:"Истина",D:"Предизвикателство"},
+  cards:[["A","Никога не съм писал/а на бивш/а след полунощ.",1],["A","Никога не съм се преструвал/а, че не съм видял/а съобщение.",1],["A","Никога не съм разглеждал/а профила на новата половинка на бивш/а.",1],["A","Никога не съм лъгал/а за възрастта си.",1],["A","Никога не съм целувал/а някого на първа среща.",1],["A","Никога не съм харесвал/а гаджето на свой приятел.",1],["A","Никога не съм изпращал/а пикантно съобщение на грешния човек.",1],["A","Никога не съм се прибирал/а по изгрев.",1],["A","Никога не съм имал/а фалшив профил за следене.",1],["A","Никога не съм си тръгвал/а от среща с измислено оправдание.",1],["A","Никога не съм целувал/а някого от тази стая.",2],["A","Никога не съм изпращал/а гола снимка.",2],["A","Никога не съм се къпал/а гол/а в морето.",2],["A","Никога не съм имал/а връзка за една нощ.",2],["A","Никога не съм целувал/а непознат в заведение.",2],["A","Никога не съм се събуждал/а, без да помня името на човека до мен.",2],["A","Никога не съм флиртувал/а, за да получа нещо безплатно.",2],["A","Никога не съм излизал/а с двама души едновременно.",2],["A","Никога не съм бил/а хванат/а в неудобен момент от родителите си.",2],["A","Никога не съм целувал/а човек от същия пол.",2],["A","Никога не съм правил/а секс на обществено място.",3],["A","Никога не съм правил/а секс в кола.",3],["A","Никога не съм имал/а приятел/ка с екстри.",3],["A","Никога не съм симулирал/а оргазъм.",3],["A","Никога не съм фантазирал/а за някого от тази стая.",3],["A","Никога не съм правил/а секс на плажа.",3],["A","Никога не съм използвал/а секс играчка.",3],["A","Никога не съм снимал/а интимно видео.",3],["A","Никога не съм спал/а с бивш/а „за последно“.",3],["A","Никога не съм спал/а с някого, чието име не знаех.",3],["A","Никога не съм правил/а секс, докато в съседната стая има хора.",3],["V","заспал пръв тази вечер?",1],["V","писал на бивш/а още тази нощ?",1],["V","се изгубил на път за вкъщи?",1],["V","станал известен в TikTok по случайност?",1],["V","се разплакал на сватба?",1],["V","се оженил следващ?",1],["V","похарчил цялата си заплата за една вечер?",1],["V","се качил на масата да танцува?",1],["V","се влюбил в сервитьора или сервитьорката?",1],["V","тръгнал за едно питие и се прибрал след два дни?",1],["V","целунал непознат тази вечер?",2],["V","имал таен профил в сайт за запознанства?",2],["V","се събудил на непознато място?",2],["V","флиртувал с бармана за безплатно питие?",2],["V","изпратил пикантна снимка на грешния човек?",2],["V","имал афера с колега?",2],["V","си тръгнал с някого от заведението?",2],["V","се съблякъл пръв на плажа?",2],["V","излязъл с бивш/а на свой приятел?",2],["V","целунал двама души в една вечер?",2],["V","правил секс на най-необичайното място?",3],["V","имал най-дългия списък с партньори?",3],["V","бил най-шумен в леглото?",3],["V","опитал тройка?",3],["V","имал цяло чекмедже с играчки?",3],["V","бил хванат насред действието?",3],["V","спал с някого от тази стая?",3],["V","снимал домашно видео?",3],["V","казал грешното име в леглото?",3],["V","е най-добър в леглото според самия себе си?",3],["Q","Кое е най-неловкото нещо, което ти се е случвало на среща?",1],["Q","Чий профил разглежда тайно последно?",1],["Q","Коя е най-голямата лъжа, която си казвал/а на родителите си?",1],["Q","Какво е последното, което търси в Google? Покажи.",1],["Q","Кой тук се облича най-добре и кой най-зле?",1],["Q","Коя знаменитост би поканил/а на среща?",1],["Q","Колко продължи най-кратката ти връзка и защо свърши?",1],["Q","Кое е най-глупавото нещо, което си правил/а от ревност?",1],["Q","Коя е най-лошата свалка, която са пробвали върху теб?",1],["Q","Кое твое съобщение те е срам да прочетеш днес?",1],["Q","Кого от присъстващите би целунал/а, ако трябва да избереш?",2],["Q","Коя е най-добрата целувка в живота ти и с кого беше?",2],["Q","Какво те възбужда най-бързо?",2],["Q","Кое е най-дръзкото съобщение, което си изпращал/а?",2],["Q","Имал/а ли си чувства към някого от тази стая?",2],["Q","Каква е най-голямата ти грешка след няколко питиета?",2],["Q","С кого от компанията би заминал/а на уикенд само двамата?",2],["Q","Кое е най-странното място, на което си се натискал/а?",2],["Q","Кое е първото, което гледаш в тялото на човек, когото харесваш?",2],["Q","Кого от бившите си би целунал/а още веднъж?",2],["Q","Коя е най-смелата ти фантазия?",3],["Q","Кое е най-необичайното място, на което си правил/а секс?",3],["Q","Какво е любимото ти нещо в леглото?",3],["Q","Какво искаш да пробваш в леглото, но още не си посмял/а?",3],["Q","Какъв беше най-лошият ти секс и защо?",3],["Q","С кого от тази стая би прекарал/а една нощ без последствия?",3],["Q","Колко бързо си стигал/а до леглото след запознанство?",3],["Q","На светнато или на тъмно? Обясни защо.",3],["Q","Каква роля би изиграл/а в ролева игра?",3],["Q","Кое е най-мръсното нещо, което си казвал/а на глас в леглото?",3],["Q","Коя част от тялото ти е най-чувствителна?",3],["D","Направи комплимент на всеки в стаята за 30 секунди.",1],["D","Изиграй най-добрата си свалка върху {o}.",1],["D","Прочети на глас последното съобщение, което си изпратил/а.",1],["D","Имитирай някого от компанията, докато останалите познаят кой е.",1],["D","Танцувай 20 секунди без музика.",1],["D","Говори с чужд акцент до следващия си ход.",1],["D","Покажи на {o} най-съблазнителния си поглед и го задръж 10 секунди.",1],["D","Изпей припева на последната песен, която си слушал/а.",1],["D","Разкажи виц. Ако никой не се засмее, броим го за пас.",1],["D","Покажи как флиртуваш, когато си пил/а повече.",1],["D","Прошепни нещо пикантно на ухото на {o}.",2],["D","Седни в скута на {o} до следващия си ход.",2],["D","Направи на {o} масаж на раменете за 20 секунди.",2],["D","Целуни {o} по бузата. Или там, където ти позволи.",2],["D","Свали една дреха или аксесоар по твой избор.",2],["D","Изиграй с {o} целувка от романтичен филм, без самата целувка.",2],["D","Изпрати на някого от контактите си „Мислех си за теб“ и покажи отговора.",2],["D","Танцувай блус с {o} за 30 секунди.",2],["D","Опиши {o} с три пикантни думи.",2],["D","Изяж нещо от ръката на {o}, без да използваш ръце.",2],["D","Целуни {o} по врата.",3],["D","Целуни {o} по устните за 5 секунди.",3],["D","Свали две дрехи и остани така до края на играта.",3],["D","Покажи пред всички как звучиш в леглото. 10 секунди.",3],["D","Изтанцувай еротичен танц за {o} за 20 секунди.",3],["D","Нека {o} ти прошепне какво би направил/а с теб. Кажи на всички дали приемаш.",3],["D","Оближи сол или лимон от врата на {o}.",3],["D","Покажи с {o} любимата си поза. С дрехи.",3],["D","Затвори очи. Някой от компанията те целува по бузата, а ти познай кой.",3],["D","Нека {o} ти напише една мръсна дума с пръст по гърба. Познай я.",3]]
+});
+const ICON = {couple:"💞",date:"🔥",similar:"👯",close:"💬",spicy:"🌶️",dreams:"✨",anniv:"🥂",girls:"💅",party:"🎉",family:"🏡",
+  never18:"🙈",who18:"😈",truth18:"🤫",drink:"🥃",sheets:"🛏️",hen:"👰",wedding:"💍",bday:"🎂",baby:"🍼",class:"🎓",zodiac:"🔮",auto:"🏎️",bg:"🇧🇬",xmas:"🎄",road:"🚗",team:"💼"};
+const TIME = {
+  cards:{15:"20–30 мин", 30:"около 45 мин", 50:"1–1,5 часа"},
+  match:{15:"10–15 мин", 30:"20–30 мин", 50:"35–50 мин"},
+  quiz:{15:"5–10 мин", 30:"около 15 мин", 50:"около 25 мин"}
+};
+/* ---------- Категория 18+ ---------- */
+GAMES.push(
+{
+  id:"never18", cat:"18+", c:"hot", eng:"cards", n:[3,12], grp:7, adult:true,
+  name:"Никога не съм: без цензура",
+  desc:"Петдесет признания само за възрастни. Който го е правил, си признава пред всички.",
+  aw:["Най-голям грешник","","Най-невинен"], tags:{A:"Никога не съм"},
+  cards:[
+    "правил/а секс на първа среща.","целувал/а повече от един човек за една вечер.","пращал/а пикантна снимка на грешния човек.",
+    "бил/а хващан/а в леглото от съквартирант.","правил/а секс, докато съм на гости у някого.","лъгал/а за броя на партньорите си.",
+    "имал/а секс на работното място.","гледал/а порно заедно с партньор.","правил/а секс под душа.",
+    "се събуждал/а до човек, за когото съжалявам.","имал/а секс с колега.","имал/а нещо с приятел на бивш/а.",
+    "флиртувал/а сериозно, докато съм във връзка.","правил/а стриптийз за някого.","купувал/а нещо от секс магазин.",
+    "правил/а секс на купон в съседната стая.","бил/а с човек, по-голям от мен с десет години.","бил/а с човек, по-малък от мен с десет години.",
+    "казвал/а грешно име в леглото.","заспивал/а по време на секс.","прекъсвал/а секс, за да вдигна телефона.",
+    "правил/а секс в палатка.","правил/а секс във влак, автобус или самолет.","се целувал/а с човек, чието име така и не научих.",
+    "пращал/а гласово съобщение, от което ме е срам.","сънувал/а пикантен сън с човек от тази стая.",
+    "ползвал/а приложение за запознанства само за една нощ.","бил/а с двама различни души в една седмица.",
+    "правил/а секс в леглото на родителите си.","връзвал/а някого или бил/а връзван/а.","играл/а ролева игра в леглото.",
+    "използвал/а храна в леглото.","правил/а секс пред огледало.","правил/а секс на покрив или тераса.","се събличал/а на бас.",
+    "се къпал/а гол/а с компания.","правил/а секс в басейн или в морето.","пращал/а пикантно съобщение от работа.",
+    "целувал/а някого заради облог.","си тръгвал/а тайно на сутринта.","се преструвал/а, че ми харесва, за да свърши по-бързо.",
+    "правил/а секс повече от три пъти за една нощ.","го правил/а в пробна на магазин.","ходил/а на стриптийз бар.","опитвал/а тройка.",
+    "имал/а тайна връзка, за която никой не знае.","правил/а секс в кино.","писал/а на бивш/а „ела“ посред нощ.",
+    "гледал/а телефона на партньора си за пикантни чатове.","имал/а приятел или приятелка с екстри."
+  ].map(t => ["A", "Никога не съм " + t])
+},
+{
+  id:"who18", cat:"18+", c:"lilac", eng:"cards", n:[3,12], grp:7, adult:true,
+  name:"Грешници и светци",
+  desc:"Кой от нас най-вероятно би… Петдесет неудобни въпроса, на които компанията отговаря с пръст.",
+  lead:"Кой от нас най-вероятно…", aw:["Грешник на компанията","","Светец на компанията"],
+  cards:[
+    "има най-мръсното въображение?","пази пикантни снимки в телефона си?","би отишъл на нудистки плаж още утре?",
+    "е правил секс на най-много различни места?","би пробвал тройка?","флиртува, без дори да го усеща?",
+    "би спал с бивш/а още тази вечер?","пази тайна, която би шокирала всички тук?","е най-шумен в леглото?",
+    "е пращал най-много голи снимки?","би направил стриптийз за пари?","е бил хващан в крачка най-много пъти?",
+    "се влюбва след една нощ?","би имал връзка с двойно по-възрастен човек?","е правил секс на работа?",
+    "пръв би си тръгнал с непознат тази вечер?","има цяла колекция играчки?","би снимал домашно видео?",
+    "става най-ревнив, след като пийне?","целува най-добре според слуховете?","е разбил най-много сърца?",
+    "би имал отворена връзка?","е лъгал най-много за броя на партньорите си?","има най-странния фетиш?",
+    "би излязъл с двама души в един ден?","пише на бивши, щом пийне?","е правил секс в кола тази година?",
+    "би целунал някого от тази стая още сега?","гледа най-много порно?","би отишъл на среща на сляпо само заради секса?",
+    "има профил в приложение за запознанства, за който мълчи?","е спал с човек, чието име не помни?",
+    "би се съблякъл пръв на покер със сваляне?","е най-добър в мръсните приказки?","би имал афера с шефа си?",
+    "е правил най-лудото нещо на почивка?","има най-много приятели с екстри?","е бил в чуждо легло тази седмица?",
+    "би пробвал всичко поне веднъж?","се изчервява пръв, щом стане дума за секс?","изглежда най-невинен, а е най-палав?",
+    "би платил, за да изтрие историята на браузъра си?","е правил секс в най-неудобната ситуация?",
+    "би приел неприлично предложение за един милион?","е правил секс в дома на родителите на гаджето си?",
+    "е получил най-много пикантни съобщения тази година?","би се целунал с човек от същия пол на бас?",
+    "ще се прибере с някого тази вечер?","е имал най-кратката връзка в историята?","е най-големият грешник в тази стая?"
+  ].map(t => ["V", t])
+},
+{
+  id:"truth18", cat:"18+", c:"gold", eng:"cards", n:[2,12], grp:7, adult:true,
+  name:"Истина без цензура",
+  desc:"Само въпроси, без задачи. Отговаряш честно пред всички или казваш пас.",
+  aw:["","Най-откровен"], tags:{Q:"Истина"},
+  cards:Qs([
+    "Кое е най-неудобното нещо, което ти се е случвало в леглото?","Кое е най-необичайното място, на което си го правил/а?",
+    "Каква е най-голямата ти тайна фантазия?","Кой беше най-лошият ти партньор и защо?","Какво никога не би направил/а в леглото?",
+    "Какво те възбужда, а те е срам да си признаеш?","С кого от тази стая би спал/а, ако няма последствия?",
+    "Кое е най-дръзкото съобщение, което си пращал/а?","Изневерявал/а ли си някога?","Колко души най-много си целувал/а за една вечер?",
+    "Какъв е рекордът ти за една нощ?","Кое е най-лудото нещо, което си правил/а пиян/а?",
+    "Какво си лъгал/а, за да вкараш някого в леглото?","Коя твоя снимка не бива никога да излиза наяве?",
+    "Кой известен човек е в списъка ти „с разрешение“?","Кое е най-странното, което са ти предлагали в леглото?",
+    "Правил/а ли си го на място, където можеха да ви видят?","Колко най-много си давал/а за бельо или играчка?",
+    "Кой от бившите ти беше най-добър в леглото?","За кого от познатите си си фантазирал/а?",
+    "Какво търсиш най-често в сайтовете за възрастни?","Кое е най-бързото ти „запознахме се и стана“?",
+    "Какво не знае за теб настоящият или последният ти партньор?","За кого съжаляваш?",
+    "Какво би пробвал/а, ако никой никога няма да разбере?","Коя част от тялото си харесваш най-много?",
+    "Какво гледаш първо в тялото на другите?","Къде си се натискал/а на публично място?","Какво те отказва моментално?",
+    "Какво те печели моментално?","Как обичаш да започва една нощ?","Пазиш ли пикантни снимки на бивши?",
+    "Пращал/а ли си пикантна снимка, за която съжаляваш?","Кое е най-голямото ти „никога повече“?",
+    "Би ли отишъл/отишла на свингър парти от любопитство?","Имал/а ли си приятел или приятелка с екстри и как свърши?",
+    "С каква най-голяма разлика във възрастта си бил/а?","Кое е най-неочакваното място, на което са те сваляли?",
+    "Симулирал/а ли си и колко често?","С кое свое умение в леглото се гордееш?","Какво искаш, а не смееш да поискаш от партньор?",
+    "Каква музика пускаш за настроение?","Говориш ли мръсно и какво казваш?","Кое е последното пикантно нещо, което търси в интернет?",
+    "Имал/а ли си нещо с човек от тази компания?","Какво си правил/а, за да накараш някого да ревнува?",
+    "Коя е най-голямата лъжа, която си казвал/а на сутринта?","Кое е най-смелото нещо, което си обличал/а за някого?",
+    "Кога беше най-близо до това да те хванат?","Кого тук би целунал/а пръв/първа?",
+    "Кажи нещо за секса, което всички мислят, а никой не казва на глас."
+  ])
+},
+{
+  id:"drink", cat:"18+", c:"sky", eng:"cards", n:[3,12], grp:7, adult:true,
+  name:"Наздраве!",
+  desc:"Игра с чаша в ръка: кой пие, кой раздава глътки и кой измисля правилата.",
+  note:"Става и с безалкохолно. Никой не е длъжен да пие.",
+  lead:"Кой от нас най-вероятно…", aw:["Най-често вдига чаша","Душата на масата"],
+  tags:{A:"Пие, който",V:"Посочете кой пие",D:"Правило"},
+  ruleA:"Който се разпознае, отпива. Маркирайте всички, които пият.", askA:"Кой пи?",
+  ruleV:"Бройте до три и посочете едновременно. Избраният отпива.",
+  cards:[
+    ...["е писал/а на бивш/а този месец.","е закъснявал/а за работа заради махмурлук.","е целувал/а някого от тази стая.",
+      "е с черно бельо в момента.","е заспивал/а на купон.","е лъгал/а, че е болен/болна, за да не излезе.",
+      "има снимка, която крие от всички.","е плакал/а от алкохол.","е танцувал/а на маса или бар.","е губил/а телефона си на купон.",
+      "е бил/а изгонен/а от заведение.","е пращал/а съобщение, за което съжалява на сутринта.","е свалял/а някого с ужасна реплика.",
+      "е необвързан/а.","е обвързан/а.","е правил/а секс тази седмица.","е гледал/а телефона на гаджето си.",
+      "е имал/а връзка за една нощ.","е повръщал/а на публично място.","е казвал/а „тази вечер няма да пия“."
+     ].map(t => ["A", "Пие всеки, който " + t]),
+    ...Ds([
+      "Раздай три глътки на когото поискаш.","Избери си партньор по чаша. До края на играта пиете заедно.",
+      "Измисли правило. Който го наруши, пие.","Всички пият. Наздраве!","Пий толкова глътки, колкото гласни има в името ти.",
+      "Играчът отляво ти задава въпрос. Отговаряш честно или пиеш двойно.","Кажи тост. Ако не е добър, пиеш ти.",
+      "Момичетата пият.","Момчетата пият.","Всички вдигат ръка. Последният пие.",
+      "Гледай {o} в очите. Който се засмее пръв, пие.","Категория: марки алкохол. Редувате се, който се запъне, пие.",
+      "Кажи дума, следващият я римува. Който сбърка, пие.","До следващия ти ход никой не казва „да“ и „не“. Който сбърка, пие.",
+      "Смени си мястото с {o}. И двамата пиете.","Покажи последната снимка в телефона си или пий три глътки.",
+      "Отпий глътка, без да използваш ръце.","Ти си барман: смеси питие за {o} от каквото има на масата.",
+      "Сложи палец на масата, когато решиш. Последният, който те последва, пие."
+    ]),
+    ...["ще заспи пръв тази вечер?","ще поръча още едно, когато всички си тръгват?","ще започне да звъни на бивши?",
+      "ще загуби нещо до сутринта?","ще се прибере последен?","ще танцува сам?","ще се разплаче до края на вечерта?",
+      "ще има най-тежък махмурлук?","ще каже „обичам ви“ на всички?","ще поръча дюнер в четири сутринта?",
+      "носи най-много на пиене?","се напива от две бири?"].map(t => ["V", t])
+  ]
+},
+{
+  id:"sheets", cat:"18+ · за двойки", c:"mint", eng:"match", n:[2,2], grp:7, adult:true,
+  name:"Между чаршафите",
+  desc:"Едно или друго? Двамата избирате тайно и виждате колко съвпадат желанията ви.",
+  qs:[
+    ["Сутрин","вечер"],["Нежно","диво"],["На светло","на тъмно"],["Бавно","бързо"],["Спалнята","всяка друга стая"],
+    ["Планирано","спонтанно"],["Музика","тишина"],["Да водя","да ме водят"],["Душ заедно","вана заедно"],["Думи","само звуци"],
+    ["Бельо","нищо"],["Масаж преди","прегръдка след"],["Целувки по врата","целувки по гърба"],["Вкъщи","в хотел"],
+    ["Дълга игра","право на въпроса"],["Свещи","приглушена лампа"],["Играчки","само ние двамата"],["Огледало","спуснати завеси"],
+    ["Ролева игра","без сценарий"],["Пикантни съобщения през деня","изненада вечерта"],["Отгоре","отдолу"],["Гъдел","захапване"],
+    ["Очи в очи","със затворени очи"],["Често и кратко","рядко и дълго"],["Нова поза","любимата поза"],["Шепот","мръсни думи"],
+    ["Кола","плаж"],["Делник","уикенд"],["След скарване","след романтична вечеря"],["С чаша вино","напълно трезви"],
+    ["Копринени чаршафи","килимът пред камината"],["Да събличам","да ме събличат"],["Снимка за спомен","никакви снимки"],
+    ["Завързани очи","завързани ръце"],["Лед","топло масло"],["Под душа","на кухненския плот"],["По обяд без бързане","късно през нощта"],
+    ["Комплименти","команди"],["Да гледам","да ме гледат"],["Нещо сладко след това","сън след това"],
+    ["Една дълга нощ","цял мързелив ден в леглото"],["Парфюм","чиста кожа"],["Дантела","кожа"],["Тайно на купон","спокойно вкъщи"],
+    ["Да направя първата крачка","да чакам знак"],["Нещо ново всеки месец","каквото знаем, че работи"],
+    ["Хотел в града за една нощ","хижа за уикенд"],["Закуска в леглото","още един рунд"],["Да питам какво искаш","да позная без думи"],
+    ["Целувка за начало","целувка за край"]
+  ].map(([a,b]) => [`${a} или ${b}?`, [a, cap(b)]])
+}
+);
+const LEVELS = ["Загрявка","Пикантно","Без задръжки"];
+const KIND_HINT = {A:"Който го е правил, си признава",V:"Всички сочат един човек",Q:"Въпрос към един играч",D:"Задача към един играч"};
+const KIND_CLASS = {A:"c-gold",V:"c-mint",Q:"c-hot",D:"c-lilac"};
+function poolOf(g){
+  return g.cards.filter(([k,t,l]) => (!g.levels || (l >= Math.max(1,S.level-1) && l <= S.level)) && (!g.modes || S.kinds[k]));
+}
+GAMES.forEach(g => { g.grp = g.grp ?? GRP[g.id] ?? 0; });
+
+const KIND = {
+  A:{tag:"Признание", c:"gold"}, V:{tag:"Кой от нас", c:"mint"}, Q:{tag:"Въпрос", c:"hot"},
+  D:{tag:"Задача", c:"lilac"}, G:{tag:"Познай", c:"gold"}
+};
+const HOW = {
+  cards:"Един телефон се подава от ръка на ръка. Четете картата на глас и отбелязвайте кой какво е направил. Всеки може да каже пас.",
+  quiz:"Редувате се. Всеки вижда въпрос с четири отговора, а верният носи точка.",
+  match:"Отговаряте един по един, без да гледате екрана на другия. После виждате дали сте избрали едно и също."
+};
+const ENG = {cards:"Карти", quiz:"Викторина", match:"За двама"};
+
+/* ---------- Състояние ---------- */
+let S = {screen:"home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
+         sheet:false, copied:false, picked:null, m:null};
+
+const app = document.getElementById("app");
+const h = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rand = n => Math.floor(Math.random()*n);
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
+const game = () => GAMES.find(g => g.id === S.g);
+const count = g => (g.cards || g.qs).length;
+const plural = n => n === 1 ? "играч" : "играчи";
+const playersLabel = g => g.n[0]===g.n[1] ? `${g.n[0]} ${plural(g.n[0])}` : `${g.n[0]}–${g.n[1]} играчи`;
+
+function loadNames(){
+  try{
+    const v = JSON.parse(localStorage.getItem("meivi.games.players")||"null");
+    if(Array.isArray(v) && v.length) S.players = v.slice(0,12).map(String).filter(x => !/^Играч \d+$/.test(x));
+  }catch(e){}
+}
+function saveNames(){ try{ localStorage.setItem("meivi.games.players", JSON.stringify(S.players)); }catch(e){} }
+
+/* ---------- Подготовка на тесте ---------- */
+function begin(){
+  const g = game(), n = S.players.length;
+  S.i = 0; S.sel = []; S.flash = ""; S.sheet = false; S.copied = false; S.picked = null; S.answered = 0;
+  S.stats = S.players.map(() => ({a:0,b:0,pass:0}));
+  if(g.eng === "cards"){
+    let deck = poolOf(g).map(([k,t,l]) => ({k,t,l}));
+    const R = Math.min(S.rounds, deck.length);
+    if(g.ordered) deck = Array.from({length:R}, (_,i) => deck[R > 1 ? Math.round(i*(deck.length-1)/(R-1)) : 0]);
+    else deck = shuffle(deck).slice(0, R);
+    let turn = g.ordered ? 0 : rand(n);
+    deck.forEach(c => {
+      if(c.k==="Q" || c.k==="D"){
+        c.p = turn % n; turn++;
+        let o = rand(n-1); if(o >= c.p) o++;
+        c.o = o;
+      }
+    });
+    S.deck = deck;
+  }else if(g.eng === "quiz"){
+    S.deck = shuffle(g.qs.slice()).slice(0, S.rounds).map(([q,opts]) => ({q, opts: shuffle(opts.map((t,i) => ({t, ok:i===0})))}));
+  }else{
+    S.deck = shuffle(g.qs.slice()).slice(0, S.rounds);
+    S.m = {step:0, ans:[null,null], hits:0, guess:[0,0], asked:[0,0]};
+  }
+  S.screen = "play";
+}
+
+/* ---------- Начало ---------- */
+function viewHome(){
+  const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}" data-act="open" data-g="${g.id}">
+      <span class="ico" aria-hidden="true">${ICON[g.id] || "🎲"}</span>
+      <span class="tx"><b>${g.name}</b>${big ? `<span class="d">${g.desc}</span>` : ""}
+        <small>${playersLabel(g)} · ${ENG[g.eng]}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
+    </button>`;
+  return `
+  <header class="stack hero">
+    <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">Дигитални игри</span>
+    <h1>Избери игра за тази вечер</h1>
+    <p class="note">${GAMES.length} игри в 8 категории. Още ${56 - GAMES.length} идват скоро.</p>
+  </header>
+  <nav class="cats" aria-label="Категории">${ORDER.map(i => `<button data-act="cat" data-i="${i}">${CATS[i]}</button>`).join("")}</nav>
+  ${ORDER.map(ci => {
+    const c = CATS[ci], gs = GAMES.filter(g => g.grp===ci), soon = PLANNED[ci] || [];
+    return `<section class="shelf" id="cat-${ci}">
+      <div class="headrow"><h2>${c}</h2><span class="cnt">${gs.length} от 7</span></div>
+      <div class="grid">${gs.map((g,i) => tile(g, i===0)).join("")}</div>
+      ${soon.length ? `<p class="soon"><b>Скоро</b>${soon.map(n => `<span>${n}</span>`).join("")}</p>` : ""}
+    </section>`;
+  }).join("")}`;
+}
+
+/* ---------- Настройка ---------- */
+function viewSetup(){
+  const g = game(), n = S.players.length;
+  const anyKind = !g.modes || Object.values(S.kinds).some(Boolean);
+  const ok = n >= g.n[0] && n <= g.n[1] && anyKind;
+  const pool = g.eng==="cards" ? poolOf(g).length : 0;
+  const extra = `${g.modes ? `<section class="stack"><h2>Режими</h2>
+    <div class="modes">${["A","V","Q","D"].map(k => `<button class="mode ${KIND_CLASS[k]}" data-act="kind" data-k="${k}" aria-pressed="${S.kinds[k]}"><b>${g.tags[k]}</b><small>${KIND_HINT[k]}</small></button>`).join("")}</div>
+    ${anyKind ? "" : `<p class="flash" style="text-align:left">Избери поне един режим.</p>`}</section>` : ""}
+  ${g.levels ? `<section class="stack"><h2>Колко пикантно</h2>
+    <div class="seg">${LEVELS.map((t,i) => `<button data-act="level" data-v="${i+1}" aria-pressed="${S.level===i+1}">${t}</button>`).join("")}</div></section>` : ""}
+  ${g.drinkOpt ? `<section class="stack"><h2>Наказание при пас</h2>
+    <div class="seg"><button data-act="drink" data-v="1" aria-pressed="${S.drink}">Глътка</button><button data-act="drink" data-v="0" aria-pressed="${!S.drink}">Само точки</button></div></section>` : ""}`;
+  let need = "";
+  if(!ok) need = g.n[0]===g.n[1] ? `Тази игра е за точно ${g.n[0]} ${plural(g.n[0])}. Сега са ${n}.`
+    : n < g.n[0] ? `Трябват поне ${g.n[0]} ${plural(g.n[0])}.` : `Най-много ${g.n[1]} играчи.`;
+  return `
+  <div class="top"><button class="btn ghost small" data-act="home">Всички игри</button><img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
+  <header class="stack c-${g.c} ghead">
+    <span class="ico lg" aria-hidden="true">${ICON[g.id] || "🎲"}</span>
+    <span class="brand" style="color:var(--m)">${g.cat}</span>
+    <h1>${g.name}</h1>
+    <p>${g.desc}</p>
+  </header>
+  <p class="how">${HOW[g.eng]}${g.note ? " " + g.note : ""}${g.hero ? ` Първият в списъка е ${g.hero}. Докосни име, за да го преместиш най-отпред.` : ""}${g.adult ? " Играта е само за пълнолетни." : ""}</p>
+  <section class="stack">
+    <div class="headrow"><h2>Играчи: ${n}</h2><span class="req">${g.n[0]===g.n[1] ? `Точно ${g.n[0]}` : `От ${g.n[0]} до ${g.n[1]}`}</span></div>
+    <div class="chips">
+      ${S.players.map((p,i) => `<span class="chip ${g.hero && i===0 ? "first" : ""}">
+        <button class="nm" data-act="front" data-i="${i}" ${g.hero ? "" : "disabled"}>${h(p)}</button>
+        <button class="x" data-act="del" data-i="${i}" aria-label="Махни ${h(p)}">×</button></span>`).join("")}
+    </div>
+    ${n >= g.n[1] ? "" : `<form class="add" id="addForm">
+      <input id="newName" maxlength="18" placeholder="${g.hero && n===0 ? "Първо " + g.hero : "Име на играч"}" autocomplete="off" aria-label="Име на играч">
+      <button class="btn small" type="submit">Добави</button>
+    </form>`}
+    <p class="${ok ? "note" : "flash"}" style="text-align:left">${
+      n < g.n[0] ? (n === 0 ? `Напиши имената на играчите. ${g.n[0]===g.n[1] ? `Трябват точно ${g.n[0]}.` : `Трябват поне ${g.n[0]}.`}` : `Добави още ${g.n[0]-n}.`)
+      : n > g.n[1] ? `Тази игра е за ${g.n[0]===g.n[1] ? "точно" : "най-много"} ${g.n[1]}. Махни ${n-g.n[1]}.`
+      : n < g.n[1] ? `Може да започнете. Има място за още ${g.n[1]-n}.` : "Всички места са заети. Може да започнете."}</p>
+  </section>
+  ${extra}
+  <section class="stack">
+    <h2>${g.eng==="cards" ? "Брой карти" : "Брой въпроси"}</h2>
+    <div class="seg times">${[15,30,50].map(n => `<button data-act="rounds" data-v="${n}" aria-pressed="${S.rounds===n}"><b>${n}</b><small>${TIME[g.eng][n]}</small></button>`).join("")}</div>
+    ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">С този избор има ${pool} карти, толкова ще изиграете.</p>` : ""}
+  </section>
+  <button class="btn" data-act="start" ${ok ? "" : "disabled"}>${g.adult ? "На 18 или повече сме, започни" : "Започни играта"}</button>`;
+}
+
+/* ---------- Общи части ---------- */
+function topBar(total){
+  const g = game();
+  return `<div class="stack">
+    <div class="top">
+      <button class="btn ghost small" data-act="quit">Край</button>
+      <span class="count">${S.i+1} от ${total}</span>
+      ${g.eng==="match" ? `<span style="width:64px"></span>` : `<button class="btn ghost small" data-act="sheet">Точки</button>`}
+    </div>
+    <div class="bar"><i style="width:${Math.round(S.i/total*100)}%"></i></div>
+  </div>`;
+}
+function fill(t, c){
+  const g = game();
+  return h(t).replace(/\{o\}/g, `<u>${h(S.players[c.o] ?? "")}</u>`).replace(/\{h\}/g, `<u>${h(S.players[0])}</u>`);
+}
+
+/* ---------- Карти ---------- */
+function viewCards(){
+  const g = game(), c = S.deck[S.i], k = KIND[c.k];
+  const pen = g.drinkOpt && S.drink;
+  const group = c.k==="A" || c.k==="V" || c.k==="G";
+  const text = fill(c.t, c);
+  let body, rule, actions;
+  if(c.k==="A"){ body = `<p class="q">${text}</p>`; rule = g.ruleA || ("Който го е правил, си признава. Маркирайте всички признали." + (pen ? " Те отпиват по глътка." : "")); }
+  else if(c.k==="V"){ body = `<p class="lead">${h(g.lead)}</p><p class="q">…${text}</p>`; rule = g.ruleV || ("Бройте до три и посочете едновременно. Маркирайте избрания." + (pen ? " Той отпива глътка." : "")); }
+  else if(c.k==="G"){ body = `<p class="q">${text}</p>`; rule = `Всички казват предположенията си, после ${h(S.players[0])} разкрива истината. Маркирайте кой позна.`; }
+  else if(c.k==="Q"){ body = `<p class="who">Въпрос към <b>${h(S.players[c.p])}</b></p><p class="q">${text}</p>`; rule = pen ? "Отговорът носи 1 точка. Пас означава една глътка." : "Отговорът носи 1 точка. Пасът не носи нищо."; }
+  else { body = `<p class="who">Задача за <b>${h(S.players[c.p])}</b></p><p class="q">${text}</p>`; rule = "Изпълнената задача носи 2 точки. Ако включва друг човек, той може да откаже." + (pen ? " Пас означава една глътка." : ""); }
+  if(group){
+    const ask = c.k==="A" ? (g.askA || "Кой си призна?") : c.k==="V" ? "Кого посочихте?" : "Кой позна?";
+    actions = `<div class="stack"><h2>${ask}</h2>
+      <div class="pick">${S.players.map((p,i) => (c.k==="G" && g.hero && i===0) ? "" :
+        `<button data-act="pick" data-i="${i}" aria-pressed="${S.sel.includes(i)}">${h(p)}</button>`).join("")}</div></div>
+      <button class="btn" data-act="next">${S.sel.length ? "Запиши и напред" : "Никой, напред"}</button>`;
+  }else{
+    actions = `<div class="row"><button class="btn ghost" data-act="pass">Пас</button>
+      <button class="btn" data-act="done">${c.k==="Q" ? "Отговорих" : "Изпълнено"}</button></div>`;
+  }
+  return `${topBar(S.deck.length)}
+  <div class="deck"><article class="card c-${k.c}"><span class="tag">${g.tags?.[c.k] || k.tag}</span>${c.l ? `<span class="heat" role="img" aria-label="Ниво ${c.l} от 3">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
+  <p class="flash" aria-live="polite">${h(S.flash)}</p>
+  ${actions}${S.sheet ? viewSheet() : ""}`;
+}
+
+/* ---------- Викторина ---------- */
+function viewQuiz(){
+  const g = game(), c = S.deck[S.i], n = S.players.length, p = S.i % n;
+  const done = S.picked !== null;
+  const right = c.opts.find(o => o.ok).t;
+  return `${topBar(S.deck.length)}
+  <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+    ${n > 1 ? `<p class="who">На ход е <b>${h(S.players[p])}</b></p>` : ""}
+    <p class="q">${h(c.q)}</p>
+  </article></div>
+  <div class="opts">${c.opts.map((o,i) => `<button class="opt ${done ? (o.ok ? "ok" : i===S.picked ? "bad" : "") : ""}"
+      data-act="q-pick" data-i="${i}" ${done ? "disabled" : ""}>${h(o.t)}</button>`).join("")}</div>
+  <p class="flash" aria-live="polite">${done ? (c.opts[S.picked].ok ? "Вярно! +1 точка" : `Верният отговор е ${h(right)}`) : ""}</p>
+  ${done ? `<button class="btn" data-act="q-next">Напред</button>` : ""}
+  ${S.sheet ? viewSheet() : ""}`;
+}
+
+/* ---------- За двама ---------- */
+function matchInfo(){
+  const q = S.deck[S.i], about = Array.isArray(q) && q.length===3, same = Array.isArray(q) && q.length===2;
+  const subj = about ? S.i % 2 : 0;
+  const order = about ? [subj, 1-subj] : [0,1];
+  const opts = about ? q[2] : same ? q[1] : [S.players[0], S.players[1]];
+  const neutral = about ? q[1].replace("{n}", S.players[subj]) : same ? q[0] : "Кой от двамата " + q;
+  return {q, about, subj, order, opts, neutral};
+}
+function viewMatch(){
+  const g = game(), m = S.m, I = matchInfo();
+  const bar = topBar(S.deck.length);
+  if(m.step===0 || m.step===2){
+    const who = I.order[m.step/2];
+    return `${bar}<section class="cover">
+      <p class="note">Подайте телефона на</p><b>${h(S.players[who])}</b>
+      <p class="note">${m.step===2 ? "Другият не гледа екрана." : I.about ? (who===I.subj ? "Отговаряш за себе си." : "Познаваш отговора на другия.") : "Отговаряте един след друг."}</p>
+      <button class="btn" data-act="m-ready">Телефонът е у мен</button></section>`;
+  }
+  if(m.step===1 || m.step===3){
+    const who = I.order[(m.step-1)/2];
+    const prompt = I.about ? (who===I.subj ? I.q[0] : I.q[1].replace("{n}", S.players[I.subj])) : I.neutral;
+    return `${bar}
+    <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+      <p class="who">Отговаря <b>${h(S.players[who])}</b></p><p class="q">${h(prompt)}</p></article></div>
+    <div class="opts">${I.opts.map((o,i) => `<button class="opt" data-act="m-pick" data-i="${i}">${h(o)}</button>`).join("")}</div>`;
+  }
+  const same = m.ans[0] === m.ans[1];
+  return `${bar}
+  <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+    <p class="q">${h(I.neutral)}</p>
+    <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${h(I.opts[m.ans[0]])}</b></div>
+    <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${h(I.opts[m.ans[1]])}</b></div>
+    <p class="verdict" style="color:${same ? "#1E7F6B" : "#B12A29"}">${same ? "Съвпадение" : "Разминаване"}</p>
+  </article></div>
+  <button class="btn" data-act="m-next">Напред</button>`;
+}
+
+/* ---------- Точки и край ---------- */
+function scoreTable(){
+  const g = game();
+  const rows = S.players.map((p,i) => ({p, ...S.stats[i]})).sort((x,y) => (y.a+y.b)-(x.a+x.b));
+  if(g.eng==="quiz") return `<table><thead><tr><th>Играч</th><th>Верни</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${h(r.p)}</td><td>${r.b}</td></tr>`).join("")}</tbody></table>`;
+  return `<table><thead><tr><th>Играч</th><th>Посочван</th><th>Точки</th><th>Пас</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${h(r.p)}</td><td>${r.a}</td><td>${r.b}</td><td>${r.pass}</td></tr>`).join("")}</tbody></table>`;
+}
+function viewSheet(){
+  return `<div class="sheet" data-act="sheet-close"><div role="dialog" aria-label="Точки">
+    <h1 style="font-size:24px">Точки дотук</h1>${scoreTable()}
+    <button class="btn" data-act="sheet-close">Обратно към играта</button></div></div>`;
+}
+function topBy(key){
+  let best = 0, who = [];
+  S.stats.forEach((s,i) => { if(s[key] > best){ best = s[key]; who = [i]; } else if(s[key] === best && best > 0) who.push(i); });
+  return best > 0 ? {names: who.map(i => S.players[i]).join(" и "), n: best} : null;
+}
+function summary(){
+  const g = game();
+  if(g.eng==="match"){
+    const m = S.m, played = m.played || 0;
+    const pct = played ? Math.round(m.hits/played*100) : 0;
+    const tier = pct>=85 ? "Един ум в две тела" : pct>=65 ? "Силен отбор" : pct>=40 ? "Има за какво да си говорите" : "Противоположностите се привличат";
+    const rows = [];
+    if(S.deck.some(q => Array.isArray(q) && q.length===3)){
+      rows.push([`${S.players[0]} позна`, `${m.guess[0]} от ${m.asked[0]}`], [`${S.players[1]} позна`, `${m.guess[1]} от ${m.asked[1]}`]);
+      if(m.guess[0] !== m.guess[1]) rows.push(["По-добре познава другия", S.players[m.guess[0] > m.guess[1] ? 0 : 1]]);
+    }else rows.push(["Съвпадения", `${m.hits} от ${played}`]);
+    return {big:`${pct}%`, title:tier, rows};
+  }
+  if(g.eng==="quiz"){
+    const t = topBy("b"), n = S.players.length;
+    const rows = t ? [[n>1 ? "Победител" : "Резултат", n>1 ? `${t.names} (${t.n})` : `${t.n} от ${S.answered || S.deck.length} верни`]] : [];
+    return {title: t ? "Крайно класиране" : "Нито един верен отговор", rows};
+  }
+  const rows = [];
+  const a = topBy("a"), b = topBy("b"), p = topBy("pass");
+  if(a && g.aw[0]) rows.push([g.aw[0], a.names]);
+  if(b && g.aw[1]) rows.push([g.aw[1], b.names]);
+  if(g.aw[2]){
+    const least = Math.min(...S.stats.map(x => x.a));
+    const who = S.players.filter((_,i) => S.stats[i].a === least);
+    if(who.length < S.players.length) rows.push([g.aw[2], who.join(" и ")]);
+  }
+  if(p) rows.push(["Крал на паса", p.names]);
+  return {title:"Равносметката", rows};
+}
+function shareText(){
+  const g = game(), s = summary();
+  const lines = s.rows.map(([k,v]) => `${k}: ${v}`).join("\n");
+  return `${g.name} · игра от Meivi\n${s.big ? s.big + " съвпадение. " : ""}${s.title}\n${lines}\nИграй и ти: meivi.bg`;
+}
+function viewEnd(){
+  const g = game(), s = summary(), n = S.players.length;
+  let rows = s.rows.slice(), hero;
+  if(s.big){
+    hero = `<div class="ring" style="--p:${parseInt(s.big, 10)}"><b>${s.big}</b><span>съвпадение</span></div>
+      <p class="ptitle">${h(s.title)}</p>
+      <p class="pnames">${h(S.players[0])} <i>и</i> ${h(S.players[1])}</p>`;
+  }else if(g.eng==="quiz" && n > 1 && rows.length){
+    const top3 = S.players.map((p,i) => ({p, b:S.stats[i].b})).sort((x,y) => y.b - x.b).slice(0,3);
+    const slot = (r, cls) => r ? `<div class="p ${cls}">${cls==="p1" ? `<span class="cr" aria-hidden="true">👑</span>` : ""}<span class="pn">${h(r.p)}</span><i>${r.b}</i></div>` : "";
+    hero = `<p class="plabel">Крайно класиране</p><div class="podium">${slot(top3[1],"p2")}${slot(top3[0],"p1")}${slot(top3[2],"p3")}</div>`;
+    rows = [];
+  }else if(rows.length){
+    const [k,v] = rows.shift();
+    hero = `<p class="plabel">${h(k)}</p><p class="pname${String(v).length > 12 ? " long" : ""}">${h(v)}</p>`;
+  }else{
+    hero = `<p class="pname long">${h(s.title)}</p>`;
+  }
+  let rank = "";
+  if(g.eng !== "match" && (g.eng !== "quiz" || n > 3)){
+    const list = S.players.map((p,i) => ({p, ...S.stats[i]})).sort((x,y) => (y.a+y.b)-(x.a+x.b));
+    let cols = g.eng==="quiz" ? [["Верни","b"]] : [["Посочван","a"],["Точки","b"],["Пас","pass"]].filter(([,k]) => list.some(r => r[k] > 0));
+    if(!cols.length) cols = [["Точки","b"]];
+    rank = `<div class="prank" style="--c:${cols.length}">
+      <div class="pr ph"><span>Класиране</span>${cols.map(([t]) => `<span>${t}</span>`).join("")}</div>
+      ${list.map((r,i) => `<div class="pr"><span><i>${i+1}</i>${h(r.p)}</span>${cols.map(([,k]) => `<span>${r[k]}</span>`).join("")}</div>`).join("")}
+    </div>`;
+  }
+  return `
+  <section class="poster c-${g.c}">
+    <div class="phead"><span class="plogo"><img class="logo" src="logo-ink.png" alt="Meivi"></span><span>Дигитални игри</span></div>
+    <p class="pgame"><span aria-hidden="true">${ICON[g.id] || "🎲"}</span>${g.name}</p>
+    <div class="phero">${hero}</div>
+    ${rows.length ? `<div class="pchips">${rows.map(([k,v]) => `<div><span>${h(k)}</span><b>${h(v)}</b></div>`).join("")}</div>` : ""}
+    ${rank}
+    <p class="pfoot">Играй и ти на <b>meivi.bg</b></p>
+  </section>
+  <div class="stack">
+    <button class="btn" data-act="copy">${S.copied ? "Копирано" : "Копирай резултата за споделяне"}</button>
+    <div class="row"><button class="btn ghost" data-act="again">Играй пак</button><button class="btn ghost" data-act="home">Всички игри</button></div>
+    <p class="note" style="text-align:center">Направи снимка на картата и я пусни в стори.</p>
+  </div>`;
+}
+
+function render(){
+  let v;
+  if(S.screen==="home" || !game()) v = viewHome();
+  else if(S.screen==="setup") v = viewSetup();
+  else if(S.screen==="end") v = viewEnd();
+  else v = {cards:viewCards, quiz:viewQuiz, match:viewMatch}[game().eng]();
+  app.innerHTML = v;
+  app.querySelector?.(".card")?.style.setProperty("--tilt", (S.i % 2 ? 1.3 : -1.3) + "deg");
+  const key = S.screen + ":" + S.g + ":" + S.i + ":" + (S.m ? S.m.step : "");
+  if(key === lastKey) app.querySelector?.(".deck")?.classList.add("still");
+  lastKey = key;
+  if(fx){ fx = false; confetti(); }
+}
+
+/* ---------- Действия ---------- */
+let busy = false, fx = false, lastKey = "";
+const calm = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+function confetti(){
+  if(!document.body || calm()) return;
+  const box = document.createElement("div"); box.className = "fx";
+  const cols = ["#B12A29","#EF8F61","#1E7F6B","#6B4FB3","#1F6FB5","#F7C948"];
+  for(let n=0; n<26; n++){
+    const i = document.createElement("i");
+    i.style.cssText = `left:${38+Math.random()*24}%;background:${cols[n%cols.length]};--x:${(Math.random()*2-1)*44}vw;--y:${-(18+Math.random()*40)}vh;--r:${Math.random()*720-360}deg;animation-delay:${Math.random()*.12}s`;
+    box.append(i);
+  }
+  document.body.append(box);
+  setTimeout(() => box.remove(), 1400);
+}
+function advance(){
+  const go = () => {
+    busy = false;
+    S.sel = []; S.picked = null;
+    if(S.i + 1 >= S.deck.length){ S.screen = "end"; S.flash = ""; S.copied = false; fx = true; }
+    else S.i++;
+    render(); window.scrollTo(0,0);
+  };
+  const el = document.querySelector?.(".card");
+  if(el && !calm()){ busy = true; el.classList.add("out"); setTimeout(go, 190); }
+  else go();
+}
+app.addEventListener("submit", e => {
+  e.preventDefault();
+  const inp = document.getElementById("newName"), name = inp.value.trim();
+  if(name && S.players.length < (game() ? game().n[1] : 12)){ S.players.push(name); saveNames(); render(); document.getElementById("newName")?.focus(); }
+});
+app.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if(!b || busy) return;
+  const act = b.dataset.act;
+  if(act==="sheet-close" && b.classList.contains("sheet") && e.target !== b) return;
+  switch(act){
+    case "cat": document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
+    case "open": S.g = b.dataset.g; S.screen = "setup"; window.scrollTo(0,0); break;
+    case "home": S.screen = "home"; S.g = null; window.scrollTo(0,0); break;
+    case "rounds": S.rounds = +b.dataset.v; break;
+    case "level": S.level = +b.dataset.v; break;
+    case "kind": S.kinds[b.dataset.k] = !S.kinds[b.dataset.k]; break;
+    case "drink": S.drink = b.dataset.v==="1"; break;
+    case "del": S.players.splice(+b.dataset.i,1); saveNames(); break;
+    case "front": { const i = +b.dataset.i; S.players.unshift(S.players.splice(i,1)[0]); saveNames(); break; }
+    case "start": case "again": begin(); window.scrollTo(0,0); break;
+    case "pick": { const i = +b.dataset.i, k = S.sel.indexOf(i); if(k>=0) S.sel.splice(k,1); else S.sel.push(i); break; }
+    case "next": {
+      const c = S.deck[S.i], key = c.k==="G" ? "b" : "a";
+      S.sel.forEach(i => S.stats[i][key]++);
+      const names = S.sel.map(i => S.players[i]).join(", ");
+      S.flash = names ? (c.k==="G" ? `Познаха: ${names}` : `Отбелязани: ${names}`) : "";
+      return advance();
+    }
+    case "done": { const c = S.deck[S.i], pts = c.k==="D" ? 2 : 1; S.stats[c.p].b += pts; S.flash = `${S.players[c.p]}: +${pts}`; return advance(); }
+    case "pass": { const c = S.deck[S.i]; S.stats[c.p].pass++; S.flash = `${S.players[c.p]} каза пас`; return advance(); }
+    case "q-pick": {
+      if(S.picked !== null) return;
+      S.picked = +b.dataset.i;
+      S.answered = (S.answered||0) + 1;
+      if(S.deck[S.i].opts[S.picked].ok){ S.stats[S.i % S.players.length].b++; fx = true; }
+      break;
+    }
+    case "q-next": return advance();
+    case "m-ready": S.m.step++; break;
+    case "m-pick": {
+      const m = S.m, I = matchInfo();
+      m.ans[(m.step-1)/2] = +b.dataset.i; m.step++;
+      if(m.step === 4){
+        const same = m.ans[0] === m.ans[1];
+        m.played = (m.played||0) + 1;
+        if(same){ m.hits++; fx = true; }
+        if(I.about){ const guesser = 1 - I.subj; m.asked[guesser]++; if(same) m.guess[guesser]++; }
+      }
+      break;
+    }
+    case "m-next": S.m.step = 0; S.m.ans = [null,null]; return advance();
+    case "sheet": S.sheet = true; break;
+    case "sheet-close": S.sheet = false; break;
+    case "quit": S.screen = "end"; S.sheet = false; S.copied = false; fx = true; break;
+    case "copy":
+      navigator.clipboard.writeText(shareText()).then(() => { S.copied = true; render(); }).catch(() => {});
+      return;
+  }
+  render();
+});
+
+/* ---------- Старт ---------- */
+function start(saved){
+  if(saved && saved.screen) S = Object.assign(S, saved); else loadNames();
+  render();
+}
+window.addEventListener("error", e => { if(!app.innerHTML) app.textContent = "Грешка при зареждане: " + e.message; });
+loadNames();
+try{ render(); }catch(e){ app.textContent = "Грешка при зареждане: " + e.message; }
+try{
+  window.claude?.hot?.snapshot?.(() => S);
+  window.claude?.hot?.ready?.(d => { try{ if(d && d.screen && Array.isArray(d.players)){ S = Object.assign(S, d); render(); } }catch(e){} });
+}catch(e){}
+</script>
+</body>
+</html>
