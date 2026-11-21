@@ -52,6 +52,8 @@ const bold = s => `<b>${h(s)}</b>`;
 const rand = n => Math.floor(Math.random()*n);
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
 const game = () => GAMES.find(g => g.id === S.g);
+/* A tester's buttons on a card (account.js); empty for everyone else. */
+const rv = text => window.MACC ? MACC.reviewButtons("s:" + S.g, text) : "";
 const playersLabel = g => T.players(g.n[0], g.n[1]);
 
 function loadNames(){
@@ -88,6 +90,7 @@ function begin(){
     S.m = {step:0, ans:[null,null], hits:0, guess:[0,0], asked:[0,0]};
   }
   S.screen = "play";
+  if(window.MACC) MACC.loadReviews("s:" + g.id);
 }
 
 /* ---------- First screen: one phone or several ---------- */
@@ -272,7 +275,7 @@ function viewCards(){
       <button class="btn" data-act="done">${c.k==="Q" ? T.answered : T.done}</button></div>`;
   }
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}"><span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
+  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}">${rv(c.t)}<span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
   <p class="flash" aria-live="polite">${h(S.flash)}</p>
   ${actions}${S.sheet ? viewSheet() : ""}`;
 }
@@ -283,7 +286,7 @@ function viewQuiz(){
   const done = S.picked !== null;
   const right = c.opts.find(o => o.ok).t;
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="tag">${g.cat}</span>
     ${n > 1 ? `<p class="who">${T.turn(bold(S.players[p]))}</p>` : ""}
     <p class="q">${h(c.q)}</p>
   </article></div>
@@ -317,13 +320,13 @@ function viewMatch(){
     const who = I.order[(m.step-1)/2];
     const prompt = I.about ? (who===I.subj ? I.q[0] : I.q[1].replace("{n}", S.players[I.subj])) : I.neutral;
     return `${bar}
-    <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+    <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
       <p class="who">${T.answers(bold(S.players[who]))}</p><p class="q">${h(prompt)}</p></article></div>
     <div class="opts">${I.opts.map((o,i) => `<button class="opt" data-act="m-pick" data-i="${i}">${h(o)}</button>`).join("")}</div>`;
   }
   const same = m.ans[0] === m.ans[1];
   return `${bar}
-  <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+  <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
     <p class="q">${h(I.neutral)}</p>
     <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${h(I.opts[m.ans[0]])}</b></div>
     <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${h(I.opts[m.ans[1]])}</b></div>
@@ -566,6 +569,7 @@ MEIVI.app = {
   show(screen){ S.screen = screen; S.g = null; render(); window.scrollTo(0,0); },
   refresh(){ if(S.screen === "room" || S.screen === "multi") render(); },
   redraw(){ if(S.screen !== "play") render(); },
+  repaint(){ render(); },
   /* For the update check (index.html): is the player on a list of games, with nothing open and nothing going on? */
   idle(){ return ["start","home","multi"].includes(S.screen) && !S.sheet && !(window.MROOM && (MROOM.room.st.mode || MROOM.ui.sheet)) && !(window.MACC && (MACC.state.sheet || MACC.state.busy)); },
   /* ...and remember the screen, so that the new release opens on the same list. */

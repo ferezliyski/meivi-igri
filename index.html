@@ -358,6 +358,14 @@ button.mrow:active{transform:scale(.98)}
 .msoon{border:1px dashed #DDBFBE;border-radius:999px;background:rgba(255,255,255,.6);padding:12px 16px;min-height:46px;font-weight:700;font-size:14px;color:var(--muted)}
 .seg button[data-act="mn"]{font-weight:700;font-size:17px}
 
+/* Testers: three small buttons in the top corner of a card */
+.card .rv{position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:2}
+.card .rv ~ .heat{position:static;align-self:flex-start;margin-top:-4px}
+.rvb{width:36px;height:36px;border-radius:50%;border:2px solid;background:rgba(255,255,255,.9);font-size:17px;font-weight:700;line-height:1;display:grid;place-items:center;padding:0;opacity:.6}
+.rvb.rv-bad{color:#C8322F;border-color:#C8322F} .rvb.rv-good{color:#1E8A4C;border-color:#1E8A4C} .rvb.rv-fix{color:#1F6FB5;border-color:#1F6FB5}
+.rvb[aria-pressed="true"]{color:#fff;opacity:1;box-shadow:0 4px 10px -4px rgba(0,0,0,.5)}
+.rvb.rv-bad[aria-pressed="true"]{background:#C8322F} .rvb.rv-good[aria-pressed="true"]{background:#1E8A4C} .rvb.rv-fix[aria-pressed="true"]{background:#1F6FB5}
+
 /* The player's account */
 .acctop{justify-content:flex-end;margin-bottom:-14px;min-height:40px}
 .acc{font-weight:700}
@@ -435,7 +443,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21n";
+  var MEIVI_RELEASE = "2026-11-21o";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

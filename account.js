@@ -113,6 +113,7 @@
     if (act === "a-open") { st.sheet = true; refresh(); return true; }
     if (act === "a-close") { if (b.classList.contains("sheet") && target !== b) return false; st.sheet = false; return true; }
     if (act === "a-out") { signOut(); return true; }
+    if (act === "a-rv") { setReview(b.dataset.g, b.dataset.c, b.dataset.v); return true; }
     if (act === "a-unlock") { const key = b.dataset.g; if (st.sure !== key) { st.sure = key; return true; } unlock(key); return true; }
     return false;
   }
@@ -129,5 +130,41 @@
       refresh();
     }
   }
-  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st };
+  /* ---------- testers: marking cards while playing ----------
+     Only an account the server marks as "reviewer" sees three buttons on every card:
+     ✕ replace this card, ✓ keep it, ⇄ keep the idea but rework it. Tapping the chosen one again clears it.
+     A card is known by a short fingerprint of its text, so it is found again in any later game. */
+  const reviews = {}, texts = {}, touched = {};
+  try { Object.assign(reviews, JSON.parse(box(localStorage, "meivi.reviews") || "{}")); } catch (e) {}
+  const keepReviews = () => box(localStorage, "meivi.reviews", JSON.stringify(reviews));
+  const isReviewer = () => !!(st.account && st.account.reviewer);
+  const cardKey = text => { let x = 0x811c9dc5; for (let i = 0; i < text.length; i++) { x ^= text.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0; } return x.toString(36); };
+  async function loadReviews(game) {
+    if (!isReviewer()) return;
+    const asked = Date.now();
+    try {
+      const got = (await api("reviews?game=" + encodeURIComponent(game))).reviews || {};
+      /* A mark tapped after this question left is newer than what the server just said. */
+      Object.keys(touched).forEach(k => { const [g, c] = k.split("|"); if (g === game && touched[k].at >= asked) { if (touched[k].v) got[c] = touched[k].v; else delete got[c]; } });
+      reviews[game] = got; keepReviews(); if (MEIVI.app.repaint) MEIVI.app.repaint();
+    } catch (e) {}
+  }
+  function reviewButtons(game, text) {
+    if (!isReviewer() || !text) return "";
+    const key = cardKey(String(text)), now = (reviews[game] || {})[key] || "";
+    texts[game + "|" + key] = String(text);
+    const b = (v, mark, label) => `<button class="rvb rv-${v}" data-act="a-rv" data-g="${esc(game)}" data-c="${key}" data-v="${v}" aria-pressed="${now === v}" aria-label="${esc(label)}">${mark}</button>`;
+    return `<div class="rv" role="group" aria-label="${esc(X.review.title)}">${b("bad", "✕", X.review.bad)}${b("good", "✓", X.review.good)}${b("fix", "⇄", X.review.fix)}</div>`;
+  }
+  function setReview(game, key, v) {
+    const was = (reviews[game] || {})[key] || "", next = was === v ? null : v;
+    reviews[game] = reviews[game] || {};
+    if (next) reviews[game][key] = next; else delete reviews[game][key];
+    keepReviews();
+    const id = game + "|" + key; touched[id] = { v: next, at: Date.now() };
+    api("review", "POST", { game, card: key, text: texts[id] || "", verdict: next })
+      .catch(() => { delete touched[id]; if (was) reviews[game][key] = was; else delete reviews[game][key]; keepReviews(); if (MEIVI.app.repaint) MEIVI.app.repaint(); });
+  }
+
+  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, isReviewer, loadReviews, reviewButtons };
 })();

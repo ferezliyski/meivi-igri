@@ -235,7 +235,9 @@ MEIVI.ui = {
     youHave: n => n === 1 ? "Имаш 1 кредит." : `Имаш ${n} кредита.`,
     needMore: (cost, have) => `Трябват ${cost === 1 ? "1 кредит" : cost + " кредита"}, а имаш ${have}.`,
     noCredits: "Кредитите не стигат.",
-    failed: "Не се получи. Опитай пак."
+    failed: "Не се получи. Опитай пак.",
+    /* testers only: the three buttons on a card */
+    review: { title: "Оценка на картата", bad: "Смени картата", good: "Харесва ми, остава", fix: "Добра е, но трябва да се преправи" }
   },
 
   /* Names an early version filled in by itself ("Играч 1"); they are dropped when names are read back. */
