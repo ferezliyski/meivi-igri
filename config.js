@@ -15,8 +15,7 @@ MEIVI.config = {
      language. Or a list of ids, for example ["couple", "girls", "party"]. */
   games: null,
 
-  /* The server through which the phones of one room talk to each other (games for several phones).
-     Address and public key of this country's Supabase project. While they are empty, rooms cannot be opened.
-     For now this is the project of the photo books (meivi-knigi), until the games get a project of their own. */
-  rooms: { url: "https://imdtasxsmrxworlsujtr.supabase.co", key: "sb_publishable_KtfFOmZTCT7IU796dK-FCA_o4LA7Fx3" }
+  /* The server of this country's games (its own Supabase project, here "meivi-igri-bg"): address and public key.
+     The phones of one room talk to each other through it. While they are empty, rooms cannot be opened. */
+  rooms: { url: "https://gjmqkvzfoxgihsrliqrn.supabase.co", key: "sb_publishable_1uAy7cRA_0Gxb7HwUYwDIw_Ph0Juxh8" }
 };
