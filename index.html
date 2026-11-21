@@ -329,6 +329,61 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
   .btn,.tile{transition:none}
   .fx{display:none}
 }
+/* Rooms: games on several phones */
+textarea{font:inherit;color:inherit}
+.cats .join{background:var(--ink);color:#fff}
+.rtitle{display:flex;align-items:center;gap:10px;min-width:0}
+.rtitle .ico{flex:none;width:38px;height:38px;border-radius:13px;display:grid;place-items:center;font-size:21px;background:color-mix(in srgb, var(--m) 18%, #fff)}
+.rtitle b{font-family:var(--display);font-weight:600;font-size:14.5px;line-height:1.2;overflow-wrap:anywhere}
+.rsub{margin-top:-12px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rh{margin-bottom:-10px}
+.rp{font-size:15.5px;color:#4A3D3D}
+.rp.strong{font-weight:700;color:var(--ink);font-size:16.5px}
+.rcard{min-height:210px}
+.rcard .q{font-size:23px}
+.rcard.secret .tag::before{content:"🔒 "}
+.rbig{text-align:center;border-radius:30px;padding:28px 18px;color:#fff;display:flex;flex-direction:column;gap:8px;
+  background:radial-gradient(95% 90% at 100% 0%, color-mix(in srgb, var(--m) 50%, #FFC2A6) 0, transparent 62%),linear-gradient(160deg, var(--m), color-mix(in srgb, var(--m) 66%, #000));
+  box-shadow:0 26px 44px -26px color-mix(in srgb, var(--m) 80%, #000)}
+.rbig b{font-family:var(--display);font-weight:800;font-size:32px;line-height:1.1;overflow-wrap:anywhere;text-wrap:balance}
+.rbig span{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.rrows td:last-child{overflow-wrap:anywhere}
+.rrows tr.hot td{color:var(--hot)}
+.rrows tr.dim td{opacity:.5}
+.rchip{padding:8px 15px}
+.rchip small{font-weight:500;font-size:12px;color:var(--muted)}
+.rchip.on{background:var(--ink);color:#fff}
+.rchip.dim{opacity:.45;box-shadow:none;text-decoration:line-through}
+.rcode{background:var(--surface);border-radius:28px;box-shadow:var(--sh);padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.rcode > span{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rcode b{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;letter-spacing:.1em;color:var(--hot);margin-right:-.1em}
+.rcode .qr{width:176px;min-height:176px}
+.rcode .qr svg{display:block;width:100%;height:auto}
+.rcode small{font-size:13.5px;color:var(--muted);max-width:300px}
+.rform{display:flex;flex-direction:column;gap:12px}
+.rform textarea{width:100%;border-radius:22px;border:1.5px solid var(--line);background:var(--surface);padding:14px 16px;resize:none;font-size:16px;line-height:1.4}
+.rform textarea:focus{outline:none;border-color:var(--hot)}
+.letter{background:var(--surface);border-radius:22px;box-shadow:var(--sh);padding:14px 18px 16px;display:flex;flex-direction:column;gap:4px}
+.letter span{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.letter p{font-family:var(--hand);font-size:25px;line-height:1.15;white-space:pre-wrap;overflow-wrap:anywhere}
+.rnote{text-align:center}
+.rhost{margin-top:4px}
+.rgo{width:100%}
+.rsheet-h{font-size:21px}
+.rfoot{position:sticky;bottom:-26px;margin:0 -18px -26px;padding:14px 18px 26px;background:linear-gradient(180deg, transparent, var(--bg) 16px)}
+.rfoot .btn.ghost{padding-left:12px;padding-right:12px}
+.rlabel{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:14px}
+.rlabel input{border-radius:999px;border:1.5px solid var(--line);background:var(--surface);padding:12px 18px;min-height:50px;font-weight:500;font-size:17px}
+.rlabel input:focus{outline:none;border-color:var(--hot)}
+.rrules{margin:0;padding-left:22px;display:grid;gap:9px;font-size:15px;color:#3A3030}
+.rrules li::marker{font-weight:700;color:var(--hot)}
+.opts.two{display:grid;grid-template-columns:1fr 1fr}
+.opt[data-act="r-ans"]{display:flex;flex-direction:column;gap:2px}
+.opt small{font-weight:500;font-size:12.5px;color:var(--muted)}
+.opt i{font-style:normal;font-weight:700;font-size:12px;color:var(--hot);overflow-wrap:anywhere}
+.opt[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff;animation:pop .22s ease-out}
+.opt[aria-pressed="true"] small{color:rgba(255,255,255,.75)}
+.opt[data-act="r-ans"][disabled]{opacity:.5;box-shadow:none}
 .ans{margin-top:12px;font-size:16px}
 .ans summary{cursor:pointer;font-weight:700;color:var(--m,#B12A29)}
 .ans b{display:block;margin-top:8px;font-size:20px}
@@ -340,7 +395,7 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21b";
+  var MEIVI_RELEASE = "2026-11-21c";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
@@ -353,7 +408,10 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
     }
     var c = MEIVI.config, v = "?v=" + MEIVI_RELEASE, dir = "lang/" + c.lang + "/";
     var games = MEIVI.catalog.games.map(function (g) { return g.id; }).filter(function (id) { return !c.games || c.games.indexOf(id) >= 0; });
-    var files = [dir + "ui.js", dir + "multi.js"].concat(games.map(function (id) { return dir + "games/" + id + ".js"; }), ["app.js"]);
+    /* Games for several phones: the text of every game that is built, then the rooms and the rules. */
+    var ready = [];
+    (MEIVI.catalog.multi || []).forEach(function (grp) { grp.shelves.forEach(function (sh) { sh.games.forEach(function (g) { if (g.ready) ready.push(dir + "multi/" + g.id + ".js"); }); }); });
+    var files = [dir + "ui.js", dir + "multi.js"].concat(ready, games.map(function (id) { return dir + "games/" + id + ".js"; }), ready.length ? ["rooms.js", "rooms-games.js"] : [], ["app.js"]);
     document.write(files.map(function (f) { return '<script src="' + f + v + '"><\/script>'; }).join(""));
   })();
 </script>

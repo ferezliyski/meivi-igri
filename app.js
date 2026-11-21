@@ -99,7 +99,7 @@ function viewStart(){
     </button>
     <button class="tile big c-lilac" data-act="multi">
       <span class="ico two" aria-hidden="true">📱📱</span>
-      <span class="tx"><b>${T.manyPhones}</b><span class="d">${T.manyPhonesText}</span><small>${T.gamesCount(multiCount())} · ${T.soon}</small></span>
+      <span class="tx"><b>${T.manyPhones}</b><span class="d">${T.manyPhonesText}</span><small>${T.multiCount(MULTI.reduce((n, grp) => n + grp.shelves.reduce((k, sh) => k + sh.games.filter(g => MEIVI.mready && MEIVI.mready(g.id)).length, 0), 0), multiCount())}</small></span>
     </button>
   </div>`;
 }
@@ -108,6 +108,11 @@ function viewStart(){
 function viewMulti(){
   const M = MEIVI.multi;
   const tile = (g, color) => { const t = M.games[g.id] || {name: g.id};
+    /* A game that is built opens its rules; the others are only announced. */
+    if(MEIVI.mready && MEIVI.mready(g.id)) return `<button class="tile c-${color}" data-act="r-open" data-g="${g.id}">
+      <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
+      <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small>${T.players(g.players[0], g.players[1])}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
+    </button>`;
     return `<div class="tile wait c-${color}">
       <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
       <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small><i class="pill">${T.soon}</i>${g.adult ? ` <i class="age">18+</i>` : ""}</small></span>
@@ -119,14 +124,14 @@ function viewMulti(){
     <h1>${T.multiTitle}</h1>
     <p class="note">${T.multiNote}</p>
   </header>
-  <nav class="cats" aria-label="${T.shelvesLabel}">${MULTI.map(grp => `<button data-act="cat" data-i="m-${grp.id}">${M.groups[grp.id]}</button>`).join("")}</nav>
+  <nav class="cats" aria-label="${T.shelvesLabel}">${MULTI.map(grp => `<button data-act="cat" data-i="m-${grp.id}">${M.groups[grp.id]}</button>`).join("")}${window.MROOM ? `<button class="join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</nav>
   ${MULTI.map(grp => `<section class="mgroup" id="cat-m-${grp.id}">
     <div class="headrow"><h1>${M.groups[grp.id]}</h1><span class="cnt">${T.gamesCount(grp.shelves.reduce((k, sh) => k + sh.games.length, 0))}</span></div>
     ${grp.shelves.map(sh => `<section class="shelf">
       <div class="headrow"><h2>${M.shelves[sh.id]}</h2><span class="cnt">${sh.games.length}</span></div>
       <div class="grid plain">${sh.games.map(g => tile(g, sh.color)).join("")}</div>
     </section>`).join("")}
-  </section>`).join("")}`;
+  </section>`).join("")}${window.MROOM ? MROOM.overlay() : ""}`;
 }
 
 /* ---------- Games for one phone ---------- */
@@ -427,6 +432,7 @@ function render(){
   let v;
   if(S.screen==="start" && MULTI) v = viewStart();
   else if(S.screen==="multi" && MULTI) v = viewMulti();
+  else if(S.screen==="room" && window.MROOM) v = MROOM.view();
   else if(S.screen==="home" || !game()) v = viewHome();
   else if(S.screen==="setup") v = viewSetup();
   else if(S.screen==="end") v = viewEnd();
@@ -437,6 +443,7 @@ function render(){
   if(key === lastKey) app.querySelector?.(".deck")?.classList.add("still");
   lastKey = key;
   if(fx){ fx = false; confetti(); }
+  if(window.MROOM && (S.screen==="room" || S.screen==="multi")) MROOM.after();
 }
 
 /* ---------- Actions ---------- */
@@ -468,6 +475,8 @@ function advance(){
 }
 app.addEventListener("submit", e => {
   e.preventDefault();
+  /* Forms of the rooms (name, code, a letter) are handled by rooms.js. */
+  if(e.target.id !== "addForm"){ if(window.MROOM){ MROOM.submit(e.target); render(); } return; }
   const inp = document.getElementById("newName"), name = inp.value.trim();
   if(name && S.players.length < (game() ? game().n[1] : 12)){ S.players.push(name); saveNames(); render(); document.getElementById("newName")?.focus(); }
 });
@@ -476,6 +485,8 @@ app.addEventListener("click", e => {
   if(!b || busy || b.disabled) return;
   const act = b.dataset.act;
   if(act==="sheet-close" && b.classList.contains("sheet") && e.target !== b) return;
+  /* Everything that starts with "r-" belongs to the rooms. */
+  if(act.startsWith("r-")){ if(window.MROOM && MROOM.click(act, b, e.target)) render(); return; }
   switch(act){
     case "cat": document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
     case "open": S.g = b.dataset.g; S.screen = "setup"; window.scrollTo(0,0); break;
@@ -534,11 +545,17 @@ app.addEventListener("click", e => {
 });
 
 /* ---------- Start ---------- */
+/* What rooms.js needs from the app: go to a screen, draw again. */
+MEIVI.app = {
+  show(screen){ S.screen = screen; S.g = null; render(); window.scrollTo(0,0); },
+  refresh(){ if(S.screen === "room" || S.screen === "multi") render(); }
+};
 document.documentElement.lang = CFG.lang;
 document.title = T.title;
 window.addEventListener("error", e => { if(!app.innerHTML) app.textContent = T.loadError(e.message); });
 loadNames();
 try{ render(); }catch(e){ app.textContent = T.loadError(e.message); }
+if(window.MROOM) MROOM.boot();
 try{
   window.claude?.hot?.snapshot?.(() => S);
   window.claude?.hot?.ready?.(d => { try{ if(d && d.screen && Array.isArray(d.players)){ S = Object.assign(S, d); render(); } }catch(e){} });
