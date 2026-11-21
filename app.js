@@ -90,6 +90,7 @@ function begin(){
     S.m = {step:0, ans:[null,null], hits:0, guess:[0,0], asked:[0,0]};
   }
   S.screen = "play";
+  rememberPlayed(g.id);
   if(window.MACC) MACC.loadReviews("s:" + g.id);
 }
 
@@ -141,6 +142,10 @@ function viewMulti(){
 }
 
 /* ---------- Games for one phone ---------- */
+/* The games played on this phone, the last one first (for "My games"). */
+function playedRecently(){ try{ return JSON.parse(localStorage.getItem("meivi.played") || "[]"); }catch(e){ return []; } }
+function rememberPlayed(id){ try{ localStorage.setItem("meivi.played", JSON.stringify([id].concat(playedRecently().filter(x => x !== id)).slice(0, 60))); }catch(e){} }
+
 function viewHome(){
   /* One game = one narrow row. A locked game is grey, with its price; an open one has "play" in its colour. */
   const locked = g => !!(window.MACC && MACC.locked("s:" + g.id));
@@ -153,13 +158,16 @@ function viewHome(){
   const shelves = SHELVES.filter(id => GAMES.some(g => g.grp === id));
   /* "My games": the ones this player has opened, when some are open and some are not. */
   const mine = window.MACC && MACC.state.account ? GAMES.filter(g => !locked(g)) : [];
+  /* the games played last come first */
+  const last = playedRecently();
+  mine.sort((a, b) => (last.includes(a.id) ? last.indexOf(a.id) : 999) - (last.includes(b.id) ? last.indexOf(b.id) : 999));
   const showMine = mine.length > 0 && mine.length < GAMES.length;
-  const card = (id, title, gs, color, all) => {
-    const open = all || S.shelfOpen[id], shown = open ? gs : gs.slice(0, 4);
+  const card = (id, title, gs, color, isMine) => {
+    const open = S.shelfOpen[id], shown = open ? gs : gs.slice(0, 4);
     return `<section class="gcard c-${color}" id="cat-${id}">
-      <div class="ghd"><h2>${title}</h2><span class="cnt">${all ? T.opened(gs.length) : T.gamesCount(gs.length)}</span></div>
-      ${shown.map(g => row(g, all ? T.shelves[g.grp] : "")).join("")}
-      ${gs.length > 4 && !all ? `<button class="gmore" data-act="shelf-more" data-i="${id}">${open ? T.showLess : T.showAll(gs.length)}</button>` : ""}
+      <div class="ghd"><h2>${title}</h2><span class="cnt">${isMine ? T.opened(gs.length) : T.gamesCount(gs.length)}</span></div>
+      ${shown.map(g => row(g, isMine ? T.shelves[g.grp] : "")).join("")}
+      ${gs.length > 4 ? `<button class="gmore" data-act="shelf-more" data-i="${id}">${open ? T.showLess : T.showAll(gs.length)}</button>` : ""}
     </section>`;
   };
   return `
