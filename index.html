@@ -6,7 +6,11 @@
 <title>Игри от Meivi</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#FBF1F0">
-<link rel="icon" href="logo-ink.png">
+<!-- The icon a phone shows when the app is put on the home screen, and the name under it. -->
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Meivi игри">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Golos+Text:wght@400;500;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
@@ -431,7 +435,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21m";
+  var MEIVI_RELEASE = "2026-11-21n";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
