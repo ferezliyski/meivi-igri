@@ -255,7 +255,7 @@
       const inf = info(s.game);
       body = `${rulesHtml(s.game)}
         ${hasServer() ? "" : `<p class="flash">${esc(X.noServer)}</p>`}
-        <div class="stack rfoot"><button class="btn" data-act="r-sheet" data-c="name" ${hasServer() ? "" : "disabled"}>${esc(inf.adult ? X.createAdult : X.create)}</button>
+        <div class="stack rfoot">${window.MACC && MACC.locked("m:" + s.game) ? MACC.gate("m:" + s.game, "m:" + s.game) : `<button class="btn" data-act="r-sheet" data-c="name" ${hasServer() ? "" : "disabled"}>${esc(inf.adult ? X.createAdult : X.create)}</button>`}
         <div class="row"><button class="btn ghost" data-act="r-sheet" data-c="join" ${hasServer() ? "" : "disabled"}>${esc(X.joinCode)}</button><button class="btn ghost" data-act="r-sheet" data-c="close">${esc(X.close)}</button></div></div>`;
     } else if (s.k === "name") {
       body = `<h1 class="rsheet-h">${esc(gameName(s.game))}</h1>

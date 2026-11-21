@@ -92,7 +92,7 @@ function begin(){
 
 /* ---------- First screen: one phone or several ---------- */
 function viewStart(){
-  return `
+  return `${window.MACC ? `<div class="top acctop">${MACC.button()}</div>` : ""}
   <header class="stack hero">
     <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">${T.brand}</span>
     <h1>${T.startTitle}</h1>
@@ -106,7 +106,7 @@ function viewStart(){
       <span class="ico two" aria-hidden="true">📱📱</span>
       <span class="tx"><b>${T.manyPhones}</b><span class="d">${T.manyPhonesText}</span><small>${T.multiCount(MULTI.filter(g => MEIVI.mready && MEIVI.mready(g.id)).length, multiCount())}</small></span>
     </button>
-  </div>`;
+  </div>${window.MACC ? MACC.overlay() : ""}`;
 }
 
 /* ---------- Games for several phones (announced, not yet playable) ---------- */
@@ -116,7 +116,7 @@ function viewMulti(){
   const row = g => { const t = M.games[g.id] || {name: g.id}, color = g.color || "hot", ready = multiReady(g);
     const body = `<span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
       <span class="tx"><b>${t.name}</b>${t.desc || t.hint ? `<small>${t.desc || t.hint}</small>` : ""}</span>
-      <span class="end">${ready ? `<i>${T.playersShort(g.min, g.max)}</i>` : `<i class="pill">${T.soon}</i>`}${g.adult ? `<i class="age">18+</i>` : ""}</span>`;
+      <span class="end">${ready ? `<i>${window.MACC && MACC.locked("m:" + g.id) ? "🔒 " : ""}${T.playersShort(g.min, g.max)}</i>` : `<i class="pill">${T.soon}</i>`}${g.adult ? `<i class="age">18+</i>` : ""}</span>`;
     return ready ? `<button class="mrow c-${color}" data-act="r-open" data-g="${g.id}">${body}</button>` : `<div class="mrow wait c-${color}">${body}</div>`; };
   const fit = MULTI.filter(g => multiFits(g, S.mn)), ready = fit.filter(multiReady), soon = fit.filter(g => !multiReady(g));
   return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>${window.MROOM ? `<button class="btn small join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}<img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
@@ -139,7 +139,7 @@ function viewMulti(){
 
 /* ---------- Games for one phone ---------- */
 function viewHome(){
-  const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}" data-act="open" data-g="${g.id}">
+  const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}" data-act="open" data-g="${g.id}">${window.MACC && MACC.locked("s:" + g.id) ? `<i class="lock" aria-hidden="true">🔒</i>` : ""}
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
       <span class="tx"><b>${g.name}</b>${big ? `<span class="d">${g.desc}</span>` : ""}
         <small>${playersLabel(g)} · ${T.engines[g.eng]}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
@@ -205,7 +205,7 @@ function viewSetup(){
     <div class="seg times">${[15,30,50].map(n => `<button data-act="rounds" data-v="${n}" aria-pressed="${S.rounds===n}"><b>${n}</b><small>${T.time[g.eng][n]}</small></button>`).join("")}</div>
     ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">${T.poolNote(pool)}</p>` : ""}
   </section>
-  <button class="btn" data-act="start" ${ok ? "" : "disabled"}>${g.adult ? T.startAdult : T.start}</button>`;
+  ${window.MACC && MACC.locked("s:" + g.id) ? MACC.gate("s:" + g.id, "s:" + g.id) : `<button class="btn" data-act="start" ${ok ? "" : "disabled"}>${g.adult ? T.startAdult : T.start}</button>`}`;
 }
 
 /* ---------- Shared parts ---------- */
@@ -490,6 +490,8 @@ app.addEventListener("click", e => {
   if(act==="sheet-close" && b.classList.contains("sheet") && e.target !== b) return;
   /* Everything that starts with "r-" belongs to the rooms. */
   if(act.startsWith("r-")){ if(window.MROOM && MROOM.click(act, b, e.target)) render(); return; }
+  /* ...and everything that starts with "a-" to the account. */
+  if(act.startsWith("a-")){ if(window.MACC && MACC.click(act, b, e.target)) render(); return; }
   switch(act){
     case "cat": document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
     case "open": S.g = b.dataset.g; S.screen = "setup"; window.scrollTo(0,0); break;
@@ -553,7 +555,15 @@ app.addEventListener("click", e => {
 /* What rooms.js needs from the app: go to a screen, draw again. */
 MEIVI.app = {
   show(screen){ S.screen = screen; S.g = null; render(); window.scrollTo(0,0); },
-  refresh(){ if(S.screen === "room" || S.screen === "multi") render(); }
+  refresh(){ if(S.screen === "room" || S.screen === "multi") render(); },
+  redraw(){ if(S.screen !== "play") render(); },
+  /* Back from signing in: to the game the player wanted ("s:<id>" one phone, "m:<id>" multiplayer). */
+  open(key){
+    const id = String(key).slice(2);
+    if(key[0] === "s" && GAMES.some(g => g.id === id)){ S.g = id; S.screen = "setup"; }
+    else if(key[0] === "m" && MULTI){ S.g = null; S.screen = "multi"; if(window.MROOM && MEIVI.mready(id)) MROOM.ui.sheet = { k: "rules", game: id }; }
+    render(); window.scrollTo(0,0);
+  }
 };
 document.documentElement.lang = CFG.lang;
 document.title = T.title;
@@ -561,6 +571,7 @@ window.addEventListener("error", e => { if(!app.innerHTML) app.textContent = T.l
 loadNames();
 try{ render(); }catch(e){ app.textContent = T.loadError(e.message); }
 if(window.MROOM) MROOM.boot();
+if(window.MACC) MACC.boot();
 try{
   window.claude?.hot?.snapshot?.(() => S);
   window.claude?.hot?.ready?.(d => { try{ if(d && d.screen && Array.isArray(d.players)){ S = Object.assign(S, d); render(); } }catch(e){} });
