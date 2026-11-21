@@ -83,22 +83,47 @@ MEIVI.catalog = {
 };
 
 /* Games for several phones: every player is on their own phone, all in one room.
-   A game marked "ready" can be played (its rules are in rooms-games.js, "players" is fewest and most);
-   the others are only announced on the page.
-   Two groups (for a company, for a couple), each with its shelves. Names are in lang/<language>/multi.js. */
+   The page shows them by the fewest players a game needs ("min"): for two, from 3, from 4...
+   A game marked "ready" can be played (its rules are in rooms-games.js; "max" is the most players);
+   the others are only announced. Names are in lang/<language>/multi.js. */
 MEIVI.catalog.multi = [
-  { id: "group", shelves: [
-    { id: "bluff", color: "hot", games: [ { id: "mole", icon: "🕵️", ready: true, players: [3, 10] }, { id: "agents", icon: "🕶️" }, { id: "liar", icon: "🤥" }, { id: "poker", icon: "🃏" } ] },
-    { id: "tactics", color: "sky", games: [ { id: "conquer", icon: "🗺️", ready: true, players: [3, 8] }, { id: "bid", icon: "💰" }, { id: "lowest", icon: "🔢" }, { id: "split", icon: "🤝" }, { id: "market", icon: "📈" }, { id: "minority", icon: "⚖️" } ] },
-    { id: "fun", color: "gold", games: [ { id: "whoofus", icon: "👉", ready: true, players: [3, 10] }, { id: "fakeartist", icon: "🎨" }, { id: "telephone", icon: "☎️" }, { id: "likeyou", icon: "🧠" }, { id: "court", icon: "🔨" } ] },
-    { id: "speed", color: "mint", games: [ { id: "trapquiz", icon: "🎣" }, { id: "bomb", icon: "💣", ready: true, players: [3, 10] }, { id: "auction", icon: "🔔" } ] },
-    { id: "teams", color: "lilac", games: [ { id: "nowords", icon: "🗣️" }, { id: "detectives", icon: "🔎", ready: true, players: [5, 10] } ] }
-  ] },
-  { id: "pairs", shelves: [
-    { id: "know", color: "lilac", games: [ { id: "mirror", icon: "👀", ready: true, players: [2, 2] }, { id: "knowme", icon: "🎯" }, { id: "pairwho", icon: "👫" }, { id: "memories", icon: "📸" } ] },
-    { id: "together", color: "mint", games: [ { id: "onemind", icon: "💡", ready: true, players: [2, 2] }, { id: "boat", icon: "🚣" }, { id: "escape", icon: "🗝️" } ] },
-    { id: "versus", color: "sky", games: [ { id: "battle", icon: "⚔️" }, { id: "deal", icon: "📝", ready: true, players: [2, 2] }, { id: "wish", icon: "🌠" } ] },
-    { id: "romantic", color: "hot", games: [ { id: "q36", icon: "💬" }, { id: "letters", icon: "✉️", ready: true, players: [2, 2] }, { id: "future", icon: "🔭" } ] },
-    { id: "spicy", color: "gold", games: [ { id: "spicydeal", icon: "🌶️", adult: true }, { id: "wishes18", icon: "🔥", ready: true, players: [2, 2], adult: true } ] }
-  ] }
+  /* for two */
+  { id: "mirror", icon: "👀", color: "lilac", min: 2, max: 2, ready: true },
+  { id: "onemind", icon: "💡", color: "mint", min: 2, max: 2, ready: true },
+  { id: "deal", icon: "📝", color: "sky", min: 2, max: 2, ready: true },
+  { id: "letters", icon: "✉️", color: "hot", min: 2, max: 2, ready: true },
+  { id: "wishes18", icon: "🔥", color: "gold", min: 2, max: 2, ready: true, adult: true },
+  { id: "knowme", icon: "🎯", color: "lilac", min: 2 },
+  { id: "pairwho", icon: "👫", color: "lilac", min: 2 },
+  { id: "memories", icon: "📸", color: "lilac", min: 2 },
+  { id: "boat", icon: "🚣", color: "mint", min: 2 },
+  { id: "escape", icon: "🗝️", color: "mint", min: 2 },
+  { id: "battle", icon: "⚔️", color: "sky", min: 2 },
+  { id: "wish", icon: "🌠", color: "sky", min: 2 },
+  { id: "q36", icon: "💬", color: "hot", min: 2 },
+  { id: "future", icon: "🔭", color: "hot", min: 2 },
+  { id: "spicydeal", icon: "🌶️", color: "gold", min: 2, adult: true },
+  /* from three */
+  { id: "mole", icon: "🕵️", color: "hot", min: 3, max: 10, ready: true },
+  { id: "conquer", icon: "🗺️", color: "sky", min: 3, max: 8, ready: true },
+  { id: "whoofus", icon: "👉", color: "gold", min: 3, max: 10, ready: true },
+  { id: "bomb", icon: "💣", color: "mint", min: 3, max: 10, ready: true },
+  { id: "liar", icon: "🤥", color: "hot", min: 3 },
+  { id: "poker", icon: "🃏", color: "hot", min: 3 },
+  { id: "bid", icon: "💰", color: "sky", min: 3 },
+  { id: "lowest", icon: "🔢", color: "sky", min: 3 },
+  { id: "split", icon: "🤝", color: "sky", min: 3 },
+  { id: "market", icon: "📈", color: "sky", min: 3 },
+  { id: "minority", icon: "⚖️", color: "sky", min: 3 },
+  { id: "likeyou", icon: "🧠", color: "gold", min: 3 },
+  { id: "trapquiz", icon: "🎣", color: "mint", min: 3 },
+  { id: "auction", icon: "🔔", color: "mint", min: 3 },
+  /* from four */
+  { id: "agents", icon: "🕶️", color: "hot", min: 4 },
+  { id: "fakeartist", icon: "🎨", color: "gold", min: 4 },
+  { id: "telephone", icon: "☎️", color: "gold", min: 4 },
+  { id: "court", icon: "🔨", color: "gold", min: 4 },
+  { id: "nowords", icon: "🗣️", color: "lilac", min: 4 },
+  /* from five */
+  { id: "detectives", icon: "🔎", color: "lilac", min: 5, max: 10, ready: true }
 ];

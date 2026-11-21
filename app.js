@@ -29,7 +29,10 @@ const GAMES = MEIVI.catalog.games
 
 /* Games for several phones are only announced for now; a site without them starts straight at the list. */
 const MULTI = MEIVI.multi && MEIVI.catalog.multi ? MEIVI.catalog.multi : null;
-const multiCount = () => MULTI.reduce((n, grp) => n + grp.shelves.reduce((k, sh) => k + sh.games.length, 0), 0);
+const multiCount = () => MULTI.length;
+/* The games for several phones, by the fewest players each needs: [[2, games], [3, games], ...]. Ready games first. */
+const multiGroups = () => [...new Set(MULTI.map(g => g.min))].sort((a, b) => a - b)
+  .map(n => [n, MULTI.filter(g => g.min === n).sort((a, b) => (MEIVI.mready && MEIVI.mready(b.id) ? 1 : 0) - (MEIVI.mready && MEIVI.mready(a.id) ? 1 : 0))]);
 
 const KIND_CLASS = {A:"c-gold",V:"c-mint",Q:"c-hot",D:"c-lilac"};
 const KIND_COLOR = {A:"gold",V:"mint",Q:"hot",D:"lilac",G:"gold"};
@@ -99,7 +102,7 @@ function viewStart(){
     </button>
     <button class="tile big c-lilac" data-act="multi">
       <span class="ico two" aria-hidden="true">📱📱</span>
-      <span class="tx"><b>${T.manyPhones}</b><span class="d">${T.manyPhonesText}</span><small>${T.multiCount(MULTI.reduce((n, grp) => n + grp.shelves.reduce((k, sh) => k + sh.games.filter(g => MEIVI.mready && MEIVI.mready(g.id)).length, 0), 0), multiCount())}</small></span>
+      <span class="tx"><b>${T.manyPhones}</b><span class="d">${T.manyPhonesText}</span><small>${T.multiCount(MULTI.filter(g => MEIVI.mready && MEIVI.mready(g.id)).length, multiCount())}</small></span>
     </button>
   </div>`;
 }
@@ -107,30 +110,27 @@ function viewStart(){
 /* ---------- Games for several phones (announced, not yet playable) ---------- */
 function viewMulti(){
   const M = MEIVI.multi;
-  const tile = (g, color) => { const t = M.games[g.id] || {name: g.id};
+  const tile = g => { const t = M.games[g.id] || {name: g.id}, color = g.color || "hot";
     /* A game that is built opens its rules; the others are only announced. */
     if(MEIVI.mready && MEIVI.mready(g.id)) return `<button class="tile c-${color}" data-act="r-open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
-      <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small>${T.players(g.players[0], g.players[1])}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
+      <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small>${T.players(g.min, g.max)}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
     </button>`;
     return `<div class="tile wait c-${color}">
       <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
       <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small><i class="pill">${T.soon}</i>${g.adult ? ` <i class="age">18+</i>` : ""}</small></span>
     </div>`; };
-  return `
-  <div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button><img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
+  const groups = multiGroups();
+  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button><img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
   <header class="stack ghead">
     <span class="brand">${T.manyPhones}</span>
     <h1>${T.multiTitle}</h1>
     <p class="note">${T.multiNote}</p>
   </header>
-  <nav class="cats" aria-label="${T.shelvesLabel}">${MULTI.map(grp => `<button data-act="cat" data-i="m-${grp.id}">${M.groups[grp.id]}</button>`).join("")}${window.MROOM ? `<button class="join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</nav>
-  ${MULTI.map(grp => `<section class="mgroup" id="cat-m-${grp.id}">
-    <div class="headrow"><h1>${M.groups[grp.id]}</h1><span class="cnt">${T.gamesCount(grp.shelves.reduce((k, sh) => k + sh.games.length, 0))}</span></div>
-    ${grp.shelves.map(sh => `<section class="shelf">
-      <div class="headrow"><h2>${M.shelves[sh.id]}</h2><span class="cnt">${sh.games.length}</span></div>
-      <div class="grid plain">${sh.games.map(g => tile(g, sh.color)).join("")}</div>
-    </section>`).join("")}
+  <nav class="cats" aria-label="${T.shelvesLabel}">${groups.map(([n]) => `<button data-act="cat" data-i="m-${n}">${T.multiGroupShort(n)}</button>`).join("")}${window.MROOM ? `<button class="join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</nav>
+  ${groups.map(([n, games]) => `<section class="shelf" id="cat-m-${n}">
+    <div class="headrow"><h2 class="mh">${T.multiGroup(n)}</h2><span class="cnt">${T.gamesCount(games.length)}</span></div>
+    <div class="grid plain">${games.map(tile).join("")}</div>
   </section>`).join("")}${window.MROOM ? MROOM.overlay() : ""}`;
 }
 

@@ -1,12 +1,7 @@
 /* Meivi games · games for several phones · Bulgarian
-   Names of the groups, the shelves and the games announced in catalog.js (MEIVI.catalog.multi).
+   Names of the games announced in catalog.js (MEIVI.catalog.multi).
    "hint" is a short note shown under the name. */
 MEIVI.multi = {
-  groups: { group: "За компания", pairs: "За двойки" },
-  shelves: {
-    bluff: "Блъф и скрити роли", tactics: "Тактика", fun: "Компания и смях", speed: "Бързина и знания", teams: "Отборни",
-    know: "Познай партньора", together: "Заедно срещу играта", versus: "Един срещу друг", romantic: "Романтични", spicy: "18+"
-  },
   games: {
     mole: { name: "Къртицата" },
     agents: { name: "Агентите на Меиви" },

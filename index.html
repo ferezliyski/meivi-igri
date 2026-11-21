@@ -116,6 +116,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 /* Games for several phones: announced tiles that cannot be opened yet */
 .mgroup{display:flex;flex-direction:column;gap:20px;scroll-margin-top:14px}
 .mgroup > .headrow h1{font-size:21px}
+.shelf .mh{font-size:19px;font-weight:800}
 .mgroup + .mgroup{margin-top:14px;padding-top:26px;border-top:1px dashed #E5C9C7}
 .tile.wait{cursor:default}
 .tile.wait:active{transform:none}
@@ -395,7 +396,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21d";
+  var MEIVI_RELEASE = "2026-11-21e";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
@@ -410,7 +411,7 @@ textarea{font:inherit;color:inherit}
     var games = MEIVI.catalog.games.map(function (g) { return g.id; }).filter(function (id) { return !c.games || c.games.indexOf(id) >= 0; });
     /* Games for several phones: the text of every game that is built, then the rooms and the rules. */
     var ready = [];
-    (MEIVI.catalog.multi || []).forEach(function (grp) { grp.shelves.forEach(function (sh) { sh.games.forEach(function (g) { if (g.ready) ready.push(dir + "multi/" + g.id + ".js"); }); }); });
+    (MEIVI.catalog.multi || []).forEach(function (g) { if (g.ready) ready.push(dir + "multi/" + g.id + ".js"); });
     var files = [dir + "ui.js", dir + "multi.js"].concat(ready, games.map(function (id) { return dir + "games/" + id + ".js"; }), ready.length ? ["rooms.js", "rooms-games.js"] : [], ["app.js"]);
     document.write(files.map(function (f) { return '<script src="' + f + v + '"><\/script>'; }).join(""));
   })();

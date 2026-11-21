@@ -28,11 +28,7 @@
   const DEFS = {};
   MEIVI.mgame = (id, def) => { DEFS[id] = def; };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const info = id => {
-    for (const grp of MEIVI.catalog.multi || []) for (const sh of grp.shelves) for (const g of sh.games)
-      if (g.id === id) return Object.assign({ color: sh.color }, g);
-    return null;
-  };
+  const info = id => (MEIVI.catalog.multi || []).find(g => g.id === id) || null;
   const gameName = id => ((MEIVI.multi.games[id] || {}).name) || id;
   /* A game can be played when it is marked ready in the catalogue and both its rules and its text are loaded. */
   MEIVI.mready = id => { const i = info(id); return !!(i && i.ready && DEFS[id] && MEIVI.mtexts[id]); };
