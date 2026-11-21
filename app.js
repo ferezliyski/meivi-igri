@@ -43,7 +43,7 @@ function poolOf(g){
 
 /* ---------- State ---------- */
 let S = {screen: MULTI ? "start" : "home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
-         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}};
+         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}, shelfOpen:{}};
 try{ S.mn = +(localStorage.getItem("meivi.multi.n") || 0) || 0; }catch(e){}
 
 const app = document.getElementById("app");
@@ -142,13 +142,26 @@ function viewMulti(){
 
 /* ---------- Games for one phone ---------- */
 function viewHome(){
-  const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}${window.MACC && MACC.locked("s:" + g.id) ? " locked" : ""}" data-act="open" data-g="${g.id}">${window.MACC && MACC.locked("s:" + g.id) ? `<i class="lock" aria-hidden="true">🔒</i>` : ""}
+  /* One game = one narrow row. A locked game is grey, with its price; an open one has "play" in its colour. */
+  const locked = g => !!(window.MACC && MACC.locked("s:" + g.id));
+  const row = (g, sub) => `<button class="grow c-${g.c}${locked(g) ? " off" : ""}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
-      <span class="tx"><b>${g.name}</b>${big ? `<span class="d">${g.desc}</span>` : ""}
-        <small>${playersLabel(g)} · ${T.engines[g.eng]}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
+      <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${sub || g.desc}</small></span>
+      <span class="go">${locked(g) ? `🔒 ${T.price1}` : T.play}</span>
     </button>`;
   /* A shelf with no game on this site is not shown at all. */
   const shelves = SHELVES.filter(id => GAMES.some(g => g.grp === id));
+  /* "My games": the ones this player has opened, when some are open and some are not. */
+  const mine = window.MACC && MACC.state.account ? GAMES.filter(g => !locked(g)) : [];
+  const showMine = mine.length > 0 && mine.length < GAMES.length;
+  const card = (id, title, gs, color, all) => {
+    const open = all || S.shelfOpen[id], shown = open ? gs : gs.slice(0, 4);
+    return `<section class="gcard c-${color}" id="cat-${id}">
+      <div class="ghd"><h2>${title}</h2><span class="cnt">${all ? T.opened(gs.length) : T.gamesCount(gs.length)}</span></div>
+      ${shown.map(g => row(g, all ? T.shelves[g.grp] : "")).join("")}
+      ${gs.length > 4 && !all ? `<button class="gmore" data-act="shelf-more" data-i="${id}">${open ? T.showLess : T.showAll(gs.length)}</button>` : ""}
+    </section>`;
+  };
   return `
   ${MULTI ? `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button></div>` : ""}
   <header class="stack hero">
@@ -156,14 +169,10 @@ function viewHome(){
     <h1>${T.homeTitle}</h1>
     <p class="note">${T.homeNote(GAMES.length, shelves.length)}</p>
   </header>
-  <nav class="cats" aria-label="${T.shelvesLabel}">${shelves.map(id => `<button data-act="cat" data-i="${id}">${T.shelves[id]}</button>`).join("")}</nav>
-  ${shelves.map(id => {
-    const gs = GAMES.filter(g => g.grp === id), all = MEIVI.catalog.games.filter(m => m.cat === id).length;
-    return `<section class="shelf" id="cat-${id}">
-      <div class="headrow"><h2>${T.shelves[id]}</h2><span class="cnt">${T.shelfCount(gs.length, all)}</span></div>
-      <div class="grid">${gs.map((g,i) => tile(g, i===0)).join("")}</div>
-    </section>`;
-  }).join("")}`;
+  <nav class="cats" aria-label="${T.shelvesLabel}">${showMine ? `<button data-act="cat" data-i="mine">${T.myGames}</button>` : ""}${shelves.map(id => `<button data-act="cat" data-i="${id}">${T.shelves[id]}</button>`).join("")}</nav>
+  ${showMine ? card("mine", T.myGames, mine, "mint", true) : ""}
+  ${shelves.map(id => { const gs = GAMES.filter(g => g.grp === id); return card(id, T.shelves[id], gs, gs[0].c, false); }).join("")}
+  ${window.MACC ? MACC.overlay() : ""}`;
 }
 
 /* ---------- Before the game ---------- */
@@ -556,6 +565,7 @@ app.addEventListener("click", e => {
     case "multi": S.screen = "multi"; S.g = null; window.scrollTo(0,0); break;
     case "mn": S.mn = S.mn === +b.dataset.n ? 0 : +b.dataset.n; try{ localStorage.setItem("meivi.multi.n", S.mn); }catch(e){} break;
     case "msoon": S.msoon = !S.msoon; break;
+    case "shelf-more": S.shelfOpen[b.dataset.i] = !S.shelfOpen[b.dataset.i]; if(!S.shelfOpen[b.dataset.i]) document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({block:"start"}); break;
     case "rounds": S.rounds = +b.dataset.v; break;
     case "level": S.level = +b.dataset.v; break;
     case "kind": S.kinds[b.dataset.k] = !S.kinds[b.dataset.k]; break;

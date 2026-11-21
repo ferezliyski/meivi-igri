@@ -113,6 +113,22 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tile.big small{color:rgba(255,255,255,.85)}
 .tile.big .age{color:#fff;background:rgba(255,255,255,.22);padding:1px 7px;border-radius:999px}
 .grid .tile:last-child:nth-child(even){grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;justify-content:flex-start}
+/* Games for one phone: a card per shelf, a narrow row per game */
+.gcard{background:var(--surface);border-radius:28px;box-shadow:var(--sh);padding:16px 16px 6px;border-top:6px solid var(--m);display:flex;flex-direction:column;scroll-margin-top:14px}
+.ghd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:8px}
+.ghd h2{font-size:17px}
+.grow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:11px 0;color:var(--ink)}
+.grow:active{transform:scale(.99)}
+.grow .ico{flex:none;width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:24px;line-height:1;background:color-mix(in srgb, var(--m) 18%, #fff)}
+.grow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.grow b{font-family:var(--display);font-weight:600;font-size:14px;line-height:1.2;overflow-wrap:anywhere}
+.grow b .age{font-style:normal;font-family:var(--body);font-weight:700;font-size:11px;color:var(--hot);background:#FCEBEA;border-radius:999px;padding:1px 6px;vertical-align:2px}
+.grow small{font-size:12.5px;line-height:1.3;color:var(--muted);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.grow .go{flex:none;font-weight:700;font-size:13px;border-radius:999px;padding:7px 13px;background:var(--m);color:#fff;white-space:nowrap}
+.grow.off .ico,.grow.off .tx{filter:grayscale(.9);opacity:.6}
+.grow.off .go{background:#F3E8E7;color:#9A8B8B}
+.gmore{border:0;border-top:1px solid var(--line);background:none;padding:13px 0 11px;font-weight:700;font-size:14px;color:var(--m)}
+
 /* First screen: the two ways to play, one under the other */
 .ways{grid-template-columns:1fr;gap:14px}
 .ways .tile.big,.grid.ways .tile.big:last-child{grid-column:1/-1;min-height:176px;flex-direction:row-reverse;align-items:flex-end;justify-content:space-between}
@@ -447,7 +463,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21p";
+  var MEIVI_RELEASE = "2026-11-22a";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

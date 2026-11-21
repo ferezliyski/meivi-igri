@@ -38,6 +38,13 @@ MEIVI.ui = {
     occasions: "Поводи", quiz: "Викторини", holidays: "Празници през годината", travel: "Път, почивка и екип"
   },
   shelfCount: (have, all) => `${have} от ${all}`,
+  /* the cards of the shelves */
+  myGames: "Моите игри",
+  opened: n => n === 1 ? "1 отключена" : `${n} отключени`,
+  showAll: n => `Виж всички ${n} ›`,
+  showLess: "Покажи по-малко",
+  play: "Играй",
+  price1: "1 кредит",
   players: (min, max) => min === max ? `${min} ${min === 1 ? "играч" : "играчи"}` : `${min}–${max} играчи`,
   engines: { cards: "Карти", quiz: "Викторина", match: "За двама" },
 
