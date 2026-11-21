@@ -357,7 +357,8 @@ button.mrow:active{transform:scale(.98)}
 .gate{background:rgba(255,255,255,.72);border-radius:24px;padding:16px}
 .gate a.btn,.sheet a.btn{display:block;text-align:center;text-decoration:none}
 /* A locked game is a little grey, so that the games a player owns stand out. */
-.tile.locked{filter:grayscale(.9);opacity:.68;box-shadow:0 6px 16px -12px rgba(60,40,40,.35)}
+.tile.locked,.mrow.locked{filter:grayscale(.9);opacity:.68;box-shadow:0 6px 16px -12px rgba(60,40,40,.35)}
+h2.mid{text-align:center}
 .tile .lock{position:absolute;top:12px;right:12px;font-style:normal;font-size:15px}
 .tile.big .lock{top:auto;bottom:14px;right:16px}
 
@@ -427,7 +428,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21j";
+  var MEIVI_RELEASE = "2026-11-21k";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

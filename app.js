@@ -117,16 +117,16 @@ function viewMulti(){
     const body = `<span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
       <span class="tx"><b>${t.name}</b>${t.desc || t.hint ? `<small>${t.desc || t.hint}</small>` : ""}</span>
       <span class="end">${ready ? `<i>${window.MACC && MACC.locked("m:" + g.id) ? "🔒 " : ""}${T.playersShort(g.min, g.max)}</i>` : `<i class="pill">${T.soon}</i>`}${g.adult ? `<i class="age">18+</i>` : ""}</span>`;
-    return ready ? `<button class="mrow c-${color}" data-act="r-open" data-g="${g.id}">${body}</button>` : `<div class="mrow wait c-${color}">${body}</div>`; };
+    return ready ? `<button class="mrow c-${color}${window.MACC && MACC.locked("m:" + g.id) ? " locked" : ""}" data-act="r-open" data-g="${g.id}">${body}</button>` : `<div class="mrow wait c-${color}">${body}</div>`; };
   const fit = MULTI.filter(g => multiFits(g, S.mn)), ready = fit.filter(multiReady), soon = fit.filter(g => !multiReady(g));
-  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>${window.MROOM ? `<button class="btn small join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}<img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
-  <header class="stack ghead">
-    <span class="brand">${T.manyPhones}</span>
+  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>${window.MROOM ? `<button class="btn small join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</div>
+  <header class="stack hero">
+    <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">${T.manyPhones}</span>
     <h1>${T.multiTitle}</h1>
     <p class="note">${T.multiNote}</p>
   </header>
   <section class="stack">
-    <h2>${T.howMany}</h2>
+    <h2 class="mid">${T.howMany}</h2>
     <div class="seg" role="group" aria-label="${T.howMany}">${[2, 3, 4, 5, 6].map(n => `<button data-act="mn" data-n="${n}" aria-pressed="${S.mn === n}">${n === 6 ? T.sixPlus : n}</button>`).join("")}</div>
   </section>
   <section class="stack">
