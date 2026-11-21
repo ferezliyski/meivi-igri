@@ -78,3 +78,23 @@ MEIVI.catalog = {
     { id: "meet", cat: "travel", color: "lilac", eng: "cards", players: [2, 10], icon: "👋" }
   ]
 };
+
+/* Games for several phones: every player is on their own phone, all in one room.
+   For now they are only announced on their own page; a game can be played once it is built.
+   Two groups (for a company, for a couple), each with its shelves. Names are in lang/<language>/multi.js. */
+MEIVI.catalog.multi = [
+  { id: "group", shelves: [
+    { id: "bluff", color: "hot", games: [ { id: "mole", icon: "🕵️" }, { id: "agents", icon: "🕶️" }, { id: "liar", icon: "🤥" }, { id: "poker", icon: "🃏" } ] },
+    { id: "tactics", color: "sky", games: [ { id: "conquer", icon: "🗺️" }, { id: "bid", icon: "💰" }, { id: "lowest", icon: "🔢" }, { id: "split", icon: "🤝" }, { id: "market", icon: "📈" }, { id: "minority", icon: "⚖️" } ] },
+    { id: "fun", color: "gold", games: [ { id: "whoofus", icon: "👉" }, { id: "fakeartist", icon: "🎨" }, { id: "telephone", icon: "☎️" }, { id: "likeyou", icon: "🧠" }, { id: "court", icon: "🔨" } ] },
+    { id: "speed", color: "mint", games: [ { id: "trapquiz", icon: "🎣" }, { id: "bomb", icon: "💣" }, { id: "auction", icon: "🔔" } ] },
+    { id: "teams", color: "lilac", games: [ { id: "nowords", icon: "🗣️" }, { id: "detectives", icon: "🔎" } ] }
+  ] },
+  { id: "pairs", shelves: [
+    { id: "know", color: "lilac", games: [ { id: "mirror", icon: "👀" }, { id: "knowme", icon: "🎯" }, { id: "pairwho", icon: "👫" }, { id: "memories", icon: "📸" } ] },
+    { id: "together", color: "mint", games: [ { id: "onemind", icon: "💡" }, { id: "boat", icon: "🚣" }, { id: "escape", icon: "🗝️" } ] },
+    { id: "versus", color: "sky", games: [ { id: "battle", icon: "⚔️" }, { id: "deal", icon: "📝" }, { id: "wish", icon: "🌠" } ] },
+    { id: "romantic", color: "hot", games: [ { id: "q36", icon: "💬" }, { id: "letters", icon: "✉️" }, { id: "future", icon: "🔭" } ] },
+    { id: "spicy", color: "gold", games: [ { id: "spicydeal", icon: "🌶️", adult: true }, { id: "wishes18", icon: "🔥", adult: true } ] }
+  ] }
+];

@@ -7,7 +7,19 @@ MEIVI.ui = {
   brand: "Дигитални игри",
   loadError: message => "Грешка при зареждане: " + message,
 
-  /* ---------- home ---------- */
+  /* ---------- first screen: one phone or several ---------- */
+  startTitle: "Как ще играете?",
+  onePhone: "На един телефон",
+  onePhoneText: "Подавате телефона от ръка на ръка.",
+  manyPhones: "На няколко телефона",
+  manyPhonesText: "Всеки е на своя телефон. Влизате в една стая с код, дори от разстояние.",
+  gamesCount: n => n === 1 ? "1 игра" : `${n} игри`,
+  soon: "Скоро",
+  toStart: "Начало",
+  multiTitle: "Всеки играе на своя телефон",
+  multiNote: "Един отваря стая, другите влизат с код или QR. Игрите идват една по една.",
+
+  /* ---------- games for one phone ---------- */
   homeTitle: "Избери игра за тази вечер",
   homeNote: (games, shelves) => `${games} игри в ${shelves} категории.`,
   shelvesLabel: "Категории",

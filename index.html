@@ -109,6 +109,20 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tile.big small{color:rgba(255,255,255,.85)}
 .tile.big .age{color:#fff;background:rgba(255,255,255,.22);padding:1px 7px;border-radius:999px}
 .grid .tile:last-child:nth-child(even){grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;justify-content:flex-start}
+/* First screen: the two ways to play, one under the other */
+.ways{grid-template-columns:1fr;gap:14px}
+.ways .tile.big,.grid.ways .tile.big:last-child{grid-column:1/-1;min-height:176px;flex-direction:row-reverse;align-items:flex-end;justify-content:space-between}
+.ways .tile.big .ico.two{font-size:30px;letter-spacing:-8px;padding-right:8px}
+/* Games for several phones: announced tiles that cannot be opened yet */
+.mgroup{display:flex;flex-direction:column;gap:20px;scroll-margin-top:14px}
+.mgroup > .headrow h1{font-size:21px}
+.mgroup + .mgroup{margin-top:14px;padding-top:26px;border-top:1px dashed #E5C9C7}
+.tile.wait{cursor:default}
+.tile.wait:active{transform:none}
+.tile.wait small{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.tile .pill{font-style:normal;font-weight:700;font-size:11.5px;color:var(--m);background:color-mix(in srgb, var(--m) 13%, #fff);border-radius:999px;padding:3px 9px}
+.grid.plain .tile:last-child:nth-child(even){grid-column:auto;min-height:132px;flex-direction:column;align-items:stretch;justify-content:space-between}
+.grid.plain .tile:last-child:nth-child(odd){grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;justify-content:flex-start}
 .soon{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
 .soon b{font-weight:700;margin-right:2px}
 .soon span{background:rgba(255,255,255,.7);border:1px dashed #DDBFBE;border-radius:999px;padding:4px 10px}
@@ -326,7 +340,7 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21";
+  var MEIVI_RELEASE = "2026-11-21b";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
@@ -339,7 +353,7 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
     }
     var c = MEIVI.config, v = "?v=" + MEIVI_RELEASE, dir = "lang/" + c.lang + "/";
     var games = MEIVI.catalog.games.map(function (g) { return g.id; }).filter(function (id) { return !c.games || c.games.indexOf(id) >= 0; });
-    var files = [dir + "ui.js"].concat(games.map(function (id) { return dir + "games/" + id + ".js"; }), ["app.js"]);
+    var files = [dir + "ui.js", dir + "multi.js"].concat(games.map(function (id) { return dir + "games/" + id + ".js"; }), ["app.js"]);
     document.write(files.map(function (f) { return '<script src="' + f + v + '"><\/script>'; }).join(""));
   })();
 </script>

@@ -27,6 +27,10 @@ const GAMES = MEIVI.catalog.games
     });
   });
 
+/* Games for several phones are only announced for now; a site without them starts straight at the list. */
+const MULTI = MEIVI.multi && MEIVI.catalog.multi ? MEIVI.catalog.multi : null;
+const multiCount = () => MULTI.reduce((n, grp) => n + grp.shelves.reduce((k, sh) => k + sh.games.length, 0), 0);
+
 const KIND_CLASS = {A:"c-gold",V:"c-mint",Q:"c-hot",D:"c-lilac"};
 const KIND_COLOR = {A:"gold",V:"mint",Q:"hot",D:"lilac",G:"gold"};
 function poolOf(g){
@@ -34,7 +38,7 @@ function poolOf(g){
 }
 
 /* ---------- State ---------- */
-let S = {screen:"home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
+let S = {screen: MULTI ? "start" : "home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
          sheet:false, copied:false, picked:null, m:null};
 
 const app = document.getElementById("app");
@@ -81,7 +85,51 @@ function begin(){
   S.screen = "play";
 }
 
-/* ---------- Home ---------- */
+/* ---------- First screen: one phone or several ---------- */
+function viewStart(){
+  return `
+  <header class="stack hero">
+    <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">${T.brand}</span>
+    <h1>${T.startTitle}</h1>
+  </header>
+  <div class="grid ways">
+    <button class="tile big c-hot" data-act="home">
+      <span class="ico" aria-hidden="true">📱</span>
+      <span class="tx"><b>${T.onePhone}</b><span class="d">${T.onePhoneText}</span><small>${T.gamesCount(GAMES.length)}</small></span>
+    </button>
+    <button class="tile big c-lilac" data-act="multi">
+      <span class="ico two" aria-hidden="true">📱📱</span>
+      <span class="tx"><b>${T.manyPhones}</b><span class="d">${T.manyPhonesText}</span><small>${T.gamesCount(multiCount())} · ${T.soon}</small></span>
+    </button>
+  </div>`;
+}
+
+/* ---------- Games for several phones (announced, not yet playable) ---------- */
+function viewMulti(){
+  const M = MEIVI.multi;
+  const tile = (g, color) => { const t = M.games[g.id] || {name: g.id};
+    return `<div class="tile wait c-${color}">
+      <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
+      <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small><i class="pill">${T.soon}</i>${g.adult ? ` <i class="age">18+</i>` : ""}</small></span>
+    </div>`; };
+  return `
+  <div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button><img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
+  <header class="stack ghead">
+    <span class="brand">${T.manyPhones}</span>
+    <h1>${T.multiTitle}</h1>
+    <p class="note">${T.multiNote}</p>
+  </header>
+  <nav class="cats" aria-label="${T.shelvesLabel}">${MULTI.map(grp => `<button data-act="cat" data-i="m-${grp.id}">${M.groups[grp.id]}</button>`).join("")}</nav>
+  ${MULTI.map(grp => `<section class="mgroup" id="cat-m-${grp.id}">
+    <div class="headrow"><h1>${M.groups[grp.id]}</h1><span class="cnt">${T.gamesCount(grp.shelves.reduce((k, sh) => k + sh.games.length, 0))}</span></div>
+    ${grp.shelves.map(sh => `<section class="shelf">
+      <div class="headrow"><h2>${M.shelves[sh.id]}</h2><span class="cnt">${sh.games.length}</span></div>
+      <div class="grid plain">${sh.games.map(g => tile(g, sh.color)).join("")}</div>
+    </section>`).join("")}
+  </section>`).join("")}`;
+}
+
+/* ---------- Games for one phone ---------- */
 function viewHome(){
   const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
@@ -91,6 +139,7 @@ function viewHome(){
   /* A shelf with no game on this site is not shown at all. */
   const shelves = SHELVES.filter(id => GAMES.some(g => g.grp === id));
   return `
+  ${MULTI ? `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button></div>` : ""}
   <header class="stack hero">
     <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">${T.brand}</span>
     <h1>${T.homeTitle}</h1>
@@ -376,7 +425,9 @@ function viewEnd(){
 
 function render(){
   let v;
-  if(S.screen==="home" || !game()) v = viewHome();
+  if(S.screen==="start" && MULTI) v = viewStart();
+  else if(S.screen==="multi" && MULTI) v = viewMulti();
+  else if(S.screen==="home" || !game()) v = viewHome();
   else if(S.screen==="setup") v = viewSetup();
   else if(S.screen==="end") v = viewEnd();
   else v = {cards:viewCards, quiz:viewQuiz, match:viewMatch}[game().eng]();
@@ -429,6 +480,8 @@ app.addEventListener("click", e => {
     case "cat": document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
     case "open": S.g = b.dataset.g; S.screen = "setup"; window.scrollTo(0,0); break;
     case "home": S.screen = "home"; S.g = null; window.scrollTo(0,0); break;
+    case "landing": S.screen = "start"; S.g = null; window.scrollTo(0,0); break;
+    case "multi": S.screen = "multi"; S.g = null; window.scrollTo(0,0); break;
     case "rounds": S.rounds = +b.dataset.v; break;
     case "level": S.level = +b.dataset.v; break;
     case "kind": S.kinds[b.dataset.k] = !S.kinds[b.dataset.k]; break;
