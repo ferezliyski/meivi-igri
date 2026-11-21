@@ -447,6 +447,7 @@ function render(){
   lastKey = key;
   if(fx){ fx = false; confetti(); }
   if(window.MROOM && (S.screen==="room" || S.screen==="multi")) MROOM.after();
+  if(window.MEIVI_UPDATE) MEIVI_UPDATE.idle();
 }
 
 /* ---------- Actions ---------- */
@@ -557,6 +558,10 @@ MEIVI.app = {
   show(screen){ S.screen = screen; S.g = null; render(); window.scrollTo(0,0); },
   refresh(){ if(S.screen === "room" || S.screen === "multi") render(); },
   redraw(){ if(S.screen !== "play") render(); },
+  /* For the update check (index.html): is the player on a list of games, with nothing open and nothing going on? */
+  idle(){ return ["start","home","multi"].includes(S.screen) && !S.sheet && !(window.MROOM && (MROOM.room.st.mode || MROOM.ui.sheet)) && !(window.MACC && (MACC.state.sheet || MACC.state.busy)); },
+  /* ...and remember the screen, so that the new release opens on the same list. */
+  park(){ try{ sessionStorage.setItem("meivi.screen", S.screen); }catch(e){} },
   /* Back from signing in: to the game the player wanted ("s:<id>" one phone, "m:<id>" multiplayer). */
   open(key){
     const id = String(key).slice(2);
@@ -569,6 +574,7 @@ document.documentElement.lang = CFG.lang;
 document.title = T.title;
 window.addEventListener("error", e => { if(!app.innerHTML) app.textContent = T.loadError(e.message); });
 loadNames();
+try{ const p = sessionStorage.getItem("meivi.screen"); if(p){ sessionStorage.removeItem("meivi.screen"); if(p === "home" || (p === "multi" && MULTI)) S.screen = p; } }catch(e){}
 try{ render(); }catch(e){ app.textContent = T.loadError(e.message); }
 if(window.MROOM) MROOM.boot();
 if(window.MACC) MACC.boot();

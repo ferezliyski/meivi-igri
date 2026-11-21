@@ -428,7 +428,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21k";
+  var MEIVI_RELEASE = "2026-11-21l";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
@@ -446,6 +446,38 @@ textarea{font:inherit;color:inherit}
     (MEIVI.catalog.multi || []).forEach(function (g) { if (g.ready) ready.push(dir + "multi/" + g.id + ".js"); });
     var files = [dir + "ui.js", dir + "multi.js"].concat(ready, games.map(function (id) { return dir + "games/" + id + ".js"; }), ready.length ? ["rooms.js", "rooms-games.js"] : [], c.account ? ["account.js"] : [], ["app.js"]);
     document.write(files.map(function (f) { return '<script src="' + f + v + '"><\/script>'; }).join(""));
+  })();
+</script>
+<script>
+  /* A phone that keeps the app open (the icon on the home screen) would stay on an old release for hours,
+     and the site lets a phone keep this page for ten minutes. So whenever the app is opened or comes back
+     to the front it asks the site which release is current. If a newer one is out, it loads it, but only
+     while the player is on a list of games: never in the middle of a game or a room. */
+  (function () {
+    var asked = 0, want = null;
+    function apply() {
+      if (!want || !window.MEIVI || !MEIVI.app || !MEIVI.app.idle || !MEIVI.app.idle()) return;
+      try { if (sessionStorage.getItem("meivi.update") === want) return; sessionStorage.setItem("meivi.update", want); } catch (e) {}
+      MEIVI.app.park();
+      location.replace(location.pathname + "?u=" + encodeURIComponent(want));
+    }
+    function check() {
+      if (want) return apply();
+      if (Date.now() - asked < 60000) return;
+      asked = Date.now();
+      fetch(location.pathname + "?check=" + asked, { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
+        var m = /MEIVI_RELEASE = "([^"]+)"/.exec(t);
+        if (m && m[1] !== MEIVI_RELEASE) { want = m[1]; apply(); }
+      }).catch(function () {});
+    }
+    window.MEIVI_UPDATE = { check: check, idle: function () { if (want) setTimeout(apply, 0); } };
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+    window.addEventListener("pageshow", function (e) { if (e.persisted) check(); });
+    setTimeout(check, 3000);
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.has("u")) { q.delete("u"); history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "")); }
+    } catch (e) {}
   })();
 </script>
 </body>
