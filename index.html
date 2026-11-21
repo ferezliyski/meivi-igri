@@ -219,6 +219,9 @@ tr:last-child td{border-bottom:0}
 th:first-child,td:first-child{text-align:left;overflow-wrap:anywhere;font-weight:700}
 th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .sheet{position:fixed;inset:0;background:rgba(31,31,31,.5);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+html.noscroll body{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+.sheet{overscroll-behavior:contain;touch-action:none}
+.sheet > div{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .sheet > div{width:100%;max-width:480px;max-height:85%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:24px 18px 26px;display:flex;flex-direction:column;gap:16px}
 
 /* Share poster */
@@ -428,7 +431,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21l";
+  var MEIVI_RELEASE = "2026-11-21m";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

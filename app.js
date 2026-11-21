@@ -431,6 +431,7 @@ function viewEnd(){
   </div>`;
 }
 
+let held = false, heldAt = 0;
 function render(){
   let v;
   if(S.screen==="start" && MULTI) v = viewStart();
@@ -447,6 +448,13 @@ function render(){
   lastKey = key;
   if(fx){ fx = false; confetti(); }
   if(window.MROOM && (S.screen==="room" || S.screen==="multi")) MROOM.after();
+  /* While a window (rules, account, a code) is open, the page behind it stays still, exactly where it was. */
+  const windowOpen = !!app.querySelector?.(".sheet");
+  if(windowOpen !== held && document.body){
+    held = windowOpen;
+    if(held){ heldAt = window.scrollY || 0; document.body.style.top = -heldAt + "px"; document.documentElement.classList.add("noscroll"); }
+    else { document.documentElement.classList.remove("noscroll"); document.body.style.top = ""; window.scrollTo(0, heldAt); }
+  }
   if(window.MEIVI_UPDATE) MEIVI_UPDATE.idle();
 }
 
