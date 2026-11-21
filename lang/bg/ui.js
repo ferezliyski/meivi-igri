@@ -9,10 +9,10 @@ MEIVI.ui = {
 
   /* ---------- first screen: one phone or several ---------- */
   startTitle: "Как ще играете?",
-  onePhone: "На един телефон",
-  onePhoneText: "Подавате телефона от ръка на ръка.",
-  manyPhones: "На няколко телефона",
-  manyPhonesText: "Всеки е на своя телефон. Влизате в една стая с код, дори от разстояние.",
+  onePhone: "Един телефон",
+  onePhoneText: "Един телефон е достатъчен за цялата компания.",
+  manyPhones: "Мултиплеър",
+  manyPhonesText: "Всеки играе от своя телефон – на една маса или от разстояние.",
   gamesCount: n => n === 1 ? "1 игра" : `${n} игри`,
   soon: "Скоро",
   /* how many games for several phones can be played now, out of all announced */
