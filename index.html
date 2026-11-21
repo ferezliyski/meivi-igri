@@ -358,6 +358,10 @@ button.mrow:active{transform:scale(.98)}
 .msoon{border:1px dashed #DDBFBE;border-radius:999px;background:rgba(255,255,255,.6);padding:12px 16px;min-height:46px;font-weight:700;font-size:14px;color:var(--muted)}
 .seg button[data-act="mn"]{font-weight:700;font-size:17px}
 
+/* The result as a picture, when the phone cannot share it directly */
+.storyimg{display:block;width:min(100%,300px);margin:0 auto;border-radius:22px;box-shadow:var(--sh);-webkit-touch-callout:default}
+a.btn{display:block;text-align:center;text-decoration:none}
+
 /* Testers: three small buttons in the top corner of a card */
 .card .rv{position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:2}
 .card .rv ~ .heat{position:static;align-self:flex-start;margin-top:-4px}
@@ -443,7 +447,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-21o";
+  var MEIVI_RELEASE = "2026-11-21p";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
@@ -459,7 +463,7 @@ textarea{font:inherit;color:inherit}
     /* Games for several phones: the text of every game that is built, then the rooms and the rules. */
     var ready = [];
     (MEIVI.catalog.multi || []).forEach(function (g) { if (g.ready) ready.push(dir + "multi/" + g.id + ".js"); });
-    var files = [dir + "ui.js", dir + "multi.js"].concat(ready, games.map(function (id) { return dir + "games/" + id + ".js"; }), ready.length ? ["rooms.js", "rooms-games.js"] : [], c.account ? ["account.js"] : [], ["app.js"]);
+    var files = [dir + "ui.js", dir + "multi.js"].concat(ready, games.map(function (id) { return dir + "games/" + id + ".js"; }), ready.length ? ["rooms.js", "rooms-games.js"] : [], c.account ? ["account.js"] : [], ["story.js", "app.js"]);
     document.write(files.map(function (f) { return '<script src="' + f + v + '"><\/script>'; }).join(""));
   })();
 </script>

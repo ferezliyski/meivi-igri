@@ -152,12 +152,15 @@ MEIVI.ui = {
   matchWord: "съвпадение",
   ranking: "Класиране",
   playToo: site => `Играй и ти на ${site}`,
-  share: (game, percent, title, lines, site) => `${game} · игра от Meivi\n${percent ? percent + " съвпадение. " : ""}${title}\n${lines}\nИграй и ти: ${site}`,
-  copy: "Копирай резултата за споделяне",
-  copied: "Копирано",
+  shareStory: "Сподели резултата",
+  shareWait: "Подготвям картинката…",
+  shareText: (game, url) => `Играхме „${game}“ от Meivi. Играй и ти: ${url}`,
+  shareTitle: "Картинка за споделяне",
+  shareKeep: "Задръж пръст върху картинката и избери „Запази“, после я качи в стори или в чат.",
+  shareSave: "Изтегли картинката",
+  close: "Затвори",
   again: "Играй пак",
   backToGame: "Назад към играта",
-  storyTip: "Направи снимка на картата и я пусни в стори.",
 
   /* ---------- games for several phones: the room ---------- */
   rooms: {

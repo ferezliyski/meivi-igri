@@ -43,7 +43,7 @@ function poolOf(g){
 
 /* ---------- State ---------- */
 let S = {screen: MULTI ? "start" : "home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
-         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false};
+         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}};
 try{ S.mn = +(localStorage.getItem("meivi.multi.n") || 0) || 0; }catch(e){}
 
 const app = document.getElementById("app");
@@ -67,7 +67,7 @@ function saveNames(){ try{ localStorage.setItem("meivi.games.players", JSON.stri
 /* ---------- Building the deck ---------- */
 function begin(){
   const g = game(), n = S.players.length;
-  S.i = 0; S.sel = []; S.flash = ""; S.sheet = false; S.copied = false; S.picked = null; S.answered = 0; S.hist = [];
+  S.run++; S.i = 0; S.sel = []; S.flash = ""; S.sheet = false; S.copied = false; S.picked = null; S.answered = 0; S.hist = [];
   S.stats = S.players.map(() => ({a:0,b:0,pass:0}));
   if(g.eng === "cards"){
     let deck = poolOf(g).map(([k,t,l]) => ({k,t,l}));
@@ -384,11 +384,55 @@ function summary(){
   if(p) rows.push([T.passKing, p.names]);
   return {title:T.recap, rows};
 }
-function shareText(){
-  const g = game(), s = summary();
-  const lines = s.rows.map(([k,v]) => `${k}: ${v}`).join("\n");
-  return T.share(g.name, s.big || "", s.title, lines, CFG.site);
+/* The same result as the end screen, as plain data for the picture (story.js). */
+function storyData(){
+  const g = game(), s = summary(), n = S.players.length;
+  let rows = s.rows.slice(), hero;
+  if(s.big) hero = {kind:"ring", big:s.big, word:T.matchWord, title:s.title, names:`${S.players[0]} ${T.and} ${S.players[1]}`};
+  else if(g.eng==="quiz" && n > 1 && rows.length){ hero = {kind:"podium", label:T.finalRanking, top:S.players.map((p,i) => ({p, b:S.stats[i].b})).sort((x,y) => y.b - x.b).slice(0,3)}; rows = []; }
+  else if(rows.length){ const [k,v] = rows.shift(); hero = {kind:"name", label:k, name:v}; }
+  else hero = {kind:"title", title:s.title};
+  let rank = null;
+  if(g.eng !== "match" && (g.eng !== "quiz" || n > 3)){
+    const list = S.players.map((p,i) => ({p, ...S.stats[i]})).sort((x,y) => (y.a+y.b)-(x.a+x.b));
+    let cols = g.eng==="quiz" ? [[T.colRight,"b"]] : [[T.colPointed,"a"],[T.colPoints,"b"],[T.colPass,"pass"]].filter(([,k]) => list.some(r => r[k] > 0));
+    if(!cols.length) cols = [[T.colPoints,"b"]];
+    rank = {head:T.ranking, cols:cols.map(([t]) => t), list:list.map(r => ({p:r.p, v:cols.map(([,k]) => r[k])}))};
+  }
+  return {color:g.c, icon:g.ico || "", game:g.name, brand:T.brand, foot:T.playToo(location.host), hero, rows, rank};
 }
+/* The picture is made as soon as the end screen shows, so that "share" can open the phone's menu at once. */
+function prepareStory(){
+  if(!MEIVI.story || S.story.run === S.run) return;
+  const run = S.run; S.story = {run, file:null, url:"", sheet:false, wanted:false};
+  MEIVI.story.make(storyData()).then(blob => {
+    if(!blob || S.story.run !== run) return;
+    S.story.file = new File([blob], "meivi-" + S.g + ".png", {type:"image/png"});
+    S.story.url = URL.createObjectURL(blob);
+    if(S.story.wanted && S.screen === "end") render();
+  }).catch(() => {});
+}
+function shareStory(){
+  const st = S.story, text = T.shareText(game().name, location.origin);
+  if(!st.file){ st.wanted = true; return; }
+  st.wanted = false;
+  try{
+    if(navigator.canShare && navigator.canShare({files:[st.file]})){
+      navigator.share({files:[st.file], text}).catch(() => {});
+      return;
+    }
+  }catch(e){}
+  st.sheet = true;   /* no sharing of pictures on this phone: show it, to be kept by hand */
+}
+function viewStorySheet(){
+  return `<div class="sheet" data-act="story-close"><div role="dialog" aria-label="${T.shareTitle}">
+    <h1 class="rsheet-h">${T.shareTitle}</h1>
+    <img class="storyimg" src="${S.story.url}" alt="">
+    <p class="note">${T.shareKeep}</p>
+    <a class="btn" href="${S.story.url}" download="meivi-${h(S.g)}.png">${T.shareSave}</a>
+    <button class="btn ghost" data-act="story-close">${T.close}</button></div></div>`;
+}
+
 function viewEnd(){
   const g = game(), s = summary(), n = S.players.length;
   let rows = s.rows.slice(), hero;
@@ -427,11 +471,10 @@ function viewEnd(){
     <p class="pfoot">${T.playToo(`<b>${h(CFG.site)}</b>`)}</p>
   </section>
   <div class="stack">
-    <button class="btn" data-act="copy">${S.copied ? T.copied : T.copy}</button>
+    <button class="btn" data-act="share" ${MEIVI.story ? "" : "disabled"}>${S.story.wanted && !S.story.file ? T.shareWait : T.shareStory}</button>
     <div class="row"><button class="btn ghost" data-act="again">${T.again}</button><button class="btn ghost" data-act="home">${T.allGames}</button></div>
     ${canBack() ? `<button class="btn ghost small" data-act="back" style="align-self:center"><span aria-hidden="true">←</span> ${T.backToGame}</button>` : ""}
-    <p class="note" style="text-align:center">${T.storyTip}</p>
-  </div>`;
+  </div>${S.story.sheet && S.story.url ? viewStorySheet() : ""}`;
 }
 
 let held = false, heldAt = 0;
@@ -458,6 +501,7 @@ function render(){
     if(held){ heldAt = window.scrollY || 0; document.body.style.top = -heldAt + "px"; document.documentElement.classList.add("noscroll"); }
     else { document.documentElement.classList.remove("noscroll"); document.body.style.top = ""; window.scrollTo(0, heldAt); }
   }
+  if(S.screen === "end") prepareStory();
   if(window.MEIVI_UPDATE) MEIVI_UPDATE.idle();
 }
 
@@ -556,9 +600,8 @@ app.addEventListener("click", e => {
     case "sheet": S.sheet = true; break;
     case "sheet-close": S.sheet = false; break;
     case "quit": if(game().eng !== "quiz") keep(); S.screen = "end"; S.sheet = false; S.copied = false; fx = true; break;
-    case "copy":
-      navigator.clipboard.writeText(shareText()).then(() => { S.copied = true; render(); }).catch(() => {});
-      return;
+    case "share": shareStory(); break;
+    case "story-close": if(b.classList.contains("sheet") && e.target !== b) return; S.story.sheet = false; break;
   }
   render();
 });
