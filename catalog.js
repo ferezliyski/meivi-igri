@@ -83,9 +83,9 @@ MEIVI.catalog = {
 };
 
 /* Games for several phones: every player is on their own phone, all in one room.
-   The page shows them by the fewest players a game needs ("min"): for two, from 3, from 4...
-   A game marked "ready" can be played (its rules are in rooms-games.js; "max" is the most players);
-   the others are only announced. Names are in lang/<language>/multi.js. */
+   The page asks "how many are you?" and shows the games that fit: "min" is the fewest players, "max" the most
+   (a game that is not built yet may have no "max"). A game marked "ready" can be played (its rules are in
+   rooms-games.js); the others are only announced. Names are in lang/<language>/multi.js. */
 MEIVI.catalog.multi = [
   /* for two */
   { id: "mirror", icon: "👀", color: "lilac", min: 2, max: 2, ready: true },
@@ -93,16 +93,16 @@ MEIVI.catalog.multi = [
   { id: "deal", icon: "📝", color: "sky", min: 2, max: 2, ready: true },
   { id: "letters", icon: "✉️", color: "hot", min: 2, max: 2, ready: true },
   { id: "wishes18", icon: "🔥", color: "gold", min: 2, max: 2, ready: true, adult: true },
-  { id: "knowme", icon: "🎯", color: "lilac", min: 2 },
-  { id: "pairwho", icon: "👫", color: "lilac", min: 2 },
-  { id: "memories", icon: "📸", color: "lilac", min: 2 },
-  { id: "boat", icon: "🚣", color: "mint", min: 2 },
-  { id: "escape", icon: "🗝️", color: "mint", min: 2 },
-  { id: "battle", icon: "⚔️", color: "sky", min: 2 },
-  { id: "wish", icon: "🌠", color: "sky", min: 2 },
-  { id: "q36", icon: "💬", color: "hot", min: 2 },
-  { id: "future", icon: "🔭", color: "hot", min: 2 },
-  { id: "spicydeal", icon: "🌶️", color: "gold", min: 2, adult: true },
+  { id: "knowme", icon: "🎯", color: "lilac", min: 2, max: 2 },
+  { id: "pairwho", icon: "👫", color: "lilac", min: 2, max: 2 },
+  { id: "memories", icon: "📸", color: "lilac", min: 2, max: 2 },
+  { id: "boat", icon: "🚣", color: "mint", min: 2, max: 2 },
+  { id: "escape", icon: "🗝️", color: "mint", min: 2, max: 2 },
+  { id: "battle", icon: "⚔️", color: "sky", min: 2, max: 2 },
+  { id: "wish", icon: "🌠", color: "sky", min: 2, max: 2 },
+  { id: "q36", icon: "💬", color: "hot", min: 2, max: 2 },
+  { id: "future", icon: "🔭", color: "hot", min: 2, max: 2 },
+  { id: "spicydeal", icon: "🌶️", color: "gold", min: 2, max: 2, adult: true },
   /* from three */
   { id: "mole", icon: "🕵️", color: "hot", min: 3, max: 10, ready: true },
   { id: "conquer", icon: "🗺️", color: "sky", min: 3, max: 8, ready: true },

@@ -19,9 +19,14 @@ MEIVI.ui = {
   multiCount: (ready, all) => ready === 0 ? `${all} игри · Скоро` : ready >= all ? `${all} игри` : `${ready} игри · още ${all - ready} скоро`,
   toStart: "Начало",
   multiTitle: "Всеки играе на своя телефон",
-  /* the games are shown by the fewest players they need */
-  multiGroup: n => n === 2 ? "За двама" : `От ${n} играчи`,
-  multiGroupShort: n => n === 2 ? "За двама" : `От ${n}`,
+  /* the page of the games for several phones: first "how many are you?", then the games that fit */
+  howMany: "Колко сте?",
+  sixPlus: "6+",
+  multiAll: "Всички игри",
+  multiFor: n => ({ 2: "Игри за двама", 3: "Игри за трима", 4: "Игри за четирима", 5: "Игри за петима" })[n] || "Игри за шестима и повече",
+  multiNone: "Засега няма готова игра за толкова играчи. Скоро ще има.",
+  soonMore: n => n === 1 ? "Очаквайте още 1 игра" : `Очаквайте още ${n} игри`,
+  playersShort: (min, max) => min === max ? `${min} души` : `${min}–${max} души`,
   multiNote: "Един отваря стая, другите влизат с код или QR. Докосни игра, за да видиш правилата й.",
 
   /* ---------- games for one phone ---------- */

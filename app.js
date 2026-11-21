@@ -30,9 +30,10 @@ const GAMES = MEIVI.catalog.games
 /* Games for several phones are only announced for now; a site without them starts straight at the list. */
 const MULTI = MEIVI.multi && MEIVI.catalog.multi ? MEIVI.catalog.multi : null;
 const multiCount = () => MULTI.length;
-/* The games for several phones, by the fewest players each needs: [[2, games], [3, games], ...]. Ready games first. */
-const multiGroups = () => [...new Set(MULTI.map(g => g.min))].sort((a, b) => a - b)
-  .map(n => [n, MULTI.filter(g => g.min === n).sort((a, b) => (MEIVI.mready && MEIVI.mready(b.id) ? 1 : 0) - (MEIVI.mready && MEIVI.mready(a.id) ? 1 : 0))]);
+/* "How many are you?": a game fits when the number is between its fewest and its most players.
+   6 stands for "six or more". A game that is not built yet has no "max" and fits from its fewest up. */
+const multiFits = (g, n) => !n || (n >= 6 ? g.min <= 6 && (g.max == null || g.max >= 6) : g.min <= n && (g.max == null || g.max >= n));
+const multiReady = g => !!(MEIVI.mready && MEIVI.mready(g.id));
 
 const KIND_CLASS = {A:"c-gold",V:"c-mint",Q:"c-hot",D:"c-lilac"};
 const KIND_COLOR = {A:"gold",V:"mint",Q:"hot",D:"lilac",G:"gold"};
@@ -42,7 +43,8 @@ function poolOf(g){
 
 /* ---------- State ---------- */
 let S = {screen: MULTI ? "start" : "home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
-         sheet:false, copied:false, picked:null, m:null};
+         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false};
+try{ S.mn = +(localStorage.getItem("meivi.multi.n") || 0) || 0; }catch(e){}
 
 const app = document.getElementById("app");
 const h = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -110,28 +112,29 @@ function viewStart(){
 /* ---------- Games for several phones (announced, not yet playable) ---------- */
 function viewMulti(){
   const M = MEIVI.multi;
-  const tile = g => { const t = M.games[g.id] || {name: g.id}, color = g.color || "hot";
-    /* A game that is built opens its rules; the others are only announced. */
-    if(MEIVI.mready && MEIVI.mready(g.id)) return `<button class="tile c-${color}" data-act="r-open" data-g="${g.id}">
-      <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
-      <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small>${T.players(g.min, g.max)}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
-    </button>`;
-    return `<div class="tile wait c-${color}">
-      <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
-      <span class="tx"><b>${t.name}</b>${t.hint ? `<small>${t.hint}</small>` : ""}<small><i class="pill">${T.soon}</i>${g.adult ? ` <i class="age">18+</i>` : ""}</small></span>
-    </div>`; };
-  const groups = multiGroups();
-  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button><img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
+  /* One game is one narrow row. A game that is built opens its rules; the others are only announced. */
+  const row = g => { const t = M.games[g.id] || {name: g.id}, color = g.color || "hot", ready = multiReady(g);
+    const body = `<span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
+      <span class="tx"><b>${t.name}</b>${t.desc || t.hint ? `<small>${t.desc || t.hint}</small>` : ""}</span>
+      <span class="end">${ready ? `<i>${T.playersShort(g.min, g.max)}</i>` : `<i class="pill">${T.soon}</i>`}${g.adult ? `<i class="age">18+</i>` : ""}</span>`;
+    return ready ? `<button class="mrow c-${color}" data-act="r-open" data-g="${g.id}">${body}</button>` : `<div class="mrow wait c-${color}">${body}</div>`; };
+  const fit = MULTI.filter(g => multiFits(g, S.mn)), ready = fit.filter(multiReady), soon = fit.filter(g => !multiReady(g));
+  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>${window.MROOM ? `<button class="btn small join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}<img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
   <header class="stack ghead">
     <span class="brand">${T.manyPhones}</span>
     <h1>${T.multiTitle}</h1>
     <p class="note">${T.multiNote}</p>
   </header>
-  <nav class="cats" aria-label="${T.shelvesLabel}">${groups.map(([n]) => `<button data-act="cat" data-i="m-${n}">${T.multiGroupShort(n)}</button>`).join("")}${window.MROOM ? `<button class="join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</nav>
-  ${groups.map(([n, games]) => `<section class="shelf" id="cat-m-${n}">
-    <div class="headrow"><h2 class="mh">${T.multiGroup(n)}</h2><span class="cnt">${T.gamesCount(games.length)}</span></div>
-    <div class="grid plain">${games.map(tile).join("")}</div>
-  </section>`).join("")}${window.MROOM ? MROOM.overlay() : ""}`;
+  <section class="stack">
+    <h2>${T.howMany}</h2>
+    <div class="seg" role="group" aria-label="${T.howMany}">${[2, 3, 4, 5, 6].map(n => `<button data-act="mn" data-n="${n}" aria-pressed="${S.mn === n}">${n === 6 ? T.sixPlus : n}</button>`).join("")}</div>
+  </section>
+  <section class="stack">
+    <div class="headrow"><h2>${S.mn ? T.multiFor(S.mn) : T.multiAll}</h2><span class="cnt">${T.gamesCount(ready.length)}</span></div>
+    ${ready.length ? `<div class="mlist">${ready.map(row).join("")}</div>` : `<p class="how">${T.multiNone}</p>`}
+    ${soon.length ? `<button class="msoon" data-act="msoon" aria-expanded="${S.msoon}">${T.soonMore(soon.length)} <span aria-hidden="true">${S.msoon ? "▴" : "▾"}</span></button>
+    ${S.msoon ? `<div class="mlist">${soon.map(row).join("")}</div>` : ""}` : ""}
+  </section>${window.MROOM ? MROOM.overlay() : ""}`;
 }
 
 /* ---------- Games for one phone ---------- */
@@ -493,6 +496,8 @@ app.addEventListener("click", e => {
     case "home": S.screen = "home"; S.g = null; window.scrollTo(0,0); break;
     case "landing": S.screen = "start"; S.g = null; window.scrollTo(0,0); break;
     case "multi": S.screen = "multi"; S.g = null; window.scrollTo(0,0); break;
+    case "mn": S.mn = S.mn === +b.dataset.n ? 0 : +b.dataset.n; try{ localStorage.setItem("meivi.multi.n", S.mn); }catch(e){} break;
+    case "msoon": S.msoon = !S.msoon; break;
     case "rounds": S.rounds = +b.dataset.v; break;
     case "level": S.level = +b.dataset.v; break;
     case "kind": S.kinds[b.dataset.k] = !S.kinds[b.dataset.k]; break;
