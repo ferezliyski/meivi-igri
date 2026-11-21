@@ -32,7 +32,7 @@ MEIVI.config = {
     gamePath: "/products/igra-{id}"
   },
 
-  /* false = every game is open for everyone (the shop is not selling yet).
+  /* false = every game is open for everyone.
      true = a game opens only for a player who owns it. */
-  locks: false
+  locks: true
 };

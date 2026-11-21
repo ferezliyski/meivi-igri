@@ -139,7 +139,7 @@ function viewMulti(){
 
 /* ---------- Games for one phone ---------- */
 function viewHome(){
-  const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}" data-act="open" data-g="${g.id}">${window.MACC && MACC.locked("s:" + g.id) ? `<i class="lock" aria-hidden="true">🔒</i>` : ""}
+  const tile = (g, big) => `<button class="tile c-${g.c}${big ? " big" : ""}${window.MACC && MACC.locked("s:" + g.id) ? " locked" : ""}" data-act="open" data-g="${g.id}">${window.MACC && MACC.locked("s:" + g.id) ? `<i class="lock" aria-hidden="true">🔒</i>` : ""}
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
       <span class="tx"><b>${g.name}</b>${big ? `<span class="d">${g.desc}</span>` : ""}
         <small>${playersLabel(g)} · ${T.engines[g.eng]}${g.adult ? ` · <i class="age">18+</i>` : ""}</small></span>
