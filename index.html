@@ -415,6 +415,41 @@ a.btn{display:block;text-align:center;text-decoration:none}
 /* The player's account */
 .acctop{justify-content:flex-end;margin-bottom:-14px;min-height:40px}
 .acc{font-weight:700}
+/* The player's credits: a gold coin, on the first screen and in the account window */
+.coin{width:22px;height:22px;border-radius:50%;flex:none;position:relative;
+  background:radial-gradient(circle at 34% 30%, #FFF1BF 0 18%, #F7C948 42%, #D9901A 78%, #B8700C 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.55), inset 0 -2px 3px rgba(120,60,0,.35), 0 2px 5px -1px rgba(150,80,0,.45)}
+.coin::after{content:"M";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:10.5px;color:#8A4E00;opacity:.85}
+.coin.big{width:54px;height:54px}
+.coin.big::after{font-size:24px}
+.wallet{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;background:var(--surface);box-shadow:var(--sh);padding:6px 14px 6px 7px;min-height:40px;color:var(--ink)}
+.wallet b{font-family:var(--display);font-weight:800;font-size:16px;line-height:1}
+.wallet small{font-size:13px;font-weight:600;color:var(--muted)}
+.who-row{display:flex;align-items:center;gap:12px}
+.who-row .avatar{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--ink);color:#fff;font-family:var(--display);font-weight:800;font-size:18px}
+.who-row b{display:block;font-family:var(--display);font-weight:800;font-size:18px}
+.who-row small{display:block;color:var(--muted);font-size:13.5px;overflow-wrap:anywhere}
+.wcard{position:relative;overflow:hidden;border-radius:28px;padding:20px 20px 18px;color:#fff;display:flex;flex-direction:column;gap:10px;
+  background:linear-gradient(135deg, #8E1F1E 0%, var(--hot) 45%, var(--coral) 100%);box-shadow:0 18px 36px -18px rgba(140,30,30,.7)}
+.wcard::before,.wcard::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.1)}
+.wcard::before{width:180px;height:180px;right:-60px;top:-70px}
+.wcard::after{width:120px;height:120px;right:40px;bottom:-70px}
+.wcard > *{position:relative}
+.wlabel{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.wnum{display:flex;align-items:center;gap:12px}
+.wnum b{font-family:var(--display);font-weight:800;font-size:46px;line-height:1}
+.wnum span:last-child{font-size:16px;font-weight:700;opacity:.92;align-self:flex-end;margin-bottom:6px}
+.wcard p{font-size:13.5px;line-height:1.4;opacity:.92}
+.owned{display:flex;flex-wrap:wrap;gap:8px}
+.owned span{background:#E5F3EF;color:var(--mint);border-radius:999px;padding:7px 12px;font-weight:700;font-size:13.5px}
+.cbk{background:var(--surface);border-radius:24px;box-shadow:var(--sh);padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.cbk-h{display:flex;align-items:center;gap:8px;font-size:16px}
+.cbk .note{font-size:13.5px}
+.cbk-bar{height:12px;border-radius:999px;background:#F6E7E6;overflow:hidden}
+.cbk-bar i{display:block;height:100%;min-width:12px;border-radius:999px;background:linear-gradient(90deg, #F7C948, #E39A1C)}
+.cbk-row{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;color:var(--muted)}
+.cbk-row b{color:var(--ink)}
+.cbk-got{font-size:13.5px;font-weight:700;color:#B8700C}
 .gate{background:rgba(255,255,255,.72);border-radius:24px;padding:16px}
 .gate a.btn,.sheet a.btn{display:block;text-align:center;text-decoration:none}
 /* A locked game is a little grey, so that the games a player owns stand out. */
@@ -489,7 +524,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-23b";
+  var MEIVI_RELEASE = "2026-11-23c";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

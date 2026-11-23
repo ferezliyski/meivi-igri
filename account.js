@@ -78,7 +78,7 @@
   const shop = path => A.store + (path || A.shopPath || "");
   /* The small button on the first screen. */
   function button() {
-    return st.account ? `<button class="btn ghost small acc" data-act="a-open"><span aria-hidden="true">👤</span> ${esc(X.credits(st.account.credits))}</button>`
+    return st.account ? `<button class="wallet" data-act="a-open" aria-label="${esc(X.title + ": " + X.credits(st.account.credits))}"><span class="coin" aria-hidden="true"></span><b>${esc(st.account.credits)}</b><small>${esc(X.creditsWord(st.account.credits))}</small></button>`
                       : `<button class="btn ghost small acc" data-act="a-in">${esc(st.busy ? X.signingIn : X.signIn)}</button>`;
   }
   /* In place of "start": what a player must do to open a locked game. */
@@ -96,14 +96,30 @@
   /* The account window. */
   function overlay() {
     if (!st.sheet || !st.account) return "";
-    const a = st.account;
+    const a = st.account, C = X.cashback, k = a.cashback;
+    const initial = (a.email || "?").trim()[0] || "?";
+    /* Credits for shopping: how far the player is towards the next one. */
+    let shopping = "";
+    if (C && k && k.step > 0) {
+      const into = k.spent % k.step, pct = Math.round(into / k.step * 100);
+      shopping = `<section class="cbk">
+        <p class="cbk-h"><span aria-hidden="true">🛍️</span><b>${esc(C.title)}</b></p>
+        <p class="note">${esc(C.how(X.money(k.step)))}</p>
+        <div class="cbk-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${k.step}" aria-valuenow="${into}" aria-label="${esc(C.title)}"><i style="width:${pct}%"></i></div>
+        <p class="cbk-row"><span>${esc(C.of(X.money(into), X.money(k.step)))}</span><b>${esc(C.left(X.money(k.step - into)))}</b></p>
+        ${k.earned ? `<p class="cbk-got">${esc(C.earned(k.earned))}</p>` : ""}
+      </section>`;
+    }
+    const owned = [...a.passes.map(p => X.pass[p]), ...(a.games.length ? [X.opened(a.games.length)] : [])];
     return `<div class="sheet rsheet" data-act="a-close"><div role="dialog" aria-label="${esc(X.title)}">
-      <h1 class="rsheet-h">${esc(X.title)}</h1>
-      <p class="note">${esc(a.email)}</p>
-      <div class="rbig c-hot"><b>${esc(a.credits)}</b><span>${esc(X.creditsWord(a.credits))}</span></div>
-      <p class="how">${esc(X.how)}</p>
-      ${a.passes.length ? `<p class="rp strong">${a.passes.map(p => esc(X.pass[p])).join(" · ")}</p>` : ""}
-      ${a.games.length ? `<p class="note">${esc(X.opened(a.games.length))}</p>` : ""}
+      <div class="who-row"><span class="avatar" aria-hidden="true">${esc(initial.toUpperCase())}</span><span><b>${esc(X.title)}</b><small>${esc(a.email)}</small></span></div>
+      <section class="wcard">
+        <span class="wlabel">${esc(X.walletLabel)}</span>
+        <div class="wnum"><span class="coin big" aria-hidden="true"></span><b>${esc(a.credits)}</b><span>${esc(X.creditsWord(a.credits))}</span></div>
+        <p>${esc(X.how)}</p>
+      </section>
+      ${owned.length ? `<div class="owned">${owned.map(t => `<span>✓ ${esc(t)}</span>`).join("")}</div>` : ""}
+      ${shopping}
       <a class="btn" href="${esc(shop())}" target="_blank" rel="noopener">${esc(X.buyCredits)}</a>
       <div class="row"><button class="btn ghost" data-act="a-out">${esc(X.signOut)}</button><button class="btn ghost" data-act="a-close">${esc(X.close)}</button></div>
     </div></div>`;

@@ -240,6 +240,16 @@ MEIVI.ui = {
     credits: n => n === 1 ? "1 кредит" : `${n} кредита`,
     creditsWord: n => n === 1 ? "кредит" : "кредита",
     how: "Игра за един телефон се отключва с 1 кредит, мултиплеър игра с 2. Отключената игра остава твоя.",
+    walletLabel: "Кредити за игри",
+    money: cents => { const v = (cents / 100).toFixed(2).replace(".", ",").replace(/,00$/, ""); return `${v} €`; },
+    /* credits for shopping in the store: 1 for every 50 € of products, added up over all orders */
+    cashback: {
+      title: "Кредити от покупки",
+      how: step => `На всеки ${step} пазаруване в магазина получаваш 1 кредит за игри.`,
+      of: (have, step) => `${have} от ${step}`,
+      left: rest => `Още ${rest} до кредит`,
+      earned: n => n === 1 ? "Досега от покупки: 1 кредит" : `Досега от покупки: ${n} кредита`
+    },
     pass: { s: "Всички игри за един телефон", m: "Всички мултиплеър игри" },
     opened: n => n === 1 ? "Отключена игра: 1" : `Отключени игри: ${n}`,
     buyCredits: "Купи кредити",
