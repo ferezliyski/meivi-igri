@@ -247,7 +247,35 @@ MEIVI.ui = {
     noCredits: "Кредитите не стигат.",
     failed: "Не се получи. Опитай пак.",
     /* testers only: the three buttons on a card */
-    review: { title: "Оценка на картата", bad: "Смени картата", good: "Харесва ми, остава", fix: "Добра е, но трябва да се преправи" }
+    review: {
+      title: "Оценка на картата", bad: "Смени картата", good: "Харесва ми, остава", fix: "Добра е, но трябва да се преправи",
+      /* the note window after ⇄ or ✕ */
+      noteFix: "Какво да се промени?",
+      noteBad: "Защо да се смени? (по желание)",
+      tags: { missing: "Липсва ми отговор", fit: "Отговорите не пасват", unclear: "Неясен въпрос", boring: "Скучно е", awkward: "Неудобен въпрос", repeat: "Повтаря друга карта" },
+      tagsFix: ["missing", "fit", "unclear", "boring"],
+      tagsBad: ["boring", "awkward", "repeat", "unclear"],
+      placeholder: "Напиши с твои думи (по желание)",
+      save: "Запази", skip: "Пропусни", remove: "Махни оценката на картата",
+      /* the tester's box on a game's screens, and the opinion of the whole game */
+      tester: "Тестер",
+      counted: (n, total) => `Оценени карти: ${n} от ${total}`,
+      opinion: "📝 Мнение за играта",
+      opinionEdit: "✓ Мнението е запазено · Промени",
+      fbTitle: "Мнение за играта",
+      stars: "Колко ти хареса?",
+      liked: "Какво ти хареса?",
+      change: "Какво да се промени?",
+      again: "Ще я играеш ли пак?",
+      againOpts: { yes: "Да", maybe: "Може би", no: "Не" },
+      players: "С колко души играхте? (по желание)",
+      playerOpts: [[2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6+"]],
+      minutes: "Колко време? (по желание)",
+      minuteOpts: [[15, "до 15 мин"], [30, "15–30 мин"], [60, "30–60 мин"], [90, "над час"]],
+      send: "Изпрати", sending: "Изпращане…",
+      fbEmpty: "Дай звезди или напиши нещо.",
+      fbThanks: "Благодарим! Мнението е запазено."
+    }
   },
 
   /* Names an early version filled in by itself ("Играч 1"); they are dropped when names are read back. */

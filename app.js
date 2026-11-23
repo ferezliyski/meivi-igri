@@ -54,6 +54,9 @@ const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j
 const game = () => GAMES.find(g => g.id === S.g);
 /* A tester's buttons on a card (account.js); empty for everyone else. */
 const rv = text => window.MACC ? MACC.reviewButtons("s:" + S.g, text) : "";
+/* Every card of a game, written exactly as rv() above gets it, so that a tester's marks can be counted. */
+const cardTexts = g => g.eng === "cards" ? g.cards.map(c => c[1]) : g.eng === "quiz" ? g.qs.map(([q, o]) => q + " → " + o[0]) : g.qs.map(q => Array.isArray(q) ? q[0] : q);
+const testerBox = (g, wide) => window.MACC && MACC.testerBox ? MACC.testerBox("s:" + g.id, cardTexts(g), wide) : "";
 const playersLabel = g => T.players(g.n[0], g.n[1]);
 
 function loadNames(){
@@ -206,6 +209,7 @@ function viewSetup(){
     <p>${g.desc}</p>
   </header>
   <p class="how">${how}</p>
+  ${testerBox(g)}
   <section class="stack">
     <div class="headrow"><h2>${T.playersTitle(n)}</h2><span class="req">${T.playersNeed(g.n[0], g.n[1])}</span></div>
     <div class="chips">
@@ -487,6 +491,7 @@ function viewEnd(){
     ${rank}
     <p class="pfoot">${T.playToo(`<b>${h(CFG.site)}</b>`)}</p>
   </section>
+  ${testerBox(g, true)}
   <div class="stack">
     <button class="btn" data-act="share" ${MEIVI.story ? "" : "disabled"}>${S.story.wanted && !S.story.file ? T.shareWait : T.shareStory}</button>
     <div class="row"><button class="btn ghost" data-act="again">${T.again}</button><button class="btn ghost" data-act="home">${T.allGames}</button></div>
@@ -504,6 +509,8 @@ function render(){
   else if(S.screen==="setup") v = viewSetup();
   else if(S.screen==="end") v = viewEnd();
   else v = {cards:viewCards, quiz:viewQuiz, match:viewMatch}[game().eng]();
+  /* A tester's windows (a note on a card, an opinion of the game) open over any screen of a game. */
+  if(window.MACC && MACC.testerSheets && game() && ["setup","play","end"].includes(S.screen)) v += MACC.testerSheets();
   app.innerHTML = v;
   app.querySelector?.(".card")?.style.setProperty("--tilt", (S.i % 2 ? 1.3 : -1.3) + "deg");
   const key = S.screen + ":" + S.g + ":" + S.i + ":" + (S.m ? S.m.step : "");
