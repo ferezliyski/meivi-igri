@@ -126,7 +126,9 @@ function viewMulti(){
       <span class="end">${ready ? `<i>${window.MACC && MACC.locked("m:" + g.id) ? "🔒 " : ""}${T.playersShort(g.min, g.max)}</i>` : `<i class="pill">${T.soon}</i>`}${g.adult ? `<i class="age">18+</i>` : ""}</span>`;
     return ready ? `<button class="mrow c-${color}${window.MACC && MACC.locked("m:" + g.id) ? " locked" : ""}" data-act="r-open" data-g="${g.id}">${body}</button>` : `<div class="mrow wait c-${color}">${body}</div>`; };
   const fit = MULTI.filter(g => multiFits(g, S.mn)), ready = fit.filter(multiReady), soon = fit.filter(g => !multiReady(g));
-  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>${window.MROOM ? `<button class="btn small join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</div>
+  /* Top right: the profile button, with "join a room" under it. */
+  return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>
+    <div class="tright">${window.MACC ? MACC.button() : ""}${window.MROOM ? `<button class="btn small join" data-act="r-join">${T.rooms.joinRoom}</button>` : ""}</div></div>
   <header class="stack hero">
     <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">${T.manyPhones}</span>
     <h1>${T.multiTitle}</h1>
@@ -141,7 +143,7 @@ function viewMulti(){
     ${ready.length ? `<div class="mlist">${ready.map(row).join("")}</div>` : `<p class="how">${T.multiNone}</p>`}
     ${soon.length ? `<button class="msoon" data-act="msoon" aria-expanded="${S.msoon}">${T.soonMore(soon.length)} <span aria-hidden="true">${S.msoon ? "▴" : "▾"}</span></button>
     ${S.msoon ? `<div class="mlist">${soon.map(row).join("")}</div>` : ""}` : ""}
-  </section>${window.MROOM ? MROOM.overlay() : ""}`;
+  </section>${window.MROOM ? MROOM.overlay() : ""}${window.MACC ? MACC.overlay() : ""}`;
 }
 
 /* ---------- Games for one phone ---------- */
@@ -174,7 +176,7 @@ function viewHome(){
     </section>`;
   };
   return `
-  ${MULTI ? `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button></div>` : ""}
+  ${MULTI || window.MACC ? `<div class="top">${MULTI ? `<button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>` : "<span></span>"}${window.MACC ? MACC.button() : ""}</div>` : ""}
   <header class="stack hero">
     <img class="logo" src="logo-ink.png" alt="Meivi"><span class="brand">${T.brand}</span>
     <h1>${T.homeTitle}</h1>

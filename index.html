@@ -354,6 +354,9 @@ html.noscroll body{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 }
 /* Games for several phones: "how many are you?" and one narrow row per game */
 .top .join{background:var(--ink);color:#fff;box-shadow:none;margin-left:auto}
+.top .tright{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-left:auto}
+.top:has(.tright){align-items:flex-start}
+.top .tright .join{margin-left:0}
 .mlist{display:flex;flex-direction:column;gap:10px}
 .mrow{
   display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:22px;padding:11px 14px 11px 11px;min-height:66px;color:var(--ink);
@@ -525,7 +528,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-23f";
+  var MEIVI_RELEASE = "2026-11-23g";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
