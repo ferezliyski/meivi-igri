@@ -407,6 +407,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .fbq{display:flex;flex-direction:column;gap:8px}
 .fbq > b{font-size:15px}
 .stars{display:flex;gap:6px}
+.fbcheck{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:18px;padding:12px 14px;font-weight:700;font-size:15px;color:var(--ink)}
+.fbcheck .box{width:26px;height:26px;border-radius:8px;border:2px solid #CDB8B7;flex:none;display:grid;place-items:center;color:#fff;font-size:16px;line-height:1}
+.fbcheck[aria-checked="true"]{border-color:var(--lilac);background:#F3EFFB}
+.fbcheck[aria-checked="true"] .box{background:var(--lilac);border-color:var(--lilac)}
 .stars button{border:0;background:none;padding:0 2px;font-size:36px;line-height:1;color:#E6D6D5}
 .stars button[aria-pressed="true"]{color:#F2A900}
 .tbox{border:1.5px dashed #1F6FB5;border-radius:22px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:rgba(31,111,181,.05)}
@@ -528,7 +532,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-23g";
+  var MEIVI_RELEASE = "2026-11-23h";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

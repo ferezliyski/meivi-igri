@@ -231,15 +231,16 @@
     if (act === "a-rvdel" && r) { st.rv = null; setReview(r.game, r.key, r.v, { clear: true }); return true; }
     if (act === "a-rvskip") { st.rv = null; return true; }
     if (act === "a-fbopen") { const g = b.dataset.g, o = opinions[g] || {};
-      st.fb = { game: g, stars: o.stars || 0, liked: o.liked || "", change: o.change || "", again: o.again || "", players: o.players || 0, minutes: o.minutes || 0, err: "", busy: false }; return true; }
+      st.fb = { game: g, stars: o.stars || 0, liked: o.liked || "", change: o.change || "", again: o.again || "", players: o.players || 0, minutes: o.minutes || 0, multi: !!o.multi, err: "", busy: false }; return true; }
     if (act === "a-fbclose") { if (f && f.busy) return false; st.fb = null; return true; }
     if (!f) return false;
+    if (act === "a-fbmulti") { f.multi = !f.multi; f.err = ""; return true; }
     if (act === "a-fbset") { const k = b.dataset.k, v = k === "again" ? b.dataset.v : +b.dataset.v; f[k] = f[k] === v ? (k === "again" ? "" : 0) : v; f.err = ""; return true; }
     if (act === "a-fbsend") {
       document.querySelectorAll("[data-fb]").forEach(el => { f[el.dataset.fb] = el.value; });
-      if (!f.stars && !f.liked.trim() && !f.change.trim() && !f.again) { f.err = R().fbEmpty; return true; }
+      if (!f.stars && !f.liked.trim() && !f.change.trim() && !f.again && !f.multi) { f.err = R().fbEmpty; return true; }
       f.busy = true; f.err = "";
-      const body = { game: f.game, stars: f.stars || null, liked: f.liked, change: f.change, again: f.again || null, players: f.players || null, minutes: f.minutes || null };
+      const body = { game: f.game, stars: f.stars || null, liked: f.liked, change: f.change, again: f.again || null, players: f.players || null, minutes: f.minutes || null, multi: !!f.multi };
       api("feedback", "POST", body).then(() => { opinions[f.game] = body; st.fb = null; st.fbThanks = f.game; })
         .catch(() => { f.busy = false; f.err = X.failed; }).then(() => { if (MEIVI.app.repaint) MEIVI.app.repaint(); });
       return true;
@@ -270,6 +271,7 @@
         <div class="fbq"><b>${esc(Y.again)}</b>${seg("again", Object.entries(Y.againOpts))}</div>
         <div class="fbq"><b>${esc(Y.players)}</b>${seg("players", Y.playerOpts)}</div>
         <div class="fbq"><b>${esc(Y.minutes)}</b>${seg("minutes", Y.minuteOpts)}</div>
+        <button class="fbcheck" data-act="a-fbmulti" role="checkbox" aria-checked="${!!f.multi}"><span class="box" aria-hidden="true">${f.multi ? "✓" : ""}</span><span>${esc(Y.multi)}</span></button>
         ${f.err ? `<p class="flash">${esc(f.err)}</p>` : ""}
         <div class="row rfoot"><button class="btn ghost" data-act="a-fbclose">${esc(X.close)}</button><button class="btn" data-act="a-fbsend" ${f.busy ? "disabled" : ""}>${esc(f.busy ? Y.sending : Y.send)}</button></div>
       </div></div>`;
