@@ -134,6 +134,14 @@ MEIVI.ui = {
   whichOfTwo: question => "Кой от двамата " + question,
   same: "Съвпадение",
   different: "Разминаване",
+  /* an answer in one's own words, and the one the question is about judging the guess */
+  ownAnswer: "✏️ Друго…",
+  ownPlaceholder: "Напиши отговора",
+  ownDone: "Готово",
+  ownBack: "← Към отговорите",
+  judgeAsk: (subj, guesser) => `${subj}, позна ли ${guesser}?`,
+  judge: { yes: "✓ Позна", half: "≈ Почти", no: "✕ Не позна" },
+  judged: { yes: "Позна!", half: "Почти позна", no: "Не позна" },
 
   /* ---------- points and the end ---------- */
   colPlayer: "Играч",

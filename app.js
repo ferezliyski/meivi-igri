@@ -340,21 +340,59 @@ function viewMatch(){
   if(m.step===1 || m.step===3){
     const who = I.order[(m.step-1)/2];
     const prompt = I.about ? (who===I.subj ? I.q[0] : I.q[1].replace("{n}", S.players[I.subj])) : I.neutral;
+    /* "About me" cards also take an answer in one's own words, for when the right one is not among the four. */
+    const own = I.about && m.typing
+      ? `<form class="add own" id="ownForm"><input id="ownAns" maxlength="80" value="${h(m.draft || "")}" placeholder="${T.ownPlaceholder}" autocomplete="off" aria-label="${T.ownPlaceholder}">
+          <button class="btn small" type="submit">${T.ownDone}</button></form>
+         <button class="btn ghost small" data-act="m-type" style="align-self:center">${T.ownBack}</button>`
+      : `<div class="opts">${I.opts.map((o,i) => `<button class="opt" data-act="m-pick" data-i="${i}">${h(o)}</button>`).join("")}
+         ${I.about ? `<button class="opt other" data-act="m-type">${T.ownAnswer}</button>` : ""}</div>`;
     return `${bar}
     <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
       <p class="who">${T.answers(bold(S.players[who]))}</p><p class="q">${h(prompt)}</p></article></div>
-    <div class="opts">${I.opts.map((o,i) => `<button class="opt" data-act="m-pick" data-i="${i}">${h(o)}</button>`).join("")}</div>`;
+    ${own}`;
   }
-  const same = m.ans[0] === m.ans[1];
+  const said = a => typeof a === "number" ? h(I.opts[a]) : `„${h(a.txt)}“`;
+  const r = matchResult(m, I);
+  const guesser = S.players[I.order[1]], subj = S.players[I.order[0]];
+  /* An answer in someone's own words: the one the question was about says how close the guess was. */
+  const judge = r === null
+    ? `<p class="who">${T.judgeAsk(bold(subj), bold(guesser))}</p>
+       <div class="judge"><button class="btn j-yes" data-act="m-judge" data-v="1">${T.judge.yes}</button>
+         <button class="btn j-half" data-act="m-judge" data-v="0.5">${T.judge.half}</button>
+         <button class="btn j-no" data-act="m-judge" data-v="0">${T.judge.no}</button></div>`
+    : `<button class="btn" data-act="m-next">${T.next}</button>`;
+  const verdict = r === null ? "" : m.judged == null ? (r === 1 ? T.same : T.different) : (r === 1 ? T.judged.yes : r === 0.5 ? T.judged.half : T.judged.no);
   return `${bar}
   <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
     <p class="q">${h(I.neutral)}</p>
-    <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${h(I.opts[m.ans[0]])}</b></div>
-    <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${h(I.opts[m.ans[1]])}</b></div>
-    <p class="verdict" style="color:${same ? "#1E7F6B" : "#B12A29"}">${same ? T.same : T.different}</p>
+    <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${said(m.ans[0])}</b></div>
+    <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${said(m.ans[1])}</b></div>
+    ${verdict ? `<p class="verdict" style="color:${r === 1 ? "#1E7F6B" : r === 0.5 ? "#B7791F" : "#B12A29"}">${verdict}</p>` : ""}
   </article></div>
-  <button class="btn" data-act="m-next">${T.next}</button>`;
+  ${judge}`;
 }
+/* How the two answers of a round compare: 1 the same, 0 different, 0.5 "almost" (judged by a person),
+   null when an answer was written in one's own words and the person the question is about has not judged yet. */
+const plain = s => String(s).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+function matchResult(m, I){
+  const [a, b] = m.ans;
+  if(typeof a === "number" && typeof b === "number") return a === b ? 1 : 0;
+  const ta = typeof a === "number" ? I.opts[a] : a.txt, tb = typeof b === "number" ? I.opts[b] : b.txt;
+  if(plain(ta) === plain(tb)) return 1;
+  return m.judged == null ? null : m.judged;
+}
+/* Counts a finished round once its result is known. */
+function scoreRound(){
+  const m = S.m, I = matchInfo(), r = matchResult(m, I);
+  if(r === null) return;
+  m.played = (m.played||0) + 1;
+  m.hits += r;
+  if(r === 1) fx = true;
+  if(I.about){ const guesser = 1 - I.subj; m.asked[guesser]++; m.guess[guesser] += r; }
+}
+/* 3.5 is written the Bulgarian way, 3,5. */
+const num = n => Number.isInteger(n) ? String(n) : String(n).replace(".", ",");
 
 /* ---------- Points and the end ---------- */
 function scoreTable(){
@@ -383,9 +421,9 @@ function summary(){
     const pct = played ? Math.round(m.hits/played*100) : 0;
     const rows = [];
     if(S.deck.some(q => Array.isArray(q) && q.length===3)){
-      rows.push([T.guessed(S.players[0]), T.outOf(m.guess[0], m.asked[0])], [T.guessed(S.players[1]), T.outOf(m.guess[1], m.asked[1])]);
+      rows.push([T.guessed(S.players[0]), T.outOf(num(m.guess[0]), m.asked[0])], [T.guessed(S.players[1]), T.outOf(num(m.guess[1]), m.asked[1])]);
       if(m.guess[0] !== m.guess[1]) rows.push([T.knowsBetter, S.players[m.guess[0] > m.guess[1] ? 0 : 1]]);
-    }else rows.push([T.matches, T.outOf(m.hits, played)]);
+    }else rows.push([T.matches, T.outOf(num(m.hits), played)]);
     return {big:`${pct}%`, title:T.tier(pct), rows};
   }
   if(g.eng==="quiz"){
@@ -556,8 +594,19 @@ function advance(){
   if(el && !calm()){ busy = true; el.classList.add("out"); setTimeout(go, 190); }
   else go();
 }
+/* What is typed in "Друго…" survives a redraw of the screen. */
+app.addEventListener("input", e => { if(e.target.id === "ownAns" && S.m) S.m.draft = e.target.value; });
 app.addEventListener("submit", e => {
   e.preventDefault();
+  /* An answer in one's own words ("Друго…") in the game for two. */
+  if(e.target.id === "ownForm"){
+    const txt = (document.getElementById("ownAns")?.value || "").trim().slice(0, 80), m = S.m;
+    if(!txt || busy){ document.getElementById("ownAns")?.focus(); return; }
+    keep();
+    m.ans[(m.step-1)/2] = {txt}; m.step++; m.typing = false; m.draft = "";
+    if(m.step === 4){ m.judged = null; scoreRound(); }
+    render(); window.scrollTo(0,0); return;
+  }
   /* Forms of the rooms (name, code, a letter) are handled by rooms.js. */
   if(e.target.id !== "addForm"){ if(window.MROOM){ MROOM.submit(e.target); render(); } return; }
   const inp = document.getElementById("newName"), name = inp.value.trim();
@@ -611,17 +660,14 @@ app.addEventListener("click", e => {
     case "m-ready": keep(); S.m.step++; break;
     case "m-pick": {
       keep();
-      const m = S.m, I = matchInfo();
-      m.ans[(m.step-1)/2] = +b.dataset.i; m.step++;
-      if(m.step === 4){
-        const same = m.ans[0] === m.ans[1];
-        m.played = (m.played||0) + 1;
-        if(same){ m.hits++; fx = true; }
-        if(I.about){ const guesser = 1 - I.subj; m.asked[guesser]++; if(same) m.guess[guesser]++; }
-      }
+      const m = S.m;
+      m.ans[(m.step-1)/2] = +b.dataset.i; m.step++; m.typing = false; m.draft = "";
+      if(m.step === 4){ m.judged = null; scoreRound(); }
       break;
     }
-    case "m-next": keep(); S.m.step = 0; S.m.ans = [null,null]; return advance();
+    case "m-type": S.m.typing = !S.m.typing; break;
+    case "m-judge": { keep(); S.m.judged = +b.dataset.v; scoreRound(); break; }
+    case "m-next": keep(); S.m.step = 0; S.m.ans = [null,null]; S.m.judged = null; return advance();
     case "sheet": S.sheet = true; break;
     case "sheet-close": S.sheet = false; break;
     case "quit": if(game().eng !== "quiz") keep(); S.screen = "end"; S.sheet = false; S.copied = false; fx = true; break;

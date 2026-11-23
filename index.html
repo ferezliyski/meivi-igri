@@ -385,6 +385,14 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .rvb.rv-bad{color:#C8322F;border-color:#C8322F} .rvb.rv-good{color:#1E8A4C;border-color:#1E8A4C} .rvb.rv-fix{color:#1F6FB5;border-color:#1F6FB5}
 .rvb[aria-pressed="true"]{color:#fff;opacity:1;box-shadow:0 4px 10px -4px rgba(0,0,0,.5)}
 .rvb.rv-bad[aria-pressed="true"]{background:#C8322F} .rvb.rv-good[aria-pressed="true"]{background:#1E8A4C} .rvb.rv-fix[aria-pressed="true"]{background:#1F6FB5}
+/* Game for two: an answer in one's own words, and judging the guess */
+.opt.other{background:transparent;border-style:dashed;box-shadow:none;color:var(--muted)}
+.card .ans span{flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .ans b{text-align:right;overflow-wrap:anywhere}
+.add.own input{font-size:17px}
+.judge{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.judge .btn{padding-left:6px;padding-right:6px;font-size:15px}
+.judge .j-yes{background:#1E7F6B} .judge .j-half{background:#B7791F} .judge .j-no{background:#B12A29}
 /* Testers: the note window, the opinion of a game, and the small box on a game's screens */
 .rvhead{display:flex;align-items:center;gap:10px;font-size:19px;line-height:1.2}
 .rvhead .rvb{flex:none}
@@ -481,7 +489,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-23a";
+  var MEIVI_RELEASE = "2026-11-23b";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
