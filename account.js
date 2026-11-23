@@ -78,7 +78,7 @@
   const shop = path => A.store + (path || A.shopPath || "");
   /* The small button on the first screen. */
   function button() {
-    return st.account ? `<button class="wallet" data-act="a-open" aria-label="${esc(X.title + ": " + X.credits(st.account.credits))}"><span class="coin" aria-hidden="true"></span><b>${esc(st.account.credits)}</b><small>${esc(X.creditsWord(st.account.credits))}</small></button>`
+    return st.account ? `<button class="wallet" data-act="a-open" aria-label="${esc(X.title + ": " + X.credits(st.account.credits))}"><span class="coin" aria-hidden="true"></span><b>${esc(st.account.credits)}</b><i class="wsep" aria-hidden="true"></i><small>${esc(X.profile)}</small></button>`
                       : `<button class="btn ghost small acc" data-act="a-in">${esc(st.busy ? X.signingIn : X.signIn)}</button>`;
   }
   /* In place of "start": what a player must do to open a locked game. */
