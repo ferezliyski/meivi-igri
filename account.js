@@ -110,7 +110,10 @@
         ${k.earned ? `<p class="cbk-got">${esc(C.earned(k.earned))}</p>` : ""}
       </section>`;
     }
-    const owned = a.games.length ? [X.opened(a.games.length)] : [];
+    /* All games the player can open, the "all games" passes included, counted over the games on this site. */
+    const keys = MEIVI.app && MEIVI.app.gameKeys ? MEIVI.app.gameKeys() : null;
+    const open = keys ? keys.filter(owns).length : a.games.length;
+    const owned = open ? [X.opened(open)] : [];
     return `<div class="sheet rsheet" data-act="a-close"><div role="dialog" aria-label="${esc(X.title)}">
       <div class="who-row"><span class="avatar" aria-hidden="true">${esc(initial.toUpperCase())}</span><span><b>${esc(X.title)}</b><small>${esc(a.email)}</small></span></div>
       <section class="wcard">

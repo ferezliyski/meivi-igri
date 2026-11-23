@@ -684,6 +684,8 @@ MEIVI.app = {
   refresh(){ if(S.screen === "room" || S.screen === "multi") render(); },
   redraw(){ if(S.screen !== "play") render(); },
   repaint(){ render(); },
+  /* Every game a player can open on this site: "s:<id>" for one phone, "m:<id>" multiplayer (only those already built). */
+  gameKeys(){ return [...GAMES.map(g => "s:" + g.id), ...(MULTI ? MULTI.filter(multiReady).map(g => "m:" + g.id) : [])]; },
   /* For the update check (index.html): is the player on a list of games, with nothing open and nothing going on? */
   idle(){ return ["start","home","multi"].includes(S.screen) && !S.sheet && !(window.MROOM && (MROOM.room.st.mode || MROOM.ui.sheet)) && !(window.MACC && (MACC.state.sheet || MACC.state.busy)); },
   /* ...and remember the screen, so that the new release opens on the same list. */
