@@ -239,7 +239,7 @@ MEIVI.ui = {
     title: "Моят профил",
     credits: n => n === 1 ? "1 кредит" : `${n} кредита`,
     creditsWord: n => n === 1 ? "кредит" : "кредита",
-    how: "Игра за един телефон се отключва с 1 кредит, мултиплеър игра с 2. Отключената игра остава твоя.",
+    how: "Игра за един телефон се отключва с 1 кредит.\nМултиплеър игра се отключва с 2 кредита.",
     walletLabel: "Кредити за игри",
     money: cents => { const v = (cents / 100).toFixed(2).replace(".", ",").replace(/,00$/, ""); return `${v} €`; },
     /* credits for shopping in the store: 1 for every 50 € of products, added up over all orders */

@@ -439,7 +439,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .wnum{display:flex;align-items:center;gap:12px}
 .wnum b{font-family:var(--display);font-weight:800;font-size:46px;line-height:1}
 .wnum span:last-child{font-size:16px;font-weight:700;opacity:.92;align-self:flex-end;margin-bottom:6px}
-.wcard p{font-size:13.5px;line-height:1.4;opacity:.92}
+.wcard p{font-size:13.5px;line-height:1.4;opacity:.92;white-space:pre-line}
 .owned{display:flex;flex-wrap:wrap;gap:8px}
 .owned span{background:#E5F3EF;color:var(--mint);border-radius:999px;padding:7px 12px;font-weight:700;font-size:13.5px}
 .cbk{background:var(--surface);border-radius:24px;box-shadow:var(--sh);padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px}
@@ -524,7 +524,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-23c";
+  var MEIVI_RELEASE = "2026-11-23d";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
