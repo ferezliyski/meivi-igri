@@ -405,6 +405,45 @@
     }
   });
 
+  /* ---------- Long-distance couple (for two): one card on both phones, taking turns ----------
+     The card says whose turn it is. That one answers out loud (on a call) or in the chat;
+     the other taps "answered" or "skipped", and the next card comes to the other partner.
+     Moved here from the one-phone games on 2026-11-25 (same 50 cards: Q = question, D = small task). */
+  G("distance", {
+    min: 2, max: 2, over,
+    setup(c) {
+      const g = { round: 0, rounds: 20, order: order(c, c.tx.cards), first: c.pick(c.ids), told: blank(c.ids), skipped: blank(c.ids) };
+      this.deal(c, g); return g;
+    },
+    deal(c, g) {
+      g.round++;
+      g.card = c.tx.cards[g.order[(g.round - 1) % g.order.length]];
+      const second = c.ids.find(id => id !== g.first);
+      g.turn = g.round % 2 ? g.first : second;
+    },
+    view(c, g, pid) {
+      const t = c.tx.t, sub = round(c, g), mine = pid === g.turn, who = c.name(g.turn);
+      const card = { k: "card", tag: t.kinds[g.card[0]] || t.kinds.Q, color: g.card[0] === "D" ? "gold" : "sky", text: g.card[1], sub: mine ? t.yourTurn : t.theirTurn(who) };
+      if (mine) return { sub, blocks: [card, { k: "p", text: t.sayIt }], note: t.otherTaps(c.name(c.ids.find(id => id !== pid))), host: [{ t: c.ui.skipWait, cmd: "skip", ghost: true, sure: true }] };
+      return { sub, blocks: [card], input: { k: "choice", options: [{ v: "told", t: t.told }, { v: "skip", t: t.skip }] } };
+    },
+    ans(c, g, pid, v) {
+      if (pid === g.turn || !["told", "skip"].includes(v)) return;
+      (v === "told" ? g.told : g.skipped)[g.turn]++;
+      this.step(c, g);
+    },
+    step(c, g) { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); },
+    cmd(c, g, name) { if (name === "skip") { g.skipped[g.turn]++; this.step(c, g); } },
+    final(c, g) {
+      const t = c.tx.t, top = Math.max(...c.ids.map(id => g.told[id])), tops = c.ids.filter(id => g.told[id] === top);
+      return { blocks: [
+        { k: "big", text: tops.length > 1 ? t.draw : c.name(tops[0]), sub: tops.length > 1 ? t.drawSub : t.award },
+        { k: "rows", title: t.tableTitle, rows: c.ids.map(id => ({ l: c.name(id), r: t.counts(g.told[id], g.skipped[id]) })) },
+        { k: "p", text: t.bye }
+      ] };
+    }
+  });
+
   /* ---------- 10. Secret wishes 18+ (for two): shown only when both want it ---------- */
   G("wishes18", {
     min: 2, max: 2, over,
