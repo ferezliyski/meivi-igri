@@ -175,7 +175,7 @@ MEIVI.ui = {
   shareSave: "Изтегли картинката",
   close: "Затвори",
   again: "Играй пак",
-  backToGame: "Назад към играта",
+  toAllGames: "Към всички игри",
 
   /* ---------- games for several phones: the room ---------- */
   rooms: {

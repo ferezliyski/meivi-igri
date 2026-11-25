@@ -534,8 +534,8 @@ function viewEnd(){
   ${testerBox(g, true)}
   <div class="stack">
     <button class="btn" data-act="share" ${MEIVI.story ? "" : "disabled"}>${S.story.wanted && !S.story.file ? T.shareWait : T.shareStory}</button>
-    <div class="row"><button class="btn ghost" data-act="again">${T.again}</button><button class="btn ghost" data-act="home">${T.allGames}</button></div>
-    ${canBack() ? `<button class="btn ghost small" data-act="back" style="align-self:center"><span aria-hidden="true">←</span> ${T.backToGame}</button>` : ""}
+    <div class="row">${canBack() ? `<button class="btn ghost" data-act="back"><span aria-hidden="true">←</span> ${T.back}</button>` : ""}<button class="btn ghost" data-act="again">${T.again}</button></div>
+    <button class="btn ghost small" data-act="home" style="align-self:center">${T.toAllGames}</button>
   </div>${S.story.sheet && S.story.url ? viewStorySheet() : ""}`;
 }
 
@@ -638,7 +638,9 @@ app.addEventListener("click", e => {
     case "drink": S.drink = b.dataset.v==="1"; break;
     case "del": S.players.splice(+b.dataset.i,1); saveNames(); break;
     case "front": { const i = +b.dataset.i; S.players.unshift(S.players.splice(i,1)[0]); saveNames(); break; }
-    case "start": case "again": begin(); window.scrollTo(0,0); break;
+    case "start": begin(); window.scrollTo(0,0); break;
+    // "Играй пак": back to the game's first screen (players, rounds), not straight into a new deck.
+    case "again": S.screen = "setup"; window.scrollTo(0,0); break;
     case "pick": { const i = +b.dataset.i, k = S.sel.indexOf(i); if(k>=0) S.sel.splice(k,1); else S.sel.push(i); break; }
     case "back": goBack(); window.scrollTo(0,0); break;
     case "next": {
