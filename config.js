@@ -12,7 +12,7 @@ MEIVI.config = {
   site: "meivi.bg",
 
   /* Which games this site offers. null = every game of the catalogue that has a text file in this
-     language. Or a list of ids, for example ["couple", "girls", "party"]. */
+     language. Or a list of ids, for example ["couple", "date", "party"]. */
   games: null,
 
   /* The server of this country's games (its own Supabase project, here "meivi-igri-bg"): address and public key.

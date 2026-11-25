@@ -24,7 +24,6 @@ MEIVI.catalog = {
   categories: ["couples", "adult", "friends", "family", "occasions", "quiz", "holidays", "travel"],
   games: [
     { id: "couple", cat: "couples", color: "hot", eng: "match", players: [2, 2], icon: "💞" },
-    { id: "girls", cat: "friends", color: "lilac", eng: "cards", players: [2, 10], icon: "💅" },
     { id: "family", cat: "family", color: "mint", eng: "cards", players: [2, 10], icon: "🏡" },
     { id: "zodiac", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🔮" },
     { id: "xmas", cat: "holidays", color: "gold", eng: "quiz", players: [1, 8], icon: "🎄" },
@@ -51,7 +50,6 @@ MEIVI.catalog = {
     { id: "never", cat: "friends", color: "gold", eng: "cards", players: [3, 12], icon: "🙊" },
     { id: "who", cat: "friends", color: "mint", eng: "cards", players: [3, 12], icon: "👉" },
     { id: "truth", cat: "friends", color: "hot", eng: "cards", players: [2, 12], icon: "🎯" },
-    { id: "guys", cat: "friends", color: "sky", eng: "cards", players: [3, 12], icon: "🍻" },
     { id: "lies", cat: "friends", color: "lilac", eng: "cards", players: [3, 10], icon: "🤥" },
     { id: "hotseat", cat: "friends", color: "hot", eng: "cards", players: [3, 12], icon: "🔥" },
     { id: "kids", cat: "family", color: "sky", eng: "quiz", players: [1, 8], icon: "🧒" },
