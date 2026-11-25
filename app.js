@@ -13,6 +13,7 @@
    Quiz:  [question, [right, wrong, wrong, wrong]] (shown shuffled).
    Match: text (a choice between the two names), [question, [a, b]],
           or [about myself, about the other with {n}, [options]].
+          A game's "extra" list (e.g. "И двете", "Нито едното") is added under every [question, [a, b]].
    ===================================================================== */
 const CFG = MEIVI.config, T = MEIVI.ui;
 const SHELVES = MEIVI.catalog.categories;
@@ -325,7 +326,8 @@ function matchInfo(){
   const q = S.deck[S.i], about = Array.isArray(q) && q.length===3, same = Array.isArray(q) && q.length===2;
   const subj = about ? S.i % 2 : 0;
   const order = about ? [subj, 1-subj] : [0,1];
-  const opts = about ? q[2] : same ? q[1] : [S.players[0], S.players[1]];
+  // "extra": answers a game adds under every "this or that" question (e.g. "И двете", "Нито едното").
+  const opts = about ? q[2] : same ? q[1].concat(game().extra || []) : [S.players[0], S.players[1]];
   const neutral = about ? q[1].replace("{n}", S.players[subj]) : same ? q[0] : T.whichOfTwo(q);
   return {q, about, subj, order, opts, neutral};
 }
