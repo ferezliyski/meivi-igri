@@ -272,11 +272,12 @@ MEIVI.ui = {
     /* stars on every card, and the opinion of the game on its last screen */
     rating: {
       card: "Оценка на картата",
-      game: "Оцени играта",
+      game: "⭐ Оцени играта",
+      rated: "✓ Благодарим за оценката · Промени",
+      title: "Оцени играта",
       question: "Какво е мнението ви за играта?",
       send: "Изпрати", sending: "Изпращане…",
-      empty: "Дай звезди или напиши нещо.",
-      thanks: "Благодарим! Мнението е запазено."
+      empty: "Дай звезди или напиши нещо."
     }
   },
 

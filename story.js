@@ -28,7 +28,7 @@
   }
   /* Largest font size (down to "min") at which the text fits in "max" lines. */
   function fit(x, text, font, size, min, width, max) {
-    for (let s = size; s >= min; s -= 4) { x.font = font.replace("#", s); const l = lines(x, text, width, 99); if (l.length <= max) return { size: s, lines: l }; }
+    for (let s = size; s >= min; s -= 4) { x.font = font.replace("#", s); const l = lines(x, text, width, 99); if (l.length <= max && l.every(t => x.measureText(t).width <= width)) return { size: s, lines: l }; }
     x.font = font.replace("#", min); return { size: min, lines: lines(x, text, width, max) };
   }
   const loadImage = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });

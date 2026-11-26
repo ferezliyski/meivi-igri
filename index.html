@@ -284,7 +284,8 @@ a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important
 .ring > *{position:relative;grid-area:1/1;text-align:center}
 .ring b{font-family:var(--display);font-weight:800;font-size:50px;line-height:1;margin-top:-14px}
 .ring span{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.88;margin-top:52px}
-.ptitle{font-family:var(--display);font-weight:800;font-size:23px;line-height:1.15;text-align:center;text-wrap:balance}
+.ptitle{font-family:var(--display);font-weight:800;font-size:23px;line-height:1.15;text-align:center;text-wrap:balance;overflow-wrap:anywhere}
+.ptitle.long{font-size:min(23px, calc((100vw - 84px) / 17))}
 .pnames{text-align:center;font-weight:700;font-size:17px;opacity:.95;overflow-wrap:anywhere}
 .pnames i{font-style:normal;font-weight:500;opacity:.85}
 .podium{display:flex;align-items:flex-end;gap:10px;min-height:210px}
@@ -388,19 +389,16 @@ button.mrow:active{transform:scale(.98)}
 .storyimg{display:block;width:min(100%,300px);margin:0 auto;border-radius:22px;box-shadow:var(--sh);-webkit-touch-callout:default}
 a.btn{display:block;text-align:center;text-decoration:none}
 
-/* Rating: five stars under every card */
-.stars{display:flex;gap:6px}
-.stars button{border:0;background:none;padding:0 2px;font-size:36px;line-height:1;color:#E0D6D5}
+/* Rating: five small stars in the top corner of every card */
+.card .cstars{position:absolute;top:27px;right:16px;display:flex;z-index:2}
+.cstars button{border:0;background:none;padding:7px 1px;font-size:clamp(13px, 3.9vw, 18px);line-height:1;color:rgba(70,45,45,.2)}
+.cstars button[aria-pressed="true"]{color:#F2A900}
+.card .cstars ~ .heat{position:static;align-self:flex-start;margin-top:-4px}
+/* ...and the window for the opinion of the game */
+.stars{display:flex;justify-content:center;gap:10px}
+.stars button{border:0;background:none;padding:0 2px;font-size:42px;line-height:1;color:#E0D6D5}
 .stars button[aria-pressed="true"]{color:#F2A900}
-.cstars{justify-content:center;gap:8px;margin-top:-6px}
-.cstars button{font-size:32px;padding:2px 4px}
-/* ...and the opinion of the game under the share button */
-.rate{background:var(--surface);border-radius:26px;box-shadow:var(--sh);padding:18px;display:flex;flex-direction:column;gap:12px}
-.rate h2{font-size:17px}
-.rate .stars{justify-content:center;gap:10px}
-.rate .stars button{font-size:42px}
-.rate .rform b{font-size:15px}
-.rate .note,.rate .flash{text-align:left}
+.rsheet .rform b{font-size:15px}
 /* Game for two: an answer in one's own words, and judging the guess */
 .opt.other{background:transparent;border-style:dashed;box-shadow:none;color:var(--muted)}
 .card .ans span{flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -522,7 +520,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-26k";
+  var MEIVI_RELEASE = "2026-11-26n";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

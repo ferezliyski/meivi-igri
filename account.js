@@ -132,7 +132,7 @@
     if (act === "a-open") { st.sheet = true; refresh(); return true; }
     if (act === "a-close") { if (b.classList.contains("sheet") && target !== b) return false; st.sheet = false; return true; }
     if (act === "a-out") { signOut(); return true; }
-    if (act === "a-star" || act.startsWith("a-op")) return ratingClick(act, b);
+    if (act === "a-star" || act.startsWith("a-op")) return ratingClick(act, b, target);
     if (act === "a-unlock") { const key = b.dataset.g; if (st.sure !== key) { st.sure = key; return true; } unlock(key); return true; }
     return false;
   }
@@ -168,17 +168,17 @@
       /* A star tapped after this question left is newer than what the server just said. */
       Object.keys(touched).forEach(k => { const [g, c] = k.split("|"); if (g === game && touched[k].at >= asked) { if (touched[k].v) got[c] = touched[k].v; else delete got[c]; } });
       stars[game] = got; keepStars();
-      if (d.game && !(st.op && st.op.game === game)) opinions[game] = d.game;
+      if (d.game && !opinions[game]) opinions[game] = d.game;
       loaded[game] = "yes";
       repaint();
     } catch (e) { loaded[game] = ""; }
   }
-  /* Five stars under a card. Tapping the star that is already chosen takes the rating away. */
+  /* Five small stars in the top corner of a card. Tapping the chosen star again takes the rating away. */
   function cardStars(game, text) {
     if (!text) return "";
     const key = cardKey(String(text)), now = (stars[game] || {})[key] || 0;
     texts[game + "|" + key] = String(text);
-    return `<div class="stars cstars" role="group" aria-label="${esc(R().card)}">${[1, 2, 3, 4, 5].map(n =>
+    return `<div class="cstars" role="group" aria-label="${esc(R().card)}">${[1, 2, 3, 4, 5].map(n =>
       `<button data-act="a-star" data-g="${esc(game)}" data-c="${key}" data-v="${n}" aria-pressed="${now >= n}" aria-label="${n}">★</button>`).join("")}</div>`;
   }
   function setStars(game, key, v) {
@@ -191,41 +191,51 @@
     api("rate", "POST", { game, card: key, text: texts[id] || "", stars: next || null }).catch(() => { delete touched[id]; });
   }
   /* The opinion of a whole game, on its last screen: stars and one question. */
-  const opinionOf = game => {
-    if (!st.op || st.op.game !== game) { const o = opinions[game] || {}; st.op = { game, stars: o.stars || 0, text: o.opinion || "", busy: false, err: "", sent: false }; }
-    return st.op;
+  const openOpinion = game => {
+    const o = opinions[game] || {};
+    st.op = { game, stars: o.stars || 0, text: o.opinion || "", busy: false, err: "" };
   };
   /* What is being typed is kept, so that a redraw of the page does not lose it. */
   if (typeof document !== "undefined") document.addEventListener("input", e => {
     const t = e.target;
-    if (t.id === "opText" && st.op) { st.op.text = t.value; st.op.sent = false; }
+    if (t.id === "opText" && st.op) st.op.text = t.value;
   });
+  /* On the last screen: a button, and the small window it opens. */
   function gameRating(game) {
     if (!loaded[game]) loadRatings(game);
-    const o = opinionOf(game), Y = R();
-    return `<section class="rate"><h2>${esc(Y.game)}</h2>
-      <div class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="a-opstar" data-v="${n}" aria-pressed="${o.stars >= n}" aria-label="${n}">★</button>`).join("")}</div>
-      <label class="rform"><b>${esc(Y.question)}</b><textarea id="opText" rows="3" maxlength="1500">${esc(o.text)}</textarea></label>
-      ${o.err ? `<p class="flash">${esc(o.err)}</p>` : ""}${o.sent ? `<p class="note">${esc(Y.thanks)}</p>` : ""}
-      <button class="btn ghost" data-act="a-opsend" ${o.busy ? "disabled" : ""}>${esc(o.busy ? Y.sending : Y.send)}</button></section>`;
+    const o = opinions[game], Y = R();
+    return `<button class="btn ghost" data-act="a-opopen" data-g="${esc(game)}">${esc(o && (o.stars || o.opinion) ? Y.rated : Y.game)}</button>`;
   }
-  function ratingClick(act, b) {
+  function ratingSheet() {
+    const o = st.op, Y = R();
+    if (!o) return "";
+    return `<div class="sheet rsheet" data-act="a-opclose"><div role="dialog" aria-label="${esc(Y.title)}">
+      <h1 class="rsheet-h">${esc(Y.title)}</h1>
+      <div class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="a-opstar" data-v="${n}" aria-pressed="${o.stars >= n}" aria-label="${n}">★</button>`).join("")}</div>
+      <label class="rform"><b>${esc(Y.question)}</b><textarea id="opText" rows="4" maxlength="1500">${esc(o.text)}</textarea></label>
+      ${o.err ? `<p class="flash">${esc(o.err)}</p>` : ""}
+      <div class="row"><button class="btn ghost" data-act="a-opclose">${esc(X.close)}</button><button class="btn" data-act="a-opsend" ${o.busy ? "disabled" : ""}>${esc(o.busy ? Y.sending : Y.send)}</button></div>
+    </div></div>`;
+  }
+  function ratingClick(act, b, target) {
     if (act === "a-star") { setStars(b.dataset.g, b.dataset.c, +b.dataset.v); return true; }
+    if (act === "a-opopen") { openOpinion(b.dataset.g); return true; }
     const o = st.op;
     if (!o) return false;
-    if (act === "a-opstar") { const v = +b.dataset.v; o.stars = o.stars === v ? 0 : v; o.err = ""; o.sent = false; return true; }
+    if (act === "a-opclose") { if ((b.classList.contains("sheet") && target !== b) || o.busy) return false; st.op = null; return true; }
+    if (act === "a-opstar") { const v = +b.dataset.v; o.stars = o.stars === v ? 0 : v; o.err = ""; return true; }
     if (act === "a-opsend") {
       const el = document.getElementById("opText"); if (el) o.text = el.value;
       if (!o.stars && !o.text.trim()) { o.err = R().empty; return true; }
-      if (!st.token) { opinions[o.game] = { stars: o.stars, opinion: o.text }; o.sent = true; return true; }
+      const kept = { stars: o.stars, opinion: o.text };
+      if (!st.token) { opinions[o.game] = kept; st.op = null; return true; }
       o.busy = true; o.err = "";
-      const body = { game: o.game, stars: o.stars || null, opinion: o.text };
-      api("opinion", "POST", body).then(() => { opinions[o.game] = { stars: o.stars, opinion: o.text }; o.sent = true; })
-        .catch(() => { o.err = X.failed; }).then(() => { o.busy = false; repaint(); });
+      api("opinion", "POST", { game: o.game, stars: o.stars || null, opinion: o.text }).then(() => { opinions[o.game] = kept; st.op = null; })
+        .catch(() => { o.busy = false; o.err = X.failed; }).then(repaint);
       return true;
     }
     return false;
   }
 
-  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, loadRatings, cardStars, gameRating };
+  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, loadRatings, cardStars, gameRating, ratingSheet };
 })();

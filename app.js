@@ -60,7 +60,7 @@ const bold = s => `<b>${h(s)}</b>`;
 const rand = n => Math.floor(Math.random()*n);
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
 const game = () => GAMES.find(g => g.id === S.g);
-/* Five stars under a card, for every player to rate it (account.js). */
+/* Five small stars in the top corner of a card, for every player to rate it (account.js). */
 const rv = text => window.MACC ? MACC.cardStars("s:" + S.g, text) : "";
 const playersLabel = g => T.players(g.n[0], g.n[1]);
 
@@ -310,8 +310,7 @@ function viewCards(){
       <button class="btn" data-act="done">${c.k==="Q" ? T.answered : T.done}</button></div>`;
   }
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}"><span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
-  ${rv(c.t)}
+  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}">${rv(c.t)}<span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
   <p class="flash" aria-live="polite">${h(S.flash)}</p>
   ${actions}${S.sheet ? viewSheet() : ""}`;
 }
@@ -322,11 +321,10 @@ function viewQuiz(){
   const done = S.picked !== null;
   const right = c.opts.find(o => o.ok).t;
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${g.c}"><span class="tag">${h(c.tag || g.cat)}</span>
+  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="tag">${h(c.tag || g.cat)}</span>
     ${n > 1 ? `<p class="who">${T.turn(bold(S.players[p]))}</p>` : ""}
     <p class="q">${h(c.q)}</p>
   </article></div>
-  ${rv(c.q + " → " + right)}
   <div class="opts">${c.opts.map((o,i) => `<button class="opt ${done ? (o.ok ? "ok" : i===S.picked ? "bad" : "") : ""}"
       data-act="q-pick" data-i="${i}" ${done ? "disabled" : ""}>${h(o.t)}</button>`).join("")}</div>
   <p class="flash" aria-live="polite">${done ? (c.opts[S.picked].ok ? T.right : T.rightIs(h(right))) : ""}</p>
@@ -381,13 +379,12 @@ function viewMatch(){
     : `<button class="btn" data-act="m-next">${T.next}</button>`;
   const verdict = r === null ? "" : m.judged == null ? (r === 1 ? T.same : T.different) : (r === 1 ? T.judged.yes : r === 0.5 ? T.judged.half : T.judged.no);
   return `${bar}
-  <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
+  <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
     <p class="q">${h(I.neutral)}</p>
     <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${said(m.ans[0])}</b></div>
     <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${said(m.ans[1])}</b></div>
     ${verdict ? `<p class="verdict" style="color:${r === 1 ? "#1E7F6B" : r === 0.5 ? "#B7791F" : "#B12A29"}">${verdict}</p>` : ""}
   </article></div>
-  ${rv(Array.isArray(I.q) ? I.q[0] : I.q)}
   ${judge}`;
 }
 /* How the two answers of a round compare: 1 the same, 0 different, 0.5 "almost" (judged by a person),
@@ -515,7 +512,7 @@ function viewEnd(){
   let rows = s.rows.slice(), hero;
   if(s.big){
     hero = `<div class="ring" style="--p:${parseInt(s.big, 10)}"><b>${s.big}</b><span>${T.matchWord}</span></div>
-      <p class="ptitle">${h(s.title)}</p>
+      <p class="ptitle${/\S{15,}/.test(s.title) ? " long" : ""}">${h(s.title)}</p>
       <p class="pnames">${h(S.players[0])} <i>${T.and}</i> ${h(S.players[1])}</p>`;
   }else if(g.eng==="quiz" && n > 1 && rows.length){
     const top3 = S.players.map((p,i) => ({p, b:S.stats[i].b})).sort((x,y) => y.b - x.b).slice(0,3);
@@ -552,7 +549,7 @@ function viewEnd(){
     ${window.MACC ? MACC.gameRating("s:" + g.id) : ""}
     <div class="row">${canBack() ? `<button class="btn ghost" data-act="back"><span aria-hidden="true">←</span> ${T.back}</button>` : ""}<button class="btn ghost" data-act="again">${T.again}</button></div>
     <button class="btn ghost small" data-act="home" style="align-self:center">${T.toAllGames}</button>
-  </div>${S.story.sheet && S.story.url ? viewStorySheet() : ""}`;
+  </div>${S.story.sheet && S.story.url ? viewStorySheet() : ""}${window.MACC ? MACC.ratingSheet() : ""}`;
 }
 
 let held = false, heldAt = 0;
