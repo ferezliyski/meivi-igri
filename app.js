@@ -61,6 +61,8 @@ const rand = n => Math.floor(Math.random()*n);
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
 const game = () => GAMES.find(g => g.id === S.g);
 /* Five small stars in the top corner of a card, for every player to rate it (account.js). */
+/* How players rate a game: "★ 4,8 (23)" above its name, once enough people have rated it (account.js). */
+const score = g => window.MACC && MACC.score ? MACC.score("s:" + g.id) : "";
 const rv = text => window.MACC ? MACC.cardStars("s:" + S.g, text) : "";
 const playersLabel = g => T.players(g.n[0], g.n[1]);
 /* The longest word of a text, in letters: a title or a name with a very long word is written smaller. */
@@ -180,7 +182,7 @@ function viewHome(){
   const forWhom = g => g.n[0] === 2 && g.n[1] === 2 ? T.forTwo : playersLabel(g);
   const row = (g, sub) => `<button class="grow c-${g.c}${locked(g) ? " off" : ""}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
-      <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${sub || g.desc}</small>
+      <span class="tx">${score(g)}<b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${sub || g.desc}</small>
         <span class="gmeta"><i class="ppl">👥 ${forWhom(g)}</i><span class="go">${locked(g) ? `🔒 ${T.price1}` : T.play}</span></span></span>
       <span class="arr" aria-hidden="true">›</span>
     </button>`;
@@ -198,7 +200,7 @@ function viewHome(){
     /* A shelf with one game is that game alone, as one large panel. */
     if(!isMine && gs.length === 1){ const g = gs[0]; return `<button class="tile big gbig c-${g.c}" id="cat-${id}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
-      <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><span class="d">${g.desc}</span>
+      <span class="tx">${score(g)}<b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><span class="d">${g.desc}</span>
         <small>👥 ${forWhom(g)} · ${locked(g) ? `🔒 ${T.price1}` : T.play}</small></span>
     </button>`; }
     return `<section class="gcard c-${color}" id="cat-${id}">
@@ -230,7 +232,7 @@ function viewRules(){
   return `<div class="sheet rsheet" data-act="rules-close"><div role="dialog" aria-label="${T.rulesTitle}">
     <header class="stack c-${g.c} ghead">
       <span class="ico lg" aria-hidden="true">${g.ico || "🎲"}</span>
-      <h1${longest(g.name) >= 15 ? ` class="long"` : ""}>${g.name}</h1>
+      ${score(g)}<h1${longest(g.name) >= 15 ? ` class="long"` : ""}>${g.name}</h1>
       <p class="note">${playersLabel(g)}${g.adult ? ` · <i class="age">18+</i>` : ""}</p>
     </header>
     <p class="how">${g.desc}</p>
@@ -267,7 +269,7 @@ function viewSetup(){
   <header class="stack c-${g.c} ghead">
     <span class="ico lg" aria-hidden="true">${g.ico || "🎲"}</span>
     <span class="brand" style="color:var(--m)">${g.cat}</span>
-    <h1${longest(g.name) >= 15 ? ` class="long"` : ""}>${g.name}</h1>
+    ${score(g)}<h1${longest(g.name) >= 15 ? ` class="long"` : ""}>${g.name}</h1>
     <p>${g.desc}</p>
   </header>
   <button class="btn ghost small" data-act="rules-show" style="align-self:flex-start">${T.rulesBtn}</button>

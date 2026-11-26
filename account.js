@@ -148,6 +148,21 @@
       if (p.get("error") || p.get("code")) { try { history.replaceState(null, "", HERE); } catch (e) {} }
       refresh();
     }
+    loadScores();
+  }
+  /* ---------- how players rate the games ----------
+     Above the name of a game: the average of the stars players gave it and, in small brackets, how many gave them.
+     The server sends only the games with enough ratings (5), so a game with fewer shows nothing.
+     Kept on the phone too, so the list shows it at once the next time. */
+  st.scores = {};
+  try { st.scores = JSON.parse(box(localStorage, "meivi.scores") || "{}") || {}; } catch (e) {}
+  function loadScores() {
+    api("scores").then(d => { st.scores = d.scores || {}; box(localStorage, "meivi.scores", JSON.stringify(st.scores)); if (MEIVI.app && MEIVI.app.repaint) MEIVI.app.repaint(); }).catch(() => {});
+  }
+  function score(game) {
+    const s = st.scores[game], Y = X.rating;
+    if (!s || !s.n) return "";
+    return `<span class="gscore" role="img" aria-label="${esc(Y.scoreLabel(Y.avg(s.avg), s.n))}"><span aria-hidden="true">★</span> ${esc(Y.avg(s.avg))} <i>(${Number(s.n)})</i></span>`;
   }
   /* ---------- ratings: stars on every card and an opinion of the game ----------
      Every player sees five stars on every card and, after a game, five stars and one question about the game.
@@ -237,5 +252,5 @@
     return false;
   }
 
-  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, loadRatings, cardStars, gameRating, ratingSheet };
+  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, loadRatings, cardStars, gameRating, ratingSheet, score };
 })();

@@ -133,6 +133,16 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .grow .gmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:5px}
 .grow .ppl{font-style:normal;font-weight:700;font-size:12px;color:var(--m);background:color-mix(in srgb, var(--m) 11%, #fff);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .grow .go{font-weight:700;font-size:12.5px;border-radius:999px;padding:5px 12px;background:var(--m);color:#fff;white-space:nowrap}
+/* How players rate a game, above its name: a gold star, the average, and the number of people in small brackets */
+.gscore{align-self:flex-start;display:inline-flex;align-items:baseline;gap:4px;font-weight:700;font-size:12.5px;line-height:1.2;color:#8A5300;font-variant-numeric:tabular-nums}
+.gscore > span{color:#F2A900;font-size:13.5px}
+.gscore i{font-style:normal;font-weight:500;font-size:11px;color:var(--muted)}
+.ghead .gscore{font-size:14px;margin-bottom:-4px}
+.ghead .gscore > span{font-size:15px}
+.ghead .gscore i{font-size:12px}
+.tile.big .gscore{color:#fff}
+.tile.big .gscore > span{color:#FFD466}
+.tile.big .gscore i{color:rgba(255,255,255,.82)}
 /* a shelf with one game: the game as one large panel */
 .tile.gbig{width:100%;scroll-margin-top:14px;align-items:center}
 .tile.gbig small{font-weight:700;margin-top:3px}
@@ -601,7 +611,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27a";
+  var MEIVI_RELEASE = "2026-11-27b";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

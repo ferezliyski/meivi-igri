@@ -280,7 +280,10 @@ MEIVI.ui = {
       title: "Оцени играта",
       question: "Какво е мнението ви за играта?",
       send: "Изпрати", sending: "Изпращане…",
-      empty: "Дай звезди или напиши нещо."
+      empty: "Дай звезди или напиши нещо.",
+      /* the rating of a game in the list: the average with one decimal, and what a screen reader says */
+      avg: v => Number(v).toFixed(1).replace(".", ","),
+      scoreLabel: (avg, n) => `Оценка ${avg} от 5, от ${n} души`
     }
   },
 
