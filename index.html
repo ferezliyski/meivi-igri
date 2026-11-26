@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Игри от Meivi</title>
 <meta name="robots" content="noindex, nofollow">
+<!-- Stop the iPhone from turning e-mails and numbers into blue underlined links. -->
+<meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
 <meta name="theme-color" content="#FBF1F0">
 <!-- The icon a phone shows when the app is put on the home screen, and the name under it. -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -242,6 +244,9 @@ th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu
 html.noscroll body{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .sheet{overscroll-behavior:contain;touch-action:none}
 .sheet > div{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+/* Parts of a window keep their full height; the window scrolls instead of squashing (and cutting) them. */
+.sheet > div > *{flex-shrink:0}
+a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;font:inherit!important}
 .sheet > div{width:100%;max-width:480px;max-height:85%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:24px 18px 26px;display:flex;flex-direction:column;gap:16px}
 
 /* Share poster */
@@ -532,7 +537,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-25i";
+  var MEIVI_RELEASE = "2026-11-26a";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
