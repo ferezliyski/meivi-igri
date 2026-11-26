@@ -21,19 +21,11 @@ MEIVI.mtexts = {};
 MEIVI.mtext = function (id, text) { MEIVI.mtexts[id] = text; };
 
 MEIVI.catalog = {
-  categories: ["couples", "adult", "friends", "family", "occasions", "quiz", "holidays", "travel"],
+  categories: ["couples", "adult", "friends", "quiz"],
   games: [
     { id: "couple", cat: "couples", color: "hot", eng: "match", players: [2, 2], icon: "💞" },
-    { id: "family", cat: "family", color: "mint", eng: "cards", players: [2, 10], icon: "🏡" },
     { id: "zodiac", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🔮" },
-    { id: "xmas", cat: "holidays", color: "gold", eng: "quiz", players: [1, 8], icon: "🎄" },
-    { id: "hen", cat: "occasions", color: "hot", eng: "cards", players: [3, 12], icon: "👰" },
-    { id: "wedding", cat: "occasions", color: "gold", eng: "match", players: [2, 2], icon: "💍" },
-    { id: "bday", cat: "occasions", color: "lilac", eng: "cards", players: [3, 12], icon: "🎂" },
-    { id: "baby", cat: "occasions", color: "mint", eng: "quiz", players: [1, 8], icon: "🍼" },
     { id: "auto", cat: "quiz", color: "hot", eng: "quiz", players: [1, 8], icon: "🏎️" },
-    { id: "team", cat: "travel", color: "sky", eng: "cards", players: [3, 12], icon: "💼" },
-    { id: "road", cat: "travel", color: "mint", eng: "cards", players: [2, 7], icon: "🚗" },
     { id: "date", cat: "couples", color: "hot", eng: "cards", players: [2, 2], icon: "🔥", ordered: true },
     { id: "bg", cat: "quiz", color: "gold", eng: "quiz", players: [1, 8], icon: "🇧🇬" },
     { id: "similar", cat: "couples", color: "mint", eng: "match", players: [2, 2], icon: "👯" },
@@ -52,28 +44,10 @@ MEIVI.catalog = {
     { id: "truth", cat: "friends", color: "hot", eng: "cards", players: [2, 12], icon: "🎯" },
     { id: "lies", cat: "friends", color: "lilac", eng: "cards", players: [3, 10], icon: "🤥" },
     { id: "hotseat", cat: "friends", color: "hot", eng: "cards", players: [3, 12], icon: "🔥" },
-    { id: "kids", cat: "family", color: "sky", eng: "quiz", players: [1, 8], icon: "🧒" },
-    { id: "kidsvs", cat: "family", color: "gold", eng: "cards", players: [2, 10], icon: "⚔️" },
-    { id: "mime", cat: "family", color: "mint", eng: "cards", players: [3, 10], icon: "🤐" },
-    { id: "riddles", cat: "family", color: "lilac", eng: "cards", players: [2, 8], icon: "🧩" },
-    { id: "grand", cat: "family", color: "gold", eng: "cards", players: [2, 10], icon: "👵" },
-    { id: "parents", cat: "family", color: "hot", eng: "cards", players: [3, 8], icon: "👪" },
-    { id: "stag", cat: "occasions", color: "sky", eng: "cards", players: [3, 12], icon: "🤵" },
-    { id: "nye", cat: "holidays", color: "gold", eng: "cards", players: [3, 12], icon: "🎆" },
-    { id: "valentine", cat: "holidays", color: "hot", eng: "cards", players: [2, 2], icon: "💘" },
-    { id: "march8", cat: "holidays", color: "lilac", eng: "cards", players: [2, 12], icon: "💐" },
-    { id: "easter", cat: "holidays", color: "mint", eng: "quiz", players: [1, 8], icon: "🥚" },
-    { id: "dec8", cat: "holidays", color: "sky", eng: "cards", players: [3, 12], icon: "🍾" },
-    { id: "nameday", cat: "holidays", color: "mint", eng: "cards", players: [3, 12], icon: "🎈" },
     { id: "football", cat: "quiz", color: "mint", eng: "quiz", players: [1, 8], icon: "⚽" },
     { id: "music", cat: "quiz", color: "lilac", eng: "quiz", players: [1, 8], icon: "🎶" },
     { id: "cinema", cat: "quiz", color: "hot", eng: "quiz", players: [1, 8], icon: "🎬" },
-    { id: "general", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🧠" },
-    { id: "beach", cat: "travel", color: "sky", eng: "cards", players: [2, 10], icon: "🏖️" },
-    { id: "hut", cat: "travel", color: "mint", eng: "cards", players: [2, 10], icon: "🏔️" },
-    { id: "fire", cat: "travel", color: "gold", eng: "cards", players: [2, 12], icon: "🔥" },
-    { id: "table", cat: "travel", color: "hot", eng: "cards", players: [3, 12], icon: "🍽️" },
-    { id: "meet", cat: "travel", color: "lilac", eng: "cards", players: [2, 10], icon: "👋" }
+    { id: "general", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🧠" }
   ]
 };
 

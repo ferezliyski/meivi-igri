@@ -34,8 +34,7 @@ MEIVI.ui = {
   homeNote: (games, shelves) => `${games} игри в ${shelves} категории.`,
   shelvesLabel: "Категории",
   shelves: {
-    couples: "За двойки", adult: "18+", friends: "Приятели", family: "Семейство и деца",
-    occasions: "Поводи", quiz: "Викторини", holidays: "Празници през годината", travel: "Път, почивка и екип"
+    couples: "За двойки", adult: "18+", friends: "Приятели", quiz: "Викторини"
   },
   shelfCount: (have, all) => `${have} от ${all}`,
   /* the cards of the shelves */
