@@ -176,10 +176,12 @@ function rememberPlayed(id){ try{ localStorage.setItem("meivi.played", JSON.stri
 function viewHome(){
   /* One game = one row in its own colour, with its whole description. A locked game shows its price quietly; an open one has "play" in its colour. */
   const locked = g => !!(window.MACC && MACC.locked("s:" + g.id));
+  /* For how many people a game is: "for two", or the fewest and the most players. */
+  const forWhom = g => g.n[0] === 2 && g.n[1] === 2 ? T.forTwo : playersLabel(g);
   const row = (g, sub) => `<button class="grow c-${g.c}${locked(g) ? " off" : ""}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
       <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${sub || g.desc}</small>
-        <span class="go">${locked(g) ? `🔒 ${T.price1}` : T.play}</span></span>
+        <span class="gmeta"><i class="ppl">👥 ${forWhom(g)}</i><span class="go">${locked(g) ? `🔒 ${T.price1}` : T.play}</span></span></span>
       <span class="arr" aria-hidden="true">›</span>
     </button>`;
   /* A shelf with no game on this site is not shown at all. */
@@ -191,11 +193,18 @@ function viewHome(){
   mine.sort((a, b) => (last.includes(a.id) ? last.indexOf(a.id) : 999) - (last.includes(b.id) ? last.indexOf(b.id) : 999));
   const showMine = mine.length > 0 && mine.length < GAMES.length;
   const card = (id, title, gs, color, isMine) => {
-    const open = S.shelfOpen[id], shown = open ? gs : gs.slice(0, 4);
+    /* A shelf shows all its games. Only "My games" (which repeats games of the shelves below) folds after four. */
+    const open = !isMine || S.shelfOpen[id], shown = open ? gs : gs.slice(0, 4);
+    /* A shelf with one game is that game alone, as one large panel. */
+    if(!isMine && gs.length === 1){ const g = gs[0]; return `<button class="tile big gbig c-${g.c}" id="cat-${id}" data-act="open" data-g="${g.id}">
+      <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
+      <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><span class="d">${g.desc}</span>
+        <small>👥 ${forWhom(g)} · ${locked(g) ? `🔒 ${T.price1}` : T.play}</small></span>
+    </button>`; }
     return `<section class="gcard c-${color}" id="cat-${id}">
       <div class="ghd"><h2>${title}</h2><span class="cnt">${isMine ? T.opened(gs.length) : T.gamesCount(gs.length)}</span></div>
       ${shown.map(g => row(g, isMine ? T.shelves[g.grp] : "")).join("")}
-      ${gs.length > 4 ? `<button class="gmore" data-act="shelf-more" data-i="${id}">${open ? T.showLess : T.showAll(gs.length)}</button>` : ""}
+      ${isMine && gs.length > 4 ? `<button class="gmore" data-act="shelf-more" data-i="${id}">${open ? T.showLess : T.showAll(gs.length)}</button>` : ""}
     </section>`;
   };
   return `

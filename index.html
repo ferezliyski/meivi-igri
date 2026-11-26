@@ -130,7 +130,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .grow b{font-family:var(--display);font-weight:600;font-size:14px;line-height:1.2;overflow-wrap:anywhere}
 .grow b .age{font-style:normal;font-family:var(--body);font-weight:700;font-size:11px;color:var(--hot);background:#FCEBEA;border-radius:999px;padding:1px 6px;vertical-align:2px}
 .grow small{font-size:13px;line-height:1.32;color:var(--muted)}
-.grow .go{align-self:flex-start;margin-top:4px;font-weight:700;font-size:12.5px;border-radius:999px;padding:5px 12px;background:var(--m);color:#fff;white-space:nowrap}
+.grow .gmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:5px}
+.grow .ppl{font-style:normal;font-weight:700;font-size:12px;color:var(--m);background:color-mix(in srgb, var(--m) 11%, #fff);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.grow .go{font-weight:700;font-size:12.5px;border-radius:999px;padding:5px 12px;background:var(--m);color:#fff;white-space:nowrap}
+/* a shelf with one game: the game as one large panel */
+.tile.gbig{width:100%;scroll-margin-top:14px;align-items:center}
+.tile.gbig small{font-weight:700;margin-top:3px}
 .grow.off .go{background:none;padding:0;color:#9A8787;font-size:12px}
 .grow .arr{flex:none;align-self:center;font-family:var(--display);font-weight:600;font-size:18px;line-height:1;color:var(--m);opacity:.75}
 .gmore{border:0;border-top:1px solid var(--line);background:none;padding:13px 0 11px;font-weight:700;font-size:14px;color:var(--m)}
@@ -596,7 +601,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-26q";
+  var MEIVI_RELEASE = "2026-11-27a";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

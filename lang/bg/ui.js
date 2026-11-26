@@ -44,6 +44,7 @@ MEIVI.ui = {
   showLess: "Покажи по-малко",
   play: "Играй",
   price1: "1 кредит",
+  forTwo: "За двама",
   players: (min, max) => min === max ? `${min} ${min === 1 ? "играч" : "играчи"}` : `${min}–${max} играчи`,
   engines: { cards: "Карти", quiz: "Викторина", match: "За двама" },
 
