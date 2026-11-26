@@ -51,7 +51,7 @@ function quizPool(g){
 
 /* ---------- State ---------- */
 let S = {screen: MULTI ? "start" : "home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
-         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}, shelfOpen:{}, topicsOff:{}};
+         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}, shelfOpen:{}, topicsOff:{}, rules:null};
 try{ S.mn = +(localStorage.getItem("meivi.multi.n") || 0) || 0; }catch(e){}
 
 const app = document.getElementById("app");
@@ -193,6 +193,27 @@ function viewHome(){
   ${window.MACC ? MACC.overlay() : ""}`;
 }
 
+/* ---------- The rules of a game ----------
+   A window that opens when a game is chosen from the list (then "Напред" leads to the game's first screen),
+   and again from that screen with the button "Правила". S.rules is the id of the game it shows. */
+function viewRules(){
+  const g = GAMES.find(x => x.id === S.rules);
+  if(!g) return "";
+  const first = S.screen !== "setup";
+  return `<div class="sheet rsheet" data-act="rules-close"><div role="dialog" aria-label="${T.rulesTitle}">
+    <header class="stack c-${g.c} ghead">
+      <span class="ico lg" aria-hidden="true">${g.ico || "🎲"}</span>
+      <h1>${g.name}</h1>
+      <p class="note">${playersLabel(g)}${g.adult ? ` · <i class="age">18+</i>` : ""}</p>
+    </header>
+    <p class="how">${g.desc}</p>
+    <ol class="rrules">${(g.rules || []).map(r => `<li>${h(r)}</li>`).join("")}</ol>
+    <div class="row rfoot">${first
+      ? `<button class="btn ghost" data-act="rules-close">${T.close}</button><button class="btn" data-act="rules-go">${T.rulesGo}</button>`
+      : `<button class="btn" data-act="rules-close">${T.rulesOk}</button>`}</div>
+  </div></div>`;
+}
+
 /* ---------- Before the game ---------- */
 function viewSetup(){
   const g = game(), n = S.players.length;
@@ -214,7 +235,6 @@ function viewSetup(){
     <div class="seg">${T.levels.map((t,i) => `<button data-act="level" data-v="${i+1}" aria-pressed="${S.level===i+1}">${t}</button>`).join("")}</div></section>` : ""}
   ${g.drinkOpt ? `<section class="stack"><h2>${T.penalty}</h2>
     <div class="seg"><button data-act="drink" data-v="1" aria-pressed="${S.drink}">${T.sip}</button><button data-act="drink" data-v="0" aria-pressed="${!S.drink}">${T.pointsOnly}</button></div></section>` : ""}`;
-  const how = [T.how[g.eng], g.note, g.hero && T.heroHow(g.hero), g.adult && T.adultOnly].filter(Boolean).join(" ");
   return `
   <div class="top"><button class="btn ghost small" data-act="home">${T.allGames}</button><img class="logo sm" src="logo-ink.png" alt="Meivi"></div>
   <header class="stack c-${g.c} ghead">
@@ -223,7 +243,8 @@ function viewSetup(){
     <h1>${g.name}</h1>
     <p>${g.desc}</p>
   </header>
-  <p class="how">${how}</p>
+  <button class="btn ghost small" data-act="rules-show" style="align-self:flex-start">${T.rulesBtn}</button>
+  ${g.hero ? `<p class="how">${T.heroHow(g.hero)}</p>` : ""}
   <section class="stack">
     <div class="headrow"><h2>${T.playersTitle(n)}</h2><span class="req">${T.playersNeed(g.n[0], g.n[1])}</span></div>
     <div class="chips">
@@ -562,6 +583,7 @@ function render(){
   else if(S.screen==="setup") v = viewSetup();
   else if(S.screen==="end") v = viewEnd();
   else v = {cards:viewCards, quiz:viewQuiz, match:viewMatch}[game().eng]();
+  if(S.rules) v += viewRules();
   app.innerHTML = v;
   app.querySelector?.(".card")?.style.setProperty("--tilt", (S.i % 2 ? 1.3 : -1.3) + "deg");
   const key = S.screen + ":" + S.g + ":" + S.i + ":" + (S.m ? S.m.step : "");
@@ -636,7 +658,11 @@ app.addEventListener("click", e => {
   if(act.startsWith("a-")){ if(window.MACC && MACC.click(act, b, e.target)) render(); return; }
   switch(act){
     case "cat": document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
-    case "open": S.g = b.dataset.g; S.screen = "setup"; window.scrollTo(0,0); break;
+    /* A game chosen from the list: first its rules, then its first screen. */
+    case "open": S.rules = b.dataset.g; break;
+    case "rules-go": S.g = S.rules; S.rules = null; S.screen = "setup"; window.scrollTo(0,0); break;
+    case "rules-show": S.rules = S.g; break;
+    case "rules-close": if(b.classList.contains("sheet") && e.target !== b) return; S.rules = null; break;
     case "home": S.screen = "home"; S.g = null; window.scrollTo(0,0); break;
     case "landing": S.screen = "start"; S.g = null; window.scrollTo(0,0); break;
     case "multi": S.screen = "multi"; S.g = null; window.scrollTo(0,0); break;
@@ -704,7 +730,7 @@ MEIVI.app = {
   /* Every game a player can open on this site: "s:<id>" for one phone, "m:<id>" multiplayer (only those already built). */
   gameKeys(){ return [...GAMES.map(g => "s:" + g.id), ...(MULTI ? MULTI.filter(multiReady).map(g => "m:" + g.id) : [])]; },
   /* For the update check (index.html): is the player on a list of games, with nothing open and nothing going on? */
-  idle(){ return ["start","home","multi"].includes(S.screen) && !S.sheet && !(window.MROOM && (MROOM.room.st.mode || MROOM.ui.sheet)) && !(window.MACC && (MACC.state.sheet || MACC.state.busy)); },
+  idle(){ return ["start","home","multi"].includes(S.screen) && !S.sheet && !S.rules && !(window.MROOM && (MROOM.room.st.mode || MROOM.ui.sheet)) && !(window.MACC && (MACC.state.sheet || MACC.state.busy)); },
   /* ...and remember the screen, so that the new release opens on the same list. */
   park(){ try{ sessionStorage.setItem("meivi.screen", S.screen); }catch(e){} },
   /* Back from signing in: to the game the player wanted ("s:<id>" one phone, "m:<id>" multiplayer). */

@@ -151,6 +151,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 /* Setup */
 .ghead{gap:8px}
+.ghead .age{font-style:normal;font-weight:700;color:var(--hot)}
 .ico.lg{width:64px;height:64px;border-radius:22px;display:grid;place-items:center;font-size:34px;background:color-mix(in srgb, var(--m) 18%, #fff);box-shadow:var(--sh)}
 .seg{display:flex;gap:4px;background:var(--surface);box-shadow:var(--sh);padding:5px;border-radius:999px}
 .seg button{flex:1;border:0;border-radius:999px;background:transparent;padding:10px 6px;min-height:42px;font-weight:500;font-size:15px;color:var(--muted)}
@@ -520,7 +521,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-26n";
+  var MEIVI_RELEASE = "2026-11-26p";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
