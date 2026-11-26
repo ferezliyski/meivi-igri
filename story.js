@@ -74,7 +74,10 @@
       y = cy + R + 110;
       const t = fit(x, h.title, "800 #px " + DISPLAY, 64, 44, inner, 2);
       t.lines.forEach(l => { x.fillText(l, W / 2, y); y += t.size * 1.2; });
-      x.font = "700 46px " + BODY; x.globalAlpha = 0.95; x.fillText(h.names, W / 2, y + 20); x.globalAlpha = 1; y += 90;
+      /* the two names: a little smaller if they do not fit on one line, two lines only if still too long */
+      let nm = fit(x, h.names, "700 #px " + BODY, 46, 34, inner, 1);
+      if (x.measureText(nm.lines[0]).width > inner || nm.lines[0].endsWith("…")) nm = fit(x, h.names, "700 #px " + BODY, 34, 34, inner, 2);
+      x.globalAlpha = 0.95; y += 20; nm.lines.forEach((l, k) => { if (k) y += nm.size * 1.25; x.fillText(l, W / 2, y); }); x.globalAlpha = 1; y += 70;
       x.textAlign = "left";
     } else if (h.kind === "podium") {
       x.font = "700 34px " + BODY; x.globalAlpha = 0.9; x.fillText(String(h.label).toUpperCase(), PAD, y + 20); x.globalAlpha = 1; y += 70;
