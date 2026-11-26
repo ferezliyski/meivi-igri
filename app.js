@@ -63,6 +63,23 @@ const game = () => GAMES.find(g => g.id === S.g);
 /* Five small stars in the top corner of a card, for every player to rate it (account.js). */
 const rv = text => window.MACC ? MACC.cardStars("s:" + S.g, text) : "";
 const playersLabel = g => T.players(g.n[0], g.n[1]);
+/* The longest word of a text, in letters: a title or a name with a very long word is written smaller. */
+const longest = s => Math.max(0, ...String(s).split(/\s+/).map(w => w.length));
+/* A short question is written larger on its card. */
+/* A long label on a card (see the styles: it must leave room for the stars). */
+const tagCls = s => String(s).length >= 14 ? "tag long" : "tag";
+const qSize = s => { const n = String(s).length, w = longest(s); return n <= 42 && w <= 11 ? " xl" : n <= 80 && w <= 13 ? " lg" : ""; };
+/* The mood of a shelf while one of its games is played: the page behind the card (styles "mood-<shelf>"),
+   whether it is dark, and the colour of the phone's own bar above the page. */
+const MOODS = {couples:{bar:"#FBE2E0"}, friends:{bar:"#FFF1D2"}, adult:{bar:"#1B070C", dark:true}, quiz:{bar:"#0E2B52", dark:true}};
+function setMood(){
+  if(!document.body) return;
+  const g = game(), on = g && (S.screen === "play" || S.screen === "end") && MOODS[g.grp];
+  const cls = on ? `mood-${g.grp}${on.dark ? " dark" : ""}${S.screen === "play" ? " play" : ""}` : "";
+  if(document.body.className !== cls) document.body.className = cls;
+  const meta = document.querySelector?.('meta[name="theme-color"]');
+  if(meta) meta.setAttribute("content", on ? on.bar : "#FBF1F0");
+}
 
 function loadNames(){
   try{
@@ -157,12 +174,13 @@ function playedRecently(){ try{ return JSON.parse(localStorage.getItem("meivi.pl
 function rememberPlayed(id){ try{ localStorage.setItem("meivi.played", JSON.stringify([id].concat(playedRecently().filter(x => x !== id)).slice(0, 60))); }catch(e){} }
 
 function viewHome(){
-  /* One game = one narrow row. A locked game is grey, with its price; an open one has "play" in its colour. */
+  /* One game = one row in its own colour, with its whole description. A locked game shows its price quietly; an open one has "play" in its colour. */
   const locked = g => !!(window.MACC && MACC.locked("s:" + g.id));
   const row = (g, sub) => `<button class="grow c-${g.c}${locked(g) ? " off" : ""}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
-      <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${sub || g.desc}</small></span>
-      <span class="go">${locked(g) ? `🔒 ${T.price1}` : T.play}</span>
+      <span class="tx"><b>${g.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${sub || g.desc}</small>
+        <span class="go">${locked(g) ? `🔒 ${T.price1}` : T.play}</span></span>
+      <span class="arr" aria-hidden="true">›</span>
     </button>`;
   /* A shelf with no game on this site is not shown at all. */
   const shelves = SHELVES.filter(id => GAMES.some(g => g.grp === id));
@@ -203,7 +221,7 @@ function viewRules(){
   return `<div class="sheet rsheet" data-act="rules-close"><div role="dialog" aria-label="${T.rulesTitle}">
     <header class="stack c-${g.c} ghead">
       <span class="ico lg" aria-hidden="true">${g.ico || "🎲"}</span>
-      <h1>${g.name}</h1>
+      <h1${longest(g.name) >= 15 ? ` class="long"` : ""}>${g.name}</h1>
       <p class="note">${playersLabel(g)}${g.adult ? ` · <i class="age">18+</i>` : ""}</p>
     </header>
     <p class="how">${g.desc}</p>
@@ -240,7 +258,7 @@ function viewSetup(){
   <header class="stack c-${g.c} ghead">
     <span class="ico lg" aria-hidden="true">${g.ico || "🎲"}</span>
     <span class="brand" style="color:var(--m)">${g.cat}</span>
-    <h1>${g.name}</h1>
+    <h1${longest(g.name) >= 15 ? ` class="long"` : ""}>${g.name}</h1>
     <p>${g.desc}</p>
   </header>
   <button class="btn ghost small" data-act="rules-show" style="align-self:flex-start">${T.rulesBtn}</button>
@@ -292,13 +310,13 @@ function goBack(){
 }
 function topBar(total){
   const g = game();
-  return `<div class="stack">
+  return `<div class="stack c-${g.c}">
     <div class="top">
       <button class="btn ghost small" data-act="back" aria-label="${T.backLabel}" ${canBack() ? "" : "disabled"}><span aria-hidden="true">←</span> ${T.back}</button>
       <span class="count">${T.progress(S.i+1, total)}</span>
       <span class="grp">${g.eng==="match" ? "" : `<button class="btn ghost small" data-act="sheet">${T.score}</button>`}<button class="btn ghost small" data-act="quit">${T.end}</button></span>
     </div>
-    <div class="bar"><i style="width:${Math.round(S.i/total*100)}%"></i></div>
+    <div class="bar"><i style="width:${Math.round((S.i+1)/total*100)}%"></i></div>
   </div>`;
 }
 function fill(t, c){
@@ -314,11 +332,12 @@ function viewCards(){
   const text = fill(parts[0], c);
   const ans = parts[1] ? `<details class="ans"><summary>${T.showAnswer}</summary><b>${h(parts[1])}</b></details>` : "";
   let body, rule, actions;
-  if(c.k==="A"){ body = `<p class="q">${text}</p>`; rule = g.ruleA || T.rules.A(pen); }
-  else if(c.k==="V"){ body = `<p class="lead">${h(g.lead)}</p><p class="q">…${text}</p>`; rule = g.ruleV || T.rules.V(pen); }
-  else if(c.k==="G"){ body = `<p class="q">${text}</p>`; rule = T.rules.G(h(S.players[0])); }
-  else if(c.k==="Q"){ body = `<p class="who">${T.questionTo(bold(S.players[c.p]))}</p><p class="q">${text}</p>`; rule = g.ruleQ || T.rules.Q(pen); }
-  else { body = `<p class="who">${T.taskFor(bold(S.players[c.p]))}</p><p class="q">${text}</p>`; rule = g.ruleD || T.rules.D(pen); }
+  const q = `<p class="q${qSize(parts[0])}">${c.k==="V" ? "…" : ""}${text}</p>`;
+  if(c.k==="A"){ body = q; rule = g.ruleA || T.rules.A(pen); }
+  else if(c.k==="V"){ body = `<p class="lead">${h(g.lead)}</p>${q}`; rule = g.ruleV || T.rules.V(pen); }
+  else if(c.k==="G"){ body = q; rule = T.rules.G(h(S.players[0])); }
+  else if(c.k==="Q"){ body = `<p class="who">${T.questionTo(bold(S.players[c.p]))}</p>${q}`; rule = g.ruleQ || T.rules.Q(pen); }
+  else { body = `<p class="who">${T.taskFor(bold(S.players[c.p]))}</p>${q}`; rule = g.ruleD || T.rules.D(pen); }
   body += ans;
   if(group){
     const ask = c.k==="A" ? (g.askA || T.ask.A) : T.ask[c.k];
@@ -331,7 +350,7 @@ function viewCards(){
       <button class="btn" data-act="done">${c.k==="Q" ? T.answered : T.done}</button></div>`;
   }
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}">${rv(c.t)}<span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
+  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}">${rv(c.t)}<span class="${tagCls(g.tags?.[c.k] || T.kinds[c.k])}">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
   <p class="flash" aria-live="polite">${h(S.flash)}</p>
   ${actions}${S.sheet ? viewSheet() : ""}`;
 }
@@ -342,12 +361,12 @@ function viewQuiz(){
   const done = S.picked !== null;
   const right = c.opts.find(o => o.ok).t;
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="tag">${h(c.tag || g.cat)}</span>
+  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="${tagCls(c.tag || g.cat)}">${h(c.tag || g.cat)}</span>
     ${n > 1 ? `<p class="who">${T.turn(bold(S.players[p]))}</p>` : ""}
-    <p class="q">${h(c.q)}</p>
+    <p class="q${qSize(c.q)}">${h(c.q)}</p>
   </article></div>
-  <div class="opts">${c.opts.map((o,i) => `<button class="opt ${done ? (o.ok ? "ok" : i===S.picked ? "bad" : "") : ""}"
-      data-act="q-pick" data-i="${i}" ${done ? "disabled" : ""}>${h(o.t)}</button>`).join("")}</div>
+  <div class="opts c-${g.c}">${c.opts.map((o,i) => `<button class="opt abc ${done ? (o.ok ? "ok" : i===S.picked ? "bad" : "") : ""}"
+      data-act="q-pick" data-i="${i}" ${done ? "disabled" : ""}><span class="ltr" aria-hidden="true">${T.letters[i] || ""}</span><span class="t">${h(o.t)}</span></button>`).join("")}</div>
   <p class="flash" aria-live="polite">${done ? (c.opts[S.picked].ok ? T.right : T.rightIs(h(right))) : ""}</p>
   ${done ? `<button class="btn" data-act="q-next">${T.next}</button>` : ""}
   ${S.sheet ? viewSheet() : ""}`;
@@ -368,9 +387,11 @@ function viewMatch(){
   const bar = topBar(S.deck.length);
   if(m.step===0 || m.step===2){
     const who = I.order[m.step/2];
-    return `${bar}<section class="cover">
-      <p class="note">${T.handTo}</p><b>${h(S.players[who])}</b>
-      <p class="note">${m.step===2 ? T.otherLooksAway : I.about ? (who===I.subj ? T.forYourself : T.guessOther) : T.oneByOne}</p>
+    const name = S.players[who];
+    return `${bar}<section class="cover pass c-${g.c}">
+      <div class="cmid"><span class="ph" aria-hidden="true">📱</span>
+        <p class="note">${T.handTo}</p><b style="font-size:min(44px, calc((min(100vw, 480px) - 84px) / ${(Math.max(5, longest(name)) * 0.86).toFixed(2)}))">${h(name)}</b>
+        <p class="note">${m.step===2 ? T.otherLooksAway : I.about ? (who===I.subj ? T.forYourself : T.guessOther) : T.oneByOne}</p></div>
       <button class="btn" data-act="m-ready">${T.gotPhone}</button></section>`;
   }
   if(m.step===1 || m.step===3){
@@ -385,7 +406,7 @@ function viewMatch(){
          ${I.about ? `<button class="opt other" data-act="m-type">${T.ownAnswer}</button>` : ""}</div>`;
     return `${bar}
     <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
-      <p class="who">${T.answers(bold(S.players[who]))}</p><p class="q">${h(prompt)}</p></article></div>
+      <p class="who">${T.answers(bold(S.players[who]))}</p><p class="q${qSize(prompt)}">${h(prompt)}</p></article></div>
     ${own}`;
   }
   const said = a => typeof a === "number" ? h(I.opts[a]) : `„${h(a.txt)}“`;
@@ -400,8 +421,8 @@ function viewMatch(){
     : `<button class="btn" data-act="m-next">${T.next}</button>`;
   const verdict = r === null ? "" : m.judged == null ? (r === 1 ? T.same : T.different) : (r === 1 ? T.judged.yes : r === 0.5 ? T.judged.half : T.judged.no);
   return `${bar}
-  <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
-    <p class="q">${h(I.neutral)}</p>
+  <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="${tagCls(g.cat)}">${g.cat}</span>
+    <p class="q${qSize(I.neutral)}">${h(I.neutral)}</p>
     <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${said(m.ans[0])}</b></div>
     <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${said(m.ans[1])}</b></div>
     ${verdict ? `<p class="verdict" style="color:${r === 1 ? "#1E7F6B" : r === 0.5 ? "#B7791F" : "#B12A29"}">${verdict}</p>` : ""}
@@ -584,6 +605,7 @@ function render(){
   else if(S.screen==="end") v = viewEnd();
   else v = {cards:viewCards, quiz:viewQuiz, match:viewMatch}[game().eng]();
   if(S.rules) v += viewRules();
+  setMood();
   app.innerHTML = v;
   app.querySelector?.(".card")?.style.setProperty("--tilt", (S.i % 2 ? 1.3 : -1.3) + "deg");
   const key = S.screen + ":" + S.g + ":" + S.i + ":" + (S.m ? S.m.step : "");

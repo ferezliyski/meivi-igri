@@ -94,6 +94,8 @@ MEIVI.ui = {
   back: "Назад",
   backLabel: "Назад към предишната карта",
   progress: (now, all) => `${now} от ${all}`,
+  /* quiz: the letters in front of the four answers */
+  letters: ["А", "Б", "В", "Г"],
   score: "Точки",
   end: "Край",
   cardBack: "Върнахте картата. Отбележете я отново.",

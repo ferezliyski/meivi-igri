@@ -35,6 +35,10 @@
   --display:"Unbounded","Golos Text",system-ui,sans-serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --hand:"Caveat","Segoe Script",cursive;
+  /* Colours of what stands straight on the page (not on a white surface). A dark mood changes them; a window sets them back. */
+  --on:var(--ink); --on-muted:var(--muted); --ghost:var(--surface); --ghost-ink:var(--ink); --ghost-sh:var(--sh);
+  --track:#EDD3D1; --flashc:var(--hot); --pressed:var(--ink); --pressed-ink:#fff;
+  --b1:#CB3A33; --b2:#A92423; --b-ink:#fff; --b-sh:rgba(177,42,41,.75);
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -46,7 +50,7 @@ body{
   color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;
 }
 #app{max-width:480px;min-height:100%;margin:0 auto;padding:20px 18px 36px;display:flex;flex-direction:column;gap:22px}
-h1,h2{font-family:var(--display);margin:0;text-wrap:balance;color:var(--ink)}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;color:var(--on)}
 h1{font-size:26px;font-weight:800;line-height:1.12;letter-spacing:-.01em}
 h2{font-size:15px;font-weight:600;line-height:1.2}
 p{margin:0}
@@ -56,18 +60,18 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .c-hot{--m:var(--hot)} .c-gold{--m:var(--gold)} .c-mint{--m:var(--mint)} .c-lilac{--m:var(--lilac)} .c-sky{--m:var(--sky)}
 
 .btn{
-  border:0;border-radius:999px;padding:15px 22px;min-height:56px;font-weight:700;font-size:17px;color:#fff;
-  background:linear-gradient(180deg,#CB3A33,#A92423);box-shadow:0 14px 24px -12px rgba(177,42,41,.75), inset 0 1px 0 rgba(255,255,255,.25);
+  border:0;border-radius:999px;padding:15px 22px;min-height:56px;font-weight:700;font-size:17px;color:var(--b-ink);
+  background:linear-gradient(180deg,var(--b1),var(--b2));box-shadow:0 14px 24px -12px var(--b-sh), inset 0 1px 0 rgba(255,255,255,.25);
   transition:transform .1s;
 }
 .btn:active{transform:scale(.97)}
 .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
-.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:var(--sh)}
+.btn.ghost{background:var(--ghost);color:var(--ghost-ink);box-shadow:var(--ghost-sh)}
 .btn.small{min-height:40px;padding:8px 15px;font-size:14px;flex:none}
 .row{display:flex;gap:10px}
 .row > *{flex:1}
 .stack{display:flex;flex-direction:column;gap:12px}
-.note{color:var(--muted);font-size:14px}
+.note{color:var(--on-muted);font-size:14px}
 .brand{font-family:var(--hand);font-weight:700;font-size:25px;line-height:1;color:var(--hot)}
 .logo{display:block;width:120px;height:auto}
 .logo.sm{width:66px}
@@ -119,16 +123,16 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .gcard{background:var(--surface);border-radius:28px;box-shadow:var(--sh);padding:16px 16px 6px;border-top:6px solid var(--m);display:flex;flex-direction:column;scroll-margin-top:14px}
 .ghd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:8px}
 .ghd h2{font-size:17px}
-.grow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:11px 0;color:var(--ink)}
+.grow{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:13px 0;color:var(--ink)}
 .grow:active{transform:scale(.99)}
-.grow .ico{flex:none;width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:24px;line-height:1;background:color-mix(in srgb, var(--m) 18%, #fff)}
-.grow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.grow .ico{flex:none;width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:27px;line-height:1;background:color-mix(in srgb, var(--m) 20%, #fff)}
+.grow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .grow b{font-family:var(--display);font-weight:600;font-size:14px;line-height:1.2;overflow-wrap:anywhere}
 .grow b .age{font-style:normal;font-family:var(--body);font-weight:700;font-size:11px;color:var(--hot);background:#FCEBEA;border-radius:999px;padding:1px 6px;vertical-align:2px}
-.grow small{font-size:12.5px;line-height:1.3;color:var(--muted);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-.grow .go{flex:none;font-weight:700;font-size:13px;border-radius:999px;padding:7px 13px;background:var(--m);color:#fff;white-space:nowrap}
-.grow.off .ico,.grow.off .tx{filter:grayscale(.9);opacity:.6}
-.grow.off .go{background:#F3E8E7;color:#9A8B8B}
+.grow small{font-size:13px;line-height:1.32;color:var(--muted)}
+.grow .go{align-self:flex-start;margin-top:4px;font-weight:700;font-size:12.5px;border-radius:999px;padding:5px 12px;background:var(--m);color:#fff;white-space:nowrap}
+.grow.off .go{background:none;padding:0;color:#9A8787;font-size:12px}
+.grow .arr{flex:none;align-self:center;font-family:var(--display);font-weight:600;font-size:18px;line-height:1;color:var(--m);opacity:.75}
 .gmore{border:0;border-top:1px solid var(--line);background:none;padding:13px 0 11px;font-weight:700;font-size:14px;color:var(--m)}
 
 /* First screen: the two ways to play, one under the other */
@@ -152,6 +156,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 /* Setup */
 .ghead{gap:8px}
 .ghead .age{font-style:normal;font-weight:700;color:var(--hot)}
+.ghead h1.long{font-size:min(26px, calc((100vw - 36px) / 14.5))}
 .ico.lg{width:64px;height:64px;border-radius:22px;display:grid;place-items:center;font-size:34px;background:color-mix(in srgb, var(--m) 18%, #fff);box-shadow:var(--sh)}
 .seg{display:flex;gap:4px;background:var(--surface);box-shadow:var(--sh);padding:5px;border-radius:999px}
 .seg button{flex:1;border:0;border-radius:999px;background:transparent;padding:10px 6px;min-height:42px;font-weight:500;font-size:15px;color:var(--muted)}
@@ -163,7 +168,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .chip .nm{border:0;background:none;padding:0;text-align:left;font-weight:700}
 .chip button:not(.nm){border:0;background:#F4E6E5;color:var(--muted);width:28px;height:28px;border-radius:50%;font-size:16px;line-height:1;flex:none}
 .add{display:flex;gap:8px}
-.add input{flex:1;min-width:0;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);padding:12px 18px;min-height:50px}
+.add input{flex:1;min-width:0;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:12px 18px;min-height:50px}
 .add input:focus{outline:none;border-color:var(--hot)}
 .add input::placeholder{color:#A99494}
 .how{background:rgba(255,255,255,.72);border-radius:20px;padding:14px 16px;font-size:15px;color:#4A3D3D}
@@ -184,12 +189,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .seg.times small{font-size:11.5px;font-weight:500;line-height:1.2;opacity:.8}
 /* Play */
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.top .count{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;text-align:center;flex:1;min-width:0;white-space:nowrap}
+.top .count{font-variant-numeric:tabular-nums;color:var(--on-muted);font-weight:700;text-align:center;flex:1;min-width:0;white-space:nowrap}
 .top .grp{display:flex;gap:6px;flex:none}
 .top .btn.small{padding:8px 13px}
 @media (max-width:359px){.top{gap:6px}.top .btn.small{padding:8px 10px;font-size:13px}.top .count{font-size:13px}}
-.bar{height:8px;border-radius:999px;background:#F1DEDD;overflow:hidden}
-.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--hot),var(--coral))}
+.bar{height:10px;border-radius:999px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg, var(--m, var(--hot)), color-mix(in srgb, var(--m, var(--hot)) 62%, #fff));transition:width .3s ease-out}
 .deck{position:relative;margin:30px 0 10px}
 .deck::before,.deck::after{content:"";position:absolute;inset:10px 10px 0;border-radius:30px;background:#fff}
 .deck::before{transform:rotate(3deg) translateY(6px);opacity:.75;box-shadow:var(--sh)}
@@ -215,6 +220,9 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .card .who b{color:var(--ink);font-size:18px;font-weight:700}
 .card .lead{font-weight:700;color:var(--muted);font-size:16px}
 .card .q{font-size:25px;line-height:1.22;font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:auto 0;overflow-wrap:anywhere}
+/* a short question is written larger */
+.card .q.lg{font-size:min(28px, 7.4vw)}
+.card .q.xl{font-size:min(32px, 8.4vw);line-height:1.18}
 .card .q u{text-decoration:none;color:var(--m);background:color-mix(in srgb, var(--m) 12%, #fff);border-radius:8px;padding:0 6px}
 .card .rule{font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 .card .ans{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:10px}
@@ -222,8 +230,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .card .ans b{text-align:right;overflow-wrap:anywhere}
 .verdict{font-family:var(--display);font-weight:800;font-size:20px}
 .pick{display:flex;flex-wrap:wrap;gap:8px}
-.pick button{border:0;border-radius:999px;padding:10px 17px;min-height:46px;font-weight:700;background:var(--surface);box-shadow:var(--sh);overflow-wrap:anywhere}
-.pick button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.pick button{border:0;border-radius:999px;padding:10px 17px;min-height:46px;font-weight:700;background:var(--surface);color:var(--ink);box-shadow:var(--sh);overflow-wrap:anywhere}
+.pick button[aria-pressed="true"]{background:var(--pressed);color:var(--pressed-ink)}
 .opts{display:flex;flex-direction:column;gap:10px}
 .opt{
   text-align:left;border:2px solid transparent;border-radius:20px;padding:14px 18px;min-height:54px;font-weight:700;font-size:16px;
@@ -231,11 +239,74 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 }
 .opt:active{transform:scale(.98)}
 .opt.ok{background:var(--mint);color:#fff}
-.opt.bad{background:#FCEBEA;border-color:#EDB7B5;color:var(--hot);text-decoration:line-through;box-shadow:none}
+.opt.bad{background:#FCEBEA;border-color:#EDB7B5;color:var(--hot);box-shadow:none}
+.opt.bad .t{text-decoration:line-through}
+/* Quiz: a letter in front of every answer */
+.opt.abc{display:flex;align-items:center;gap:12px;padding:9px 16px 9px 10px}
+.opt .ltr{flex:none;width:36px;height:36px;border-radius:13px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:14px;color:var(--m);background:color-mix(in srgb, var(--m) 14%, #fff)}
+.opt.ok .ltr{background:rgba(255,255,255,.26);color:#fff}
+.opt.bad .ltr{background:#F6D3D1;color:var(--hot)}
 .opt[disabled]{cursor:default}
-.flash{min-height:22px;text-align:center;font-weight:700;color:var(--hot);font-size:15px}
+.flash{min-height:22px;text-align:center;font-weight:700;color:var(--flashc);font-size:15px}
 .cover{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;text-align:center;min-height:340px}
 .cover b{font-family:var(--display);font-weight:800;font-size:34px;color:var(--hot);overflow-wrap:anywhere}
+/* "Pass the phone to…": a panel in the colour of the game, so the change of player is seen at a glance */
+.cover.pass{
+  position:relative;overflow:hidden;border-radius:34px;padding:26px 22px 22px;color:#fff;gap:0;
+  background:
+    radial-gradient(95% 60% at 100% 0%, color-mix(in srgb, var(--m) 50%, #FFC2A6) 0, transparent 62%),
+    radial-gradient(80% 50% at 0% 100%, color-mix(in srgb, var(--m) 55%, #000) 0, transparent 70%),
+    linear-gradient(160deg, var(--m), color-mix(in srgb, var(--m) 66%, #000));
+  box-shadow:0 34px 60px -28px color-mix(in srgb, var(--m) 80%, #000);
+}
+.cover.pass .cmid{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0}
+.cover.pass .ph{font-size:58px;line-height:1;animation:hand 1.5s ease-in-out infinite alternate}
+.cover.pass .note{color:rgba(255,255,255,.9);font-size:15.5px}
+.cover.pass b{color:#fff;line-height:1.08;letter-spacing:-.02em}
+.cover.pass .btn{background:#fff;color:var(--m);box-shadow:0 16px 26px -16px rgba(0,0,0,.7)}
+@keyframes hand{from{transform:translateX(-12px) rotate(-10deg)}to{transform:translateX(12px) rotate(10deg)}}
+
+/* ---------- While a game is played ---------- */
+/* The card takes all the free height of the screen, and the buttons stand at the bottom, under the thumb. */
+body.play #app{padding-bottom:max(26px, env(safe-area-inset-bottom))}
+body.play .deck{flex:1 1 auto;display:flex;max-height:620px;margin-bottom:auto}
+body.play .deck .card{flex:1;min-height:210px}
+body.play .cover{flex:1 1 auto;max-height:660px;margin-bottom:auto}
+/* the line for a short message takes room only while it says something */
+body.play .flash:empty{display:none}
+/* a low screen (a small phone, or a browser with its bars): less air, so the buttons stay in sight */
+@media (max-height:640px){
+  body.play #app{gap:16px;padding-top:14px;padding-bottom:max(18px, env(safe-area-inset-bottom))}
+  body.play .deck{margin-top:26px}
+}
+/* A mood for every shelf: the page behind the card. */
+body[class*="mood-"]{transition:background-color .3s}
+body.mood-couples{background:
+  radial-gradient(80% 42% at 100% 0%, #FFC4AE 0, transparent 70%) fixed,
+  radial-gradient(70% 40% at 0% 22%, #F8B8CF 0, transparent 70%) fixed,
+  radial-gradient(90% 38% at 50% 100%, #F9C6CF 0, transparent 70%) fixed, #FBE2E0; --track:#F2C3C6}
+body.mood-friends{background:
+  radial-gradient(80% 42% at 100% 0%, #FFD476 0, transparent 70%) fixed,
+  radial-gradient(70% 40% at 0% 24%, #A9E6D1 0, transparent 70%) fixed,
+  radial-gradient(90% 38% at 50% 100%, #FFBE94 0, transparent 70%) fixed, #FFF1D2; --track:#F3D9A6}
+body.mood-adult{background:
+  radial-gradient(85% 45% at 100% 0%, #8A1830 0, transparent 70%) fixed,
+  radial-gradient(75% 42% at 0% 100%, #521034 0, transparent 70%) fixed, #1B070C}
+body.mood-quiz{background:
+  radial-gradient(85% 45% at 100% 0%, #2E8BDD 0, transparent 70%) fixed,
+  radial-gradient(75% 42% at 0% 100%, #33309A 0, transparent 70%) fixed, #0E2B52;
+  --b1:#FFD466; --b2:#F4A621; --b-ink:#2A1B00; --b-sh:rgba(0,0,0,.55); --flashc:#FFE7A6}
+body.dark{
+  color:#fff; --on:#fff; --on-muted:rgba(255,255,255,.76); --ghost:rgba(255,255,255,.14); --ghost-ink:#fff;
+  --ghost-sh:inset 0 0 0 1px rgba(255,255,255,.2); --track:rgba(255,255,255,.2); --pressed:#FFCB52; --pressed-ink:#1F1F1F;
+}
+body.dark .bar i{background:linear-gradient(90deg, color-mix(in srgb, var(--m, #fff) 45%, #fff), #fff)}
+body.mood-adult{--flashc:#FFD3CB}
+body.dark .card{box-shadow:0 0 0 1px rgba(255,255,255,.1), 0 26px 64px -18px color-mix(in srgb, var(--m, var(--hot)) 80%, transparent)}
+body.dark .card::before{filter:invert(1)}
+body.dark .deck::before{opacity:.3;box-shadow:none}
+body.dark .deck::after{opacity:.16}
+body.dark .opt.other{border-color:rgba(255,255,255,.35)}
 
 /* Scores */
 table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;background:var(--surface);border-radius:22px;box-shadow:var(--sh);overflow:hidden}
@@ -250,7 +321,9 @@ html.noscroll body{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 /* Parts of a window keep their full height; the window scrolls instead of squashing (and cutting) them. */
 .sheet > div > *{flex-shrink:0}
 a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;font:inherit!important}
-.sheet > div{width:100%;max-width:480px;max-height:85%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:24px 18px 26px;display:flex;flex-direction:column;gap:16px}
+.sheet > div{width:100%;max-width:480px;max-height:85%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:24px 18px 26px;display:flex;flex-direction:column;gap:16px;
+  color:var(--ink); --on:var(--ink); --on-muted:var(--muted); --ghost:var(--surface); --ghost-ink:var(--ink); --ghost-sh:var(--sh); --track:#EDD3D1;
+  --flashc:var(--hot); --pressed:var(--ink); --pressed-ink:#fff; --b1:#CB3A33; --b2:#A92423; --b-ink:#fff; --b-sh:rgba(177,42,41,.75)}
 
 /* Share poster */
 .poster{
@@ -357,7 +430,7 @@ a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important
 .still .card::before{animation:bob 2.8s ease-in-out infinite alternate}
 .still .card > *{animation:none}
 @media (prefers-reduced-motion:reduce){
-  .card,.card::before,.card > *,.pick button,.opt,.verdict,.cover b,.poster,.phero,.pchips > div{animation:none !important}
+  .card,.card::before,.card > *,.pick button,.opt,.verdict,.cover b,.cover .ph,.poster,.phero,.pchips > div{animation:none !important}
   .btn,.tile{transition:none}
   .fx{display:none}
 }
@@ -395,13 +468,15 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .cstars button{border:0;background:none;padding:7px 1px;font-size:clamp(13px, 3.9vw, 18px);line-height:1;color:rgba(70,45,45,.2)}
 .cstars button[aria-pressed="true"]{color:#F2A900}
 .card .cstars ~ .heat{position:static;align-self:flex-start;margin-top:-4px}
+/* on a narrow phone a long label is written smaller, so it does not reach the stars */
+@media (max-width:374px){.card .cstars ~ .tag.long{font-size:2.75vw;letter-spacing:.02em;padding:8px 11px}}
 /* ...and the window for the opinion of the game */
 .stars{display:flex;justify-content:center;gap:10px}
 .stars button{border:0;background:none;padding:0 2px;font-size:42px;line-height:1;color:#E0D6D5}
 .stars button[aria-pressed="true"]{color:#F2A900}
 .rsheet .rform b{font-size:15px}
 /* Game for two: an answer in one's own words, and judging the guess */
-.opt.other{background:transparent;border-style:dashed;box-shadow:none;color:var(--muted)}
+.opt.other{background:transparent;border-style:dashed;box-shadow:none;color:var(--on-muted)}
 .card .ans span{flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .ans b{text-align:right;overflow-wrap:anywhere}
 .add.own input{font-size:17px}
@@ -521,7 +596,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-26p";
+  var MEIVI_RELEASE = "2026-11-26q";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
