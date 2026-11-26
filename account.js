@@ -132,8 +132,7 @@
     if (act === "a-open") { st.sheet = true; refresh(); return true; }
     if (act === "a-close") { if (b.classList.contains("sheet") && target !== b) return false; st.sheet = false; return true; }
     if (act === "a-out") { signOut(); return true; }
-    if (act === "a-rv") { setReview(b.dataset.g, b.dataset.c, b.dataset.v); return true; }
-    if (act.startsWith("a-rv") || act.startsWith("a-fb")) return testerClick(act, b, target);
+    if (act === "a-star" || act.startsWith("a-op")) return ratingClick(act, b);
     if (act === "a-unlock") { const key = b.dataset.g; if (st.sure !== key) { st.sure = key; return true; } unlock(key); return true; }
     return false;
   }
@@ -150,145 +149,83 @@
       refresh();
     }
   }
-  /* ---------- testers: marking cards while playing ----------
-     Only an account the server marks as "reviewer" sees three buttons on every card:
-     ✕ replace this card, ✓ keep it, ⇄ keep the idea but rework it. Tapping ✓ again clears it.
-     ⇄ and ✕ open a small window for a note (quick reasons and own words); tapping them again opens the note
-     to change it, and the window can also take the mark away.
+  /* ---------- ratings: stars on every card and an opinion of the game ----------
+     Every player sees five stars on every card and, after a game, five stars and one question about the game.
      A card is known by a short fingerprint of its text, so it is found again in any later game.
-     After a game a tester can also write an opinion of the whole game (stars, liked, change, play again). */
-  /* notes: what the server knows; myNotes: what was written on this phone since it opened (always the newest). */
-  const reviews = {}, texts = {}, touched = {}, notes = {}, myNotes = {}, opinions = {}, loaded = {};
-  try { Object.assign(reviews, JSON.parse(box(localStorage, "meivi.reviews") || "{}")); } catch (e) {}
-  const keepReviews = () => box(localStorage, "meivi.reviews", JSON.stringify(reviews));
-  const isReviewer = () => !!(st.account && st.account.reviewer);
-  const R = () => X.review;
+     Stars are kept on the phone at once and sent to the server when the player is signed in. */
+  const stars = {}, texts = {}, touched = {}, opinions = {}, loaded = {};
+  try { Object.assign(stars, JSON.parse(box(localStorage, "meivi.stars") || "{}")); } catch (e) {}
+  const keepStars = () => box(localStorage, "meivi.stars", JSON.stringify(stars));
+  const R = () => X.rating;
   const cardKey = text => { let x = 0x811c9dc5; for (let i = 0; i < text.length; i++) { x ^= text.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0; } return x.toString(36); };
-  async function loadReviews(game) {
-    if (!isReviewer()) return;
+  const repaint = () => { if (MEIVI.app && MEIVI.app.repaint) MEIVI.app.repaint(); };
+  async function loadRatings(game) {
+    if (!st.token || loaded[game]) return;
     const asked = Date.now();
-    loaded[game] = loaded[game] || "busy";
+    loaded[game] = "busy";
     try {
-      const d = await api("reviews?game=" + encodeURIComponent(game)), got = d.reviews || {};
-      /* A mark tapped after this question left is newer than what the server just said. */
+      const d = await api("ratings?game=" + encodeURIComponent(game)), got = d.cards || {};
+      /* A star tapped after this question left is newer than what the server just said. */
       Object.keys(touched).forEach(k => { const [g, c] = k.split("|"); if (g === game && touched[k].at >= asked) { if (touched[k].v) got[c] = touched[k].v; else delete got[c]; } });
-      reviews[game] = got; keepReviews();
-      notes[game] = Object.assign({}, d.notes || {}, myNotes[game] || {});
-      opinions[game] = d.feedback || opinions[game] || null;
+      stars[game] = got; keepStars();
+      if (d.game && !(st.op && st.op.game === game)) opinions[game] = d.game;
       loaded[game] = "yes";
-      if (MEIVI.app.repaint) MEIVI.app.repaint();
+      repaint();
     } catch (e) { loaded[game] = ""; }
   }
-  function reviewButtons(game, text) {
-    if (!isReviewer() || !text) return "";
-    const key = cardKey(String(text)), now = (reviews[game] || {})[key] || "";
+  /* Five stars under a card. Tapping the star that is already chosen takes the rating away. */
+  function cardStars(game, text) {
+    if (!text) return "";
+    const key = cardKey(String(text)), now = (stars[game] || {})[key] || 0;
     texts[game + "|" + key] = String(text);
-    const b = (v, mark, label) => `<button class="rvb rv-${v}" data-act="a-rv" data-g="${esc(game)}" data-c="${key}" data-v="${v}" aria-pressed="${now === v}" aria-label="${esc(label)}">${mark}</button>`;
-    return `<div class="rv" role="group" aria-label="${esc(X.review.title)}">${b("bad", "✕", X.review.bad)}${b("good", "✓", X.review.good)}${b("fix", "⇄", X.review.fix)}</div>`;
+    return `<div class="stars cstars" role="group" aria-label="${esc(R().card)}">${[1, 2, 3, 4, 5].map(n =>
+      `<button data-act="a-star" data-g="${esc(game)}" data-c="${key}" data-v="${n}" aria-pressed="${now >= n}" aria-label="${n}">★</button>`).join("")}</div>`;
   }
-  const noteOf = (game, key) => (notes[game] || {})[key] || { note: "", tags: [] };
-  const putNote = (game, key, n) => {
-    [notes, myNotes].forEach(o => { o[game] = o[game] || {}; if (n) o[game][key] = n; else delete o[game][key]; });
-  };
-  function setReview(game, key, v, extra) {
-    const was = (reviews[game] || {})[key] || "";
-    /* ⇄ or ✕ tapped again: open its note instead of taking the mark away. */
-    if (was === v && v !== "good" && !extra) { openNote(game, key, v); return; }
-    const next = extra && extra.clear ? null : (was === v && !extra ? null : v);
-    reviews[game] = reviews[game] || {};
-    if (next) reviews[game][key] = next; else delete reviews[game][key];
-    keepReviews();
+  function setStars(game, key, v) {
+    const was = (stars[game] || {})[key] || 0, next = was === v ? 0 : v;
+    stars[game] = stars[game] || {};
+    if (next) stars[game][key] = next; else delete stars[game][key];
+    keepStars();
+    if (!st.token) return;
     const id = game + "|" + key; touched[id] = { v: next, at: Date.now() };
-    const body = { game, card: key, text: texts[id] || "", verdict: next };
-    const oldNote = noteOf(game, key);
-    if (extra && extra.note) { body.note = extra.note.note; body.tags = extra.note.tags; putNote(game, key, (extra.note.note || extra.note.tags.length) ? extra.note : null); }
-    else if (next === "good" || !next) putNote(game, key, null);
-    api("review", "POST", body).catch(() => {
-      delete touched[id]; if (was) reviews[game][key] = was; else delete reviews[game][key]; keepReviews();
-      putNote(game, key, (oldNote.note || oldNote.tags.length) ? oldNote : null);
-      st.rvError = X.failed; if (MEIVI.app.repaint) MEIVI.app.repaint();
-    });
-    if ((next === "fix" || next === "bad") && !extra) openNote(game, key, next);
+    api("rate", "POST", { game, card: key, text: texts[id] || "", stars: next || null }).catch(() => { delete touched[id]; });
   }
-  function openNote(game, key, v) {
-    const n = noteOf(game, key);
-    st.rv = { game, key, v, note: n.note || "", tags: (n.tags || []).slice(), text: texts[game + "|" + key] || "" };
-  }
-  /* The tester's own words are kept while typing, so that a redraw of the page does not lose them. */
+  /* The opinion of a whole game, on its last screen: stars and one question. */
+  const opinionOf = game => {
+    if (!st.op || st.op.game !== game) { const o = opinions[game] || {}; st.op = { game, stars: o.stars || 0, text: o.opinion || "", busy: false, err: "", sent: false }; }
+    return st.op;
+  };
+  /* What is being typed is kept, so that a redraw of the page does not lose it. */
   if (typeof document !== "undefined") document.addEventListener("input", e => {
     const t = e.target;
-    if (t.id === "rvNote" && st.rv) st.rv.note = t.value;
-    if (t.dataset && t.dataset.fb && st.fb) st.fb[t.dataset.fb] = t.value;
+    if (t.id === "opText" && st.op) { st.op.text = t.value; st.op.sent = false; }
   });
-  function testerClick(act, b, target) {
-    const backdrop = b.classList.contains("sheet");
-    if (backdrop && target !== b) return false;
-    const r = st.rv, f = st.fb;
-    st.rvError = "";
-    if (act === "a-rvtag" && r) { const t = b.dataset.t, i = r.tags.indexOf(t); if (i >= 0) r.tags.splice(i, 1); else r.tags.push(t); return true; }
-    if (act === "a-rvsave" && r) { const el = document.getElementById("rvNote"); if (el) r.note = el.value; st.rv = null;
-      setReview(r.game, r.key, r.v, { note: { note: r.note.trim().slice(0, 600), tags: r.tags } }); return true; }
-    if (act === "a-rvdel" && r) { st.rv = null; setReview(r.game, r.key, r.v, { clear: true }); return true; }
-    if (act === "a-rvskip") { st.rv = null; return true; }
-    if (act === "a-fbopen") { const g = b.dataset.g, o = opinions[g] || {};
-      st.fb = { game: g, stars: o.stars || 0, liked: o.liked || "", change: o.change || "", again: o.again || "", players: o.players || 0, minutes: o.minutes || 0, multi: !!o.multi, err: "", busy: false }; return true; }
-    if (act === "a-fbclose") { if (f && f.busy) return false; st.fb = null; return true; }
-    if (!f) return false;
-    if (act === "a-fbmulti") { f.multi = !f.multi; f.err = ""; return true; }
-    if (act === "a-fbset") { const k = b.dataset.k, v = k === "again" ? b.dataset.v : +b.dataset.v; f[k] = f[k] === v ? (k === "again" ? "" : 0) : v; f.err = ""; return true; }
-    if (act === "a-fbsend") {
-      document.querySelectorAll("[data-fb]").forEach(el => { f[el.dataset.fb] = el.value; });
-      if (!f.stars && !f.liked.trim() && !f.change.trim() && !f.again && !f.multi) { f.err = R().fbEmpty; return true; }
-      f.busy = true; f.err = "";
-      const body = { game: f.game, stars: f.stars || null, liked: f.liked, change: f.change, again: f.again || null, players: f.players || null, minutes: f.minutes || null, multi: !!f.multi };
-      api("feedback", "POST", body).then(() => { opinions[f.game] = body; st.fb = null; st.fbThanks = f.game; })
-        .catch(() => { f.busy = false; f.err = X.failed; }).then(() => { if (MEIVI.app.repaint) MEIVI.app.repaint(); });
+  function gameRating(game) {
+    if (!loaded[game]) loadRatings(game);
+    const o = opinionOf(game), Y = R();
+    return `<section class="rate"><h2>${esc(Y.game)}</h2>
+      <div class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="a-opstar" data-v="${n}" aria-pressed="${o.stars >= n}" aria-label="${n}">★</button>`).join("")}</div>
+      <label class="rform"><b>${esc(Y.question)}</b><textarea id="opText" rows="3" maxlength="1500">${esc(o.text)}</textarea></label>
+      ${o.err ? `<p class="flash">${esc(o.err)}</p>` : ""}${o.sent ? `<p class="note">${esc(Y.thanks)}</p>` : ""}
+      <button class="btn ghost" data-act="a-opsend" ${o.busy ? "disabled" : ""}>${esc(o.busy ? Y.sending : Y.send)}</button></section>`;
+  }
+  function ratingClick(act, b) {
+    if (act === "a-star") { setStars(b.dataset.g, b.dataset.c, +b.dataset.v); return true; }
+    const o = st.op;
+    if (!o) return false;
+    if (act === "a-opstar") { const v = +b.dataset.v; o.stars = o.stars === v ? 0 : v; o.err = ""; o.sent = false; return true; }
+    if (act === "a-opsend") {
+      const el = document.getElementById("opText"); if (el) o.text = el.value;
+      if (!o.stars && !o.text.trim()) { o.err = R().empty; return true; }
+      if (!st.token) { opinions[o.game] = { stars: o.stars, opinion: o.text }; o.sent = true; return true; }
+      o.busy = true; o.err = "";
+      const body = { game: o.game, stars: o.stars || null, opinion: o.text };
+      api("opinion", "POST", body).then(() => { opinions[o.game] = { stars: o.stars, opinion: o.text }; o.sent = true; })
+        .catch(() => { o.err = X.failed; }).then(() => { o.busy = false; repaint(); });
       return true;
     }
     return false;
   }
-  /* Windows that open over a game or its last screen. */
-  function testerSheets() {
-    const r = st.rv, f = st.fb, Y = R();
-    if (r) {
-      const pick = r.v === "fix" ? Y.tagsFix : Y.tagsBad;
-      return `<div class="sheet rsheet" data-act="a-rvskip"><div role="dialog" aria-label="${esc(Y.title)}">
-        <p class="rvhead"><span class="rvb rv-${r.v}" aria-hidden="true" aria-pressed="true">${r.v === "fix" ? "⇄" : "✕"}</span><b>${esc(r.v === "fix" ? Y.noteFix : Y.noteBad)}</b></p>
-        ${r.text ? `<p class="rvcard">${esc(r.text.split("||")[0])}</p>` : ""}
-        <div class="rvtags">${pick.map(t => `<button class="rvtag" data-act="a-rvtag" data-t="${t}" aria-pressed="${r.tags.includes(t)}">${esc(Y.tags[t])}</button>`).join("")}</div>
-        <div class="rform"><textarea id="rvNote" rows="3" maxlength="600" placeholder="${esc(Y.placeholder)}">${esc(r.note)}</textarea></div>
-        <div class="row"><button class="btn ghost" data-act="a-rvskip">${esc(Y.skip)}</button><button class="btn" data-act="a-rvsave">${esc(Y.save)}</button></div>
-        <button class="btn ghost small rvdel" data-act="a-rvdel">${esc(Y.remove)}</button>
-      </div></div>`;
-    }
-    if (f) {
-      const seg = (k, list) => `<div class="rvtags">${list.map(([v, t]) => `<button class="rvtag" data-act="a-fbset" data-k="${k}" data-v="${v}" aria-pressed="${f[k] === v}">${esc(t)}</button>`).join("")}</div>`;
-      return `<div class="sheet rsheet" data-act="a-fbclose"><div role="dialog" aria-label="${esc(Y.fbTitle)}">
-        <h1 class="rsheet-h">${esc(Y.fbTitle)}</h1>
-        <div class="fbq"><b>${esc(Y.stars)}</b><div class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="a-fbset" data-k="stars" data-v="${n}" aria-pressed="${f.stars >= n}" aria-label="${n}">★</button>`).join("")}</div></div>
-        <label class="fbq rform"><b>${esc(Y.liked)}</b><textarea data-fb="liked" rows="3" maxlength="1500">${esc(f.liked)}</textarea></label>
-        <label class="fbq rform"><b>${esc(Y.change)}</b><textarea data-fb="change" rows="3" maxlength="1500">${esc(f.change)}</textarea></label>
-        <div class="fbq"><b>${esc(Y.again)}</b>${seg("again", Object.entries(Y.againOpts))}</div>
-        <div class="fbq"><b>${esc(Y.players)}</b>${seg("players", Y.playerOpts)}</div>
-        <div class="fbq"><b>${esc(Y.minutes)}</b>${seg("minutes", Y.minuteOpts)}</div>
-        <button class="fbcheck" data-act="a-fbmulti" role="checkbox" aria-checked="${!!f.multi}"><span class="box" aria-hidden="true">${f.multi ? "✓" : ""}</span><span>${esc(Y.multi)}</span></button>
-        ${f.err ? `<p class="flash">${esc(f.err)}</p>` : ""}
-        <div class="row rfoot"><button class="btn ghost" data-act="a-fbclose">${esc(X.close)}</button><button class="btn" data-act="a-fbsend" ${f.busy ? "disabled" : ""}>${esc(f.busy ? Y.sending : Y.send)}</button></div>
-      </div></div>`;
-    }
-    return "";
-  }
-  /* For a tester on a game's own screens: how many of its cards are marked, and the opinion of the game. */
-  function testerBox(game, cardTexts, wide) {
-    if (!isReviewer()) return "";
-    if (!loaded[game]) loadReviews(game);
-    const mine = reviews[game] || {}, keys = new Set(cardTexts.map(t => cardKey(String(t))));
-    const n = Object.keys(mine).filter(k => keys.has(k)).length, Y = R();
-    const thanks = st.fbThanks === game ? `<p class="note">${esc(Y.fbThanks)}</p>` : "";
-    return `<section class="tbox${wide ? " wide" : ""}"><p class="tlabel">${esc(Y.tester)}</p><p>${esc(Y.counted(n, keys.size))}</p>
-      <button class="btn ${wide ? "" : "ghost small"}" data-act="a-fbopen" data-g="${esc(game)}">${esc(opinions[game] ? Y.opinionEdit : Y.opinion)}</button>${thanks}
-      ${st.rvError ? `<p class="flash">${esc(st.rvError)}</p>` : ""}</section>`;
-  }
 
-  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, isReviewer, loadReviews, reviewButtons, testerSheets, testerBox };
+  window.MACC = { button, gate, overlay, click, boot, locked, owns, state: st, loadRatings, cardStars, gameRating };
 })();

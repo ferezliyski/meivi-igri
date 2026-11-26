@@ -72,7 +72,6 @@ MEIVI.ui = {
   topics: "Категории",
   topicsAll: "Избери всички",
   topicsNone: "Изчисти всички",
-  topicCount: n => `${n} въпроса`,
   pickTopic: "Избери поне една категория.",
   spice: "Колко пикантно",
   levels: ["Загрявка", "Пикантно", "Без задръжки"],
@@ -87,7 +86,7 @@ MEIVI.ui = {
     quiz: { 15: "5–10 мин", 30: "около 15 мин", 50: "около 25 мин", 100: "около 50 мин" }
   },
   poolNote: n => `С този избор има ${n} карти, толкова ще изиграете.`,
-  poolNoteQuiz: n => `В избраните категории има ${n} въпроса, толкова ще изиграете.`,
+  needTopics: (n, k) => `За ${n} въпроса избери поне ${k} категории.`,
   start: "Започни играта",
   startAdult: "На 18 или повече сме, започни",
 
@@ -270,36 +269,14 @@ MEIVI.ui = {
     needMore: (cost, have) => `Трябват ${cost === 1 ? "1 кредит" : cost + " кредита"}, а имаш ${have}.`,
     noCredits: "Кредитите не стигат.",
     failed: "Не се получи. Опитай пак.",
-    /* testers only: the three buttons on a card */
-    review: {
-      title: "Оценка на картата", bad: "Смени картата", good: "Харесва ми, остава", fix: "Добра е, но трябва да се преправи",
-      /* the note window after ⇄ or ✕ */
-      noteFix: "Какво да се промени?",
-      noteBad: "Защо да се смени? (по желание)",
-      tags: { missing: "Липсва ми отговор", fit: "Отговорите не пасват", unclear: "Неясен въпрос", boring: "Скучно е", awkward: "Неудобен въпрос", repeat: "Повтаря друга карта" },
-      tagsFix: ["missing", "fit", "unclear", "boring"],
-      tagsBad: ["boring", "awkward", "repeat", "unclear"],
-      placeholder: "Напиши с твои думи (по желание)",
-      save: "Запази", skip: "Пропусни", remove: "Махни оценката на картата",
-      /* the tester's box on a game's screens, and the opinion of the whole game */
-      tester: "Тестер",
-      counted: (n, total) => `Оценени карти: ${n} от ${total}`,
-      opinion: "📝 Мнение за играта",
-      opinionEdit: "✓ Мнението е запазено · Промени",
-      fbTitle: "Мнение за играта",
-      stars: "Колко ти хареса?",
-      liked: "Какво ти хареса?",
-      change: "Какво да се промени?",
-      again: "Ще я играеш ли пак?",
-      againOpts: { yes: "Да", maybe: "Може би", no: "Не" },
-      players: "С колко души играхте? (по желание)",
-      playerOpts: [[2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6+"]],
-      minutes: "Колко време? (по желание)",
-      minuteOpts: [[15, "до 15 мин"], [30, "15–30 мин"], [60, "30–60 мин"], [90, "над час"]],
-      multi: "Да се направи същата и като мултиплеър игра",
+    /* stars on every card, and the opinion of the game on its last screen */
+    rating: {
+      card: "Оценка на картата",
+      game: "Оцени играта",
+      question: "Какво е мнението ви за играта?",
       send: "Изпрати", sending: "Изпращане…",
-      fbEmpty: "Дай звезди или напиши нещо.",
-      fbThanks: "Благодарим! Мнението е запазено."
+      empty: "Дай звезди или напиши нещо.",
+      thanks: "Благодарим! Мнението е запазено."
     }
   },
 

@@ -60,11 +60,8 @@ const bold = s => `<b>${h(s)}</b>`;
 const rand = n => Math.floor(Math.random()*n);
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
 const game = () => GAMES.find(g => g.id === S.g);
-/* A tester's buttons on a card (account.js); empty for everyone else. */
-const rv = text => window.MACC ? MACC.reviewButtons("s:" + S.g, text) : "";
-/* Every card of a game, written exactly as rv() above gets it, so that a tester's marks can be counted. */
-const cardTexts = g => g.eng === "cards" ? g.cards.map(c => c[1]) : g.eng === "quiz" ? g.qs.map(([q, o]) => q + " → " + o[0]) : g.qs.map(q => Array.isArray(q) ? q[0] : q);
-const testerBox = (g, wide) => window.MACC && MACC.testerBox ? MACC.testerBox("s:" + g.id, cardTexts(g), wide) : "";
+/* Five stars under a card, for every player to rate it (account.js). */
+const rv = text => window.MACC ? MACC.cardStars("s:" + S.g, text) : "";
 const playersLabel = g => T.players(g.n[0], g.n[1]);
 
 function loadNames(){
@@ -102,7 +99,7 @@ function begin(){
   }
   S.screen = "play";
   rememberPlayed(g.id);
-  if(window.MACC) MACC.loadReviews("s:" + g.id);
+  if(window.MACC) MACC.loadRatings("s:" + g.id);
 }
 
 /* ---------- First screen: one phone or several ---------- */
@@ -203,10 +200,12 @@ function viewSetup(){
   const anyKind = !g.modes || Object.values(S.kinds).some(Boolean);
   const pool = g.eng==="cards" ? poolOf(g).length : g.topics ? quizPool(g).length : 0;
   const anyTopic = !g.topics || pool > 0;
-  const ok = n >= g.n[0] && n <= g.n[1] && anyKind && anyTopic;
+  /* A quiz with topics is played with exactly the chosen number of questions, so the chosen topics must hold that many. */
+  const enough = !g.topics || pool >= S.rounds;
+  const ok = n >= g.n[0] && n <= g.n[1] && anyKind && anyTopic && enough;
   const extra = `${g.topics ? `<section class="stack"><div class="headrow"><h2>${T.topics}</h2>
       <button class="btn ghost small" data-act="topics-all">${g.topics.some(t => S.topicsOff[t.id]) ? T.topicsAll : T.topicsNone}</button></div>
-    <div class="modes topics">${g.topics.map(t => `<button class="mode c-${g.c}" data-act="topic" data-k="${t.id}" aria-pressed="${!S.topicsOff[t.id]}"><b><span aria-hidden="true">${t.icon}</span> ${h(t.name)}</b><small>${T.topicCount(t.questions.length)}</small></button>`).join("")}</div>
+    <div class="modes topics">${g.topics.map(t => `<button class="mode c-${g.c}" data-act="topic" data-k="${t.id}" aria-pressed="${!S.topicsOff[t.id]}"><b><span aria-hidden="true">${t.icon}</span> ${h(t.name)}</b></button>`).join("")}</div>
     ${anyTopic ? "" : `<p class="flash" style="text-align:left">${T.pickTopic}</p>`}</section>` : ""}
   ${g.modes ? `<section class="stack"><h2>${T.modes}</h2>
     <div class="modes">${["A","V","Q","D"].map(k => `<button class="mode ${KIND_CLASS[k]}" data-act="kind" data-k="${k}" aria-pressed="${S.kinds[k]}"><b>${g.tags[k]}</b><small>${T.modeHints[k]}</small></button>`).join("")}</div>
@@ -225,7 +224,6 @@ function viewSetup(){
     <p>${g.desc}</p>
   </header>
   <p class="how">${how}</p>
-  ${testerBox(g)}
   <section class="stack">
     <div class="headrow"><h2>${T.playersTitle(n)}</h2><span class="req">${T.playersNeed(g.n[0], g.n[1])}</span></div>
     <div class="chips">
@@ -237,13 +235,13 @@ function viewSetup(){
       <input id="newName" maxlength="18" placeholder="${g.hero && n===0 ? T.heroFirst(g.hero) : T.playerName}" autocomplete="off" aria-label="${T.playerName}">
       <button class="btn small" type="submit">${T.add}</button>
     </form>`}
-    <p class="${ok ? "note" : "flash"}" style="text-align:left">${T.playersStatus(n, g.n[0], g.n[1])}</p>
+    <p class="${n >= g.n[0] && n <= g.n[1] ? "note" : "flash"}" style="text-align:left">${T.playersStatus(n, g.n[0], g.n[1])}</p>
   </section>
   ${extra}
   <section class="stack">
     <h2>${g.eng==="cards" ? T.cardsCount : T.questionsCount}</h2>
     <div class="seg times">${g.rounds.map(n => `<button data-act="rounds" data-v="${n}" aria-pressed="${S.rounds===n}"><b>${n}</b><small>${T.time[g.eng][n]}</small></button>`).join("")}</div>
-    ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">${T.poolNote(pool)}</p>` : ""}${g.topics && anyTopic && pool < S.rounds ? `<p class="note">${T.poolNoteQuiz(pool)}</p>` : ""}
+    ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">${T.poolNote(pool)}</p>` : ""}${anyTopic && !enough ? `<p class="flash" style="text-align:left">${T.needTopics(S.rounds, Math.ceil(S.rounds / Math.min(...g.topics.map(t => t.questions.length))))}</p>` : ""}
   </section>
   ${window.MACC && MACC.locked("s:" + g.id) ? MACC.gate("s:" + g.id, "s:" + g.id) : `<button class="btn" data-act="start" ${ok ? "" : "disabled"}>${g.adult ? T.startAdult : T.start}</button>`}`;
 }
@@ -312,7 +310,8 @@ function viewCards(){
       <button class="btn" data-act="done">${c.k==="Q" ? T.answered : T.done}</button></div>`;
   }
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}">${rv(c.t)}<span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
+  <div class="deck"><article class="card c-${KIND_COLOR[c.k]}"><span class="tag">${g.tags?.[c.k] || T.kinds[c.k]}</span>${c.l ? `<span class="heat" role="img" aria-label="${T.levelLabel(c.l)}">${[1,2,3].map(n => `<i class="${n<=c.l ? "on" : ""}"></i>`).join("")}</span>` : ""}${body}<p class="rule">${rule}</p></article></div>
+  ${rv(c.t)}
   <p class="flash" aria-live="polite">${h(S.flash)}</p>
   ${actions}${S.sheet ? viewSheet() : ""}`;
 }
@@ -323,10 +322,11 @@ function viewQuiz(){
   const done = S.picked !== null;
   const right = c.opts.find(o => o.ok).t;
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="tag">${h(c.tag || g.cat)}</span>
+  <div class="deck"><article class="card c-${g.c}"><span class="tag">${h(c.tag || g.cat)}</span>
     ${n > 1 ? `<p class="who">${T.turn(bold(S.players[p]))}</p>` : ""}
     <p class="q">${h(c.q)}</p>
   </article></div>
+  ${rv(c.q + " → " + right)}
   <div class="opts">${c.opts.map((o,i) => `<button class="opt ${done ? (o.ok ? "ok" : i===S.picked ? "bad" : "") : ""}"
       data-act="q-pick" data-i="${i}" ${done ? "disabled" : ""}>${h(o.t)}</button>`).join("")}</div>
   <p class="flash" aria-live="polite">${done ? (c.opts[S.picked].ok ? T.right : T.rightIs(h(right))) : ""}</p>
@@ -365,7 +365,7 @@ function viewMatch(){
       : `<div class="opts">${I.opts.map((o,i) => `<button class="opt" data-act="m-pick" data-i="${i}">${h(o)}</button>`).join("")}
          ${I.about ? `<button class="opt other" data-act="m-type">${T.ownAnswer}</button>` : ""}</div>`;
     return `${bar}
-    <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
+    <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
       <p class="who">${T.answers(bold(S.players[who]))}</p><p class="q">${h(prompt)}</p></article></div>
     ${own}`;
   }
@@ -381,12 +381,13 @@ function viewMatch(){
     : `<button class="btn" data-act="m-next">${T.next}</button>`;
   const verdict = r === null ? "" : m.judged == null ? (r === 1 ? T.same : T.different) : (r === 1 ? T.judged.yes : r === 0.5 ? T.judged.half : T.judged.no);
   return `${bar}
-  <div class="deck"><article class="card c-${g.c}">${rv(Array.isArray(I.q) ? I.q[0] : I.q)}<span class="tag">${g.cat}</span>
+  <div class="deck"><article class="card c-${g.c}"><span class="tag">${g.cat}</span>
     <p class="q">${h(I.neutral)}</p>
     <div class="ans"><span>${h(S.players[I.order[0]])}</span><b>${said(m.ans[0])}</b></div>
     <div class="ans"><span>${h(S.players[I.order[1]])}</span><b>${said(m.ans[1])}</b></div>
     ${verdict ? `<p class="verdict" style="color:${r === 1 ? "#1E7F6B" : r === 0.5 ? "#B7791F" : "#B12A29"}">${verdict}</p>` : ""}
   </article></div>
+  ${rv(Array.isArray(I.q) ? I.q[0] : I.q)}
   ${judge}`;
 }
 /* How the two answers of a round compare: 1 the same, 0 different, 0.5 "almost" (judged by a person),
@@ -546,9 +547,9 @@ function viewEnd(){
     ${rank}
     <p class="pfoot">${T.playToo(`<b>${h(CFG.site)}</b>`)}</p>
   </section>
-  ${testerBox(g, true)}
   <div class="stack">
     <button class="btn" data-act="share" ${MEIVI.story ? "" : "disabled"}>${S.story.wanted && !S.story.file ? T.shareWait : T.shareStory}</button>
+    ${window.MACC ? MACC.gameRating("s:" + g.id) : ""}
     <div class="row">${canBack() ? `<button class="btn ghost" data-act="back"><span aria-hidden="true">←</span> ${T.back}</button>` : ""}<button class="btn ghost" data-act="again">${T.again}</button></div>
     <button class="btn ghost small" data-act="home" style="align-self:center">${T.toAllGames}</button>
   </div>${S.story.sheet && S.story.url ? viewStorySheet() : ""}`;
@@ -564,8 +565,6 @@ function render(){
   else if(S.screen==="setup") v = viewSetup();
   else if(S.screen==="end") v = viewEnd();
   else v = {cards:viewCards, quiz:viewQuiz, match:viewMatch}[game().eng]();
-  /* A tester's windows (a note on a card, an opinion of the game) open over any screen of a game. */
-  if(window.MACC && MACC.testerSheets && game() && ["setup","play","end"].includes(S.screen)) v += MACC.testerSheets();
   app.innerHTML = v;
   app.querySelector?.(".card")?.style.setProperty("--tilt", (S.i % 2 ? 1.3 : -1.3) + "deg");
   const key = S.screen + ":" + S.g + ":" + S.i + ":" + (S.m ? S.m.step : "");
