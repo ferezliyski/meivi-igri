@@ -11,7 +11,9 @@
      players   fewest and most players
      adult     18+ only            levels  has three levels of spice
      modes     card kinds can be switched on and off      drink  offers "a sip" as the penalty for a pass
-     ordered   cards are played in their written order, not shuffled */
+     ordered   cards are played in their written order, not shuffled
+     rounds    the choices for the number of cards, when not the usual 15, 30, 50
+   A quiz whose text has "topics" asks which of them take part before the game. */
 window.MEIVI = window.MEIVI || {};
 /* Text files call this to hand over the text of their game. */
 MEIVI.texts = {};
@@ -24,10 +26,7 @@ MEIVI.catalog = {
   categories: ["couples", "adult", "friends", "quiz"],
   games: [
     { id: "couple", cat: "couples", color: "hot", eng: "match", players: [2, 2], icon: "💞" },
-    { id: "zodiac", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🔮" },
-    { id: "auto", cat: "quiz", color: "hot", eng: "quiz", players: [1, 8], icon: "🏎️" },
     { id: "date", cat: "couples", color: "hot", eng: "cards", players: [2, 2], icon: "🔥", ordered: true },
-    { id: "bg", cat: "quiz", color: "gold", eng: "quiz", players: [1, 8], icon: "🇧🇬" },
     { id: "similar", cat: "couples", color: "mint", eng: "match", players: [2, 2], icon: "👯" },
     { id: "close", cat: "couples", color: "lilac", eng: "cards", players: [2, 2], icon: "💬", ordered: true },
     { id: "spicy", cat: "adult", color: "hot", eng: "cards", players: [2, 2], icon: "🌶️", adult: true },
@@ -44,10 +43,7 @@ MEIVI.catalog = {
     { id: "truth", cat: "friends", color: "hot", eng: "cards", players: [2, 12], icon: "🎯" },
     { id: "lies", cat: "friends", color: "lilac", eng: "cards", players: [3, 10], icon: "🤥" },
     { id: "hotseat", cat: "friends", color: "hot", eng: "cards", players: [3, 12], icon: "🔥" },
-    { id: "football", cat: "quiz", color: "mint", eng: "quiz", players: [1, 8], icon: "⚽" },
-    { id: "music", cat: "quiz", color: "lilac", eng: "quiz", players: [1, 8], icon: "🎶" },
-    { id: "cinema", cat: "quiz", color: "hot", eng: "quiz", players: [1, 8], icon: "🎬" },
-    { id: "general", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🧠" }
+    { id: "quiz", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🧠", rounds: [30, 50, 100] }
   ]
 };
 

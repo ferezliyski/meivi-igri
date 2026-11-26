@@ -24,7 +24,9 @@ const GAMES = MEIVI.catalog.games
     return Object.assign({}, t, {
       id: m.id, grp: m.cat, c: m.color, eng: m.eng, n: m.players, ico: m.icon,
       adult: m.adult, levels: m.levels, modes: m.modes, drinkOpt: m.drink, ordered: m.ordered,
-      cat: t.label, aw: t.awards, qs: t.questions
+      cat: t.label, aw: t.awards, rounds: m.rounds || [15, 30, 50],
+      /* A quiz with topics: every question also carries the number of its topic. */
+      qs: t.topics ? t.topics.flatMap((tp, i) => tp.questions.map(([q, o]) => [q, o, i])) : t.questions
     });
   });
 
@@ -42,9 +44,14 @@ function poolOf(g){
   return g.cards.filter(([k,t,l]) => (!g.levels || (l >= Math.max(1,S.level-1) && l <= S.level)) && (!g.modes || S.kinds[k]));
 }
 
+/* The questions of a quiz that may be drawn: with topics, only those of the topics that are switched on. */
+function quizPool(g){
+  return g.topics ? g.qs.filter(q => !S.topicsOff[g.topics[q[2]].id]) : g.qs.slice();
+}
+
 /* ---------- State ---------- */
 let S = {screen: MULTI ? "start" : "home", g:null, rounds:15, level:2, kinds:{A:true,V:true,Q:true,D:true}, drink:true, players:[], deck:[], i:0, stats:[], sel:[], flash:"",
-         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}, shelfOpen:{}};
+         sheet:false, copied:false, picked:null, m:null, mn:0, msoon:false, run:0, story:{}, shelfOpen:{}, topicsOff:{}};
 try{ S.mn = +(localStorage.getItem("meivi.multi.n") || 0) || 0; }catch(e){}
 
 const app = document.getElementById("app");
@@ -88,7 +95,7 @@ function begin(){
     });
     S.deck = deck;
   }else if(g.eng === "quiz"){
-    S.deck = shuffle(g.qs.slice()).slice(0, S.rounds).map(([q,opts]) => ({q, opts: shuffle(opts.map((t,i) => ({t, ok:i===0})))}));
+    S.deck = shuffle(quizPool(g)).slice(0, S.rounds).map(([q,opts,tp]) => ({q, tag: g.topics ? g.topics[tp].name : "", opts: shuffle(opts.map((t,i) => ({t, ok:i===0})))}));
   }else{
     S.deck = shuffle(g.qs.slice()).slice(0, S.rounds);
     S.m = {step:0, ans:[null,null], hits:0, guess:[0,0], asked:[0,0]};
@@ -192,10 +199,16 @@ function viewHome(){
 /* ---------- Before the game ---------- */
 function viewSetup(){
   const g = game(), n = S.players.length;
+  if(!g.rounds.includes(S.rounds)) S.rounds = g.rounds[0];
   const anyKind = !g.modes || Object.values(S.kinds).some(Boolean);
-  const ok = n >= g.n[0] && n <= g.n[1] && anyKind;
-  const pool = g.eng==="cards" ? poolOf(g).length : 0;
-  const extra = `${g.modes ? `<section class="stack"><h2>${T.modes}</h2>
+  const pool = g.eng==="cards" ? poolOf(g).length : g.topics ? quizPool(g).length : 0;
+  const anyTopic = !g.topics || pool > 0;
+  const ok = n >= g.n[0] && n <= g.n[1] && anyKind && anyTopic;
+  const extra = `${g.topics ? `<section class="stack"><div class="headrow"><h2>${T.topics}</h2>
+      <button class="btn ghost small" data-act="topics-all">${g.topics.some(t => S.topicsOff[t.id]) ? T.topicsAll : T.topicsNone}</button></div>
+    <div class="modes topics">${g.topics.map(t => `<button class="mode c-${g.c}" data-act="topic" data-k="${t.id}" aria-pressed="${!S.topicsOff[t.id]}"><b><span aria-hidden="true">${t.icon}</span> ${h(t.name)}</b><small>${T.topicCount(t.questions.length)}</small></button>`).join("")}</div>
+    ${anyTopic ? "" : `<p class="flash" style="text-align:left">${T.pickTopic}</p>`}</section>` : ""}
+  ${g.modes ? `<section class="stack"><h2>${T.modes}</h2>
     <div class="modes">${["A","V","Q","D"].map(k => `<button class="mode ${KIND_CLASS[k]}" data-act="kind" data-k="${k}" aria-pressed="${S.kinds[k]}"><b>${g.tags[k]}</b><small>${T.modeHints[k]}</small></button>`).join("")}</div>
     ${anyKind ? "" : `<p class="flash" style="text-align:left">${T.pickMode}</p>`}</section>` : ""}
   ${g.levels ? `<section class="stack"><h2>${T.spice}</h2>
@@ -229,8 +242,8 @@ function viewSetup(){
   ${extra}
   <section class="stack">
     <h2>${g.eng==="cards" ? T.cardsCount : T.questionsCount}</h2>
-    <div class="seg times">${[15,30,50].map(n => `<button data-act="rounds" data-v="${n}" aria-pressed="${S.rounds===n}"><b>${n}</b><small>${T.time[g.eng][n]}</small></button>`).join("")}</div>
-    ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">${T.poolNote(pool)}</p>` : ""}
+    <div class="seg times">${g.rounds.map(n => `<button data-act="rounds" data-v="${n}" aria-pressed="${S.rounds===n}"><b>${n}</b><small>${T.time[g.eng][n]}</small></button>`).join("")}</div>
+    ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">${T.poolNote(pool)}</p>` : ""}${g.topics && anyTopic && pool < S.rounds ? `<p class="note">${T.poolNoteQuiz(pool)}</p>` : ""}
   </section>
   ${window.MACC && MACC.locked("s:" + g.id) ? MACC.gate("s:" + g.id, "s:" + g.id) : `<button class="btn" data-act="start" ${ok ? "" : "disabled"}>${g.adult ? T.startAdult : T.start}</button>`}`;
 }
@@ -310,7 +323,7 @@ function viewQuiz(){
   const done = S.picked !== null;
   const right = c.opts.find(o => o.ok).t;
   return `${topBar(S.deck.length)}
-  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="tag">${g.cat}</span>
+  <div class="deck"><article class="card c-${g.c}">${rv(c.q + " → " + right)}<span class="tag">${h(c.tag || g.cat)}</span>
     ${n > 1 ? `<p class="who">${T.turn(bold(S.players[p]))}</p>` : ""}
     <p class="q">${h(c.q)}</p>
   </article></div>
@@ -637,6 +650,8 @@ app.addEventListener("click", e => {
     case "rounds": S.rounds = +b.dataset.v; break;
     case "level": S.level = +b.dataset.v; break;
     case "kind": S.kinds[b.dataset.k] = !S.kinds[b.dataset.k]; break;
+    case "topic": S.topicsOff[b.dataset.k] = !S.topicsOff[b.dataset.k]; break;
+    case "topics-all": { const ts = game().topics, off = !ts.some(t => S.topicsOff[t.id]); ts.forEach(t => { S.topicsOff[t.id] = off; }); break; }
     case "drink": S.drink = b.dataset.v==="1"; break;
     case "del": S.players.splice(+b.dataset.i,1); saveNames(); break;
     case "front": { const i = +b.dataset.i; S.players.unshift(S.players.splice(i,1)[0]); saveNames(); break; }
