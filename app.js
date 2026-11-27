@@ -76,8 +76,10 @@ const qSize = s => { const n = String(s).length, w = longest(s); return n <= 42 
 const MOODS = {couples:{bar:"#FBE2E0"}, friends:{bar:"#FFF1D2"}, adult:{bar:"#1B070C", dark:true}, quiz:{bar:"#0E2B52", dark:true}};
 function setMood(){
   if(!document.body) return;
-  const g = game(), on = g && (S.screen === "play" || S.screen === "end") && MOODS[g.grp];
-  const cls = on ? `mood-${g.grp}${on.dark ? " dark" : ""}${S.screen === "play" ? " play" : ""}` : "";
+  /* a game in a room says its own mood (rooms.js) */
+  const g = game(), room = S.screen === "room" && window.MROOM && MROOM.mood ? MROOM.mood() : null;
+  const grp = room ? room.grp : g && (S.screen === "play" || S.screen === "end") ? g.grp : "", on = MOODS[grp];
+  const cls = on ? `mood-${grp}${on.dark ? " dark" : ""}${(room ? room.play : S.screen === "play") ? " play" : ""}` : "";
   if(document.body.className !== cls) document.body.className = cls;
   const meta = document.querySelector?.('meta[name="theme-color"]');
   if(meta) meta.setAttribute("content", on ? on.bar : "#FBF1F0");
@@ -140,15 +142,25 @@ function viewStart(){
   </div>${window.MACC ? MACC.overlay() : ""}`;
 }
 
-/* ---------- Games for several phones (announced, not yet playable) ---------- */
+/* ---------- Games for several phones ---------- */
 function viewMulti(){
   const M = MEIVI.multi;
-  /* One game is one narrow row. A game that is built opens its rules; the others are only announced. */
-  const row = g => { const t = M.games[g.id] || {name: g.id}, color = g.color || "hot", ready = multiReady(g);
-    const body = `<span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
+  const locked = g => !!(window.MACC && MACC.locked("m:" + g.id));
+  const forWhom = g => g.min === 2 && g.max === 2 ? T.forTwo : T.players(g.min, g.max);
+  /* A game that is built: one row like the rows of the one-phone games, with what the game is about, for how many it is
+     and its price or "play". It opens the rules of the game. */
+  const row = g => { const t = M.games[g.id] || {name: g.id}, tx = MEIVI.mtexts[g.id] || {};
+    return `<button class="grow c-${g.color || "hot"}${locked(g) ? " off" : ""}" data-act="r-open" data-g="${g.id}">
+      <span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
+      <span class="tx">${window.MACC && MACC.score ? MACC.score("m:" + g.id) : ""}<b>${t.name}${g.adult ? ` <i class="age">18+</i>` : ""}</b><small>${h(tx.about || t.desc || "")}</small>
+        <span class="gmeta"><i class="ppl">👥 ${forWhom(g)}</i><span class="go">${locked(g) ? `🔒 ${T.price2}` : T.play}</span></span></span>
+      <span class="arr" aria-hidden="true">›</span>
+    </button>`; };
+  /* A game that is only announced: a narrow grey row. */
+  const soonRow = g => { const t = M.games[g.id] || {name: g.id};
+    return `<div class="mrow wait c-${g.color || "hot"}"><span class="ico" aria-hidden="true">${g.icon || "🎲"}</span>
       <span class="tx"><b>${t.name}</b>${t.desc || t.hint ? `<small>${t.desc || t.hint}</small>` : ""}</span>
-      <span class="end">${ready ? `<i>${window.MACC && MACC.locked("m:" + g.id) ? "🔒 " : ""}${T.playersShort(g.min, g.max)}</i>` : `<i class="pill">${T.soon}</i>`}${g.adult ? `<i class="age">18+</i>` : ""}</span>`;
-    return ready ? `<button class="mrow c-${color}${window.MACC && MACC.locked("m:" + g.id) ? " locked" : ""}" data-act="r-open" data-g="${g.id}">${body}</button>` : `<div class="mrow wait c-${color}">${body}</div>`; };
+      <span class="end"><i class="pill">${T.soon}</i>${g.adult ? `<i class="age">18+</i>` : ""}</span></div>`; };
   const fit = MULTI.filter(g => multiFits(g, S.mn)), ready = fit.filter(multiReady), soon = fit.filter(g => !multiReady(g));
   /* Top right: the profile button, with "join a room" under it. */
   return `<div class="top"><button class="btn ghost small" data-act="landing"><span aria-hidden="true">←</span> ${T.toStart}</button>
@@ -163,10 +175,13 @@ function viewMulti(){
     <div class="seg" role="group" aria-label="${T.howMany}">${[2, 3, 4, 5, 6].map(n => `<button data-act="mn" data-n="${n}" aria-pressed="${S.mn === n}">${n === 6 ? T.sixPlus : n}</button>`).join("")}</div>
   </section>
   <section class="stack">
-    <div class="headrow"><h2>${S.mn ? T.multiFor(S.mn) : T.multiAll}</h2><span class="cnt">${T.gamesCount(ready.length)}</span></div>
-    ${ready.length ? `<div class="mlist">${ready.map(row).join("")}</div>` : `<p class="how">${T.multiNone}</p>`}
+    ${ready.length ? `<div class="gcard c-lilac">
+      <div class="ghd"><h2>${S.mn ? T.multiFor(S.mn) : T.multiAll}</h2><span class="cnt">${T.gamesCount(ready.length)}</span></div>
+      ${ready.map(row).join("")}
+    </div>` : `<div class="headrow"><h2>${S.mn ? T.multiFor(S.mn) : T.multiAll}</h2><span class="cnt">${T.gamesCount(0)}</span></div>
+    <p class="how">${T.multiNone}</p>`}
     ${soon.length ? `<button class="msoon" data-act="msoon" aria-expanded="${S.msoon}">${T.soonMore(soon.length)} <span aria-hidden="true">${S.msoon ? "▴" : "▾"}</span></button>
-    ${S.msoon ? `<div class="mlist">${soon.map(row).join("")}</div>` : ""}` : ""}
+    ${S.msoon ? `<div class="mlist">${soon.map(soonRow).join("")}</div>` : ""}` : ""}
   </section>${window.MROOM ? MROOM.overlay() : ""}${window.MACC ? MACC.overlay() : ""}`;
 }
 

@@ -13,7 +13,8 @@
                      "closed"                 the host closed the room
 
    A view is plain data, never HTML:
-     { top: {icon, title, color}, sub, blocks: [...], input, note, host: [...], foot: [...] }
+     { top: {icon, title, color}, sub, bar, blocks: [...], input, note, host: [...], foot: [...] }
+     bar     how far the game has come, in percent (a line under the round), when the game counts rounds
      blocks  {k: "h" | "p" | "card" | "rows" | "chips" | "code" | "wait" | "big" | "letter", ...}
      input   {k: "choice", options: [{v, t, sub, dis, tag}], done, pills, cols}
              {k: "text", max, ph, sent} | {k: "btn", t, v}
@@ -88,6 +89,7 @@
       }
       const v = d.view(ctx(), st.g, pid);
       return { top, sub: v.sub, blocks: v.blocks, input: v.input, note: v.note, key: v.key,
+        bar: st.g.rounds ? Math.round(Math.min(1, st.g.round / st.g.rounds) * 100) : null,
         host: isHost ? (v.host || []).concat([{ t: X.endGame, cmd: "stop", ghost: true, sure: true }]) : null };
     }
     function publish() {
@@ -192,10 +194,15 @@
 
   /* ---------- drawing a view ---------- */
   const qrCache = {};
+  /* A short text is written larger on its card: the same rule as on the cards of the one-phone games (app.js). */
+  const longest = s => Math.max(0, ...String(s).split(/\s+/).map(w => w.length));
+  const qSize = s => { const n = String(s).length, w = longest(s); return n <= 42 && w <= 11 ? " xl" : n <= 80 && w <= 13 ? " lg" : ""; };
+  /* How players rate a game: "★ 4,8 (23)" above its name, once enough people have rated it (account.js). */
+  const score = id => window.MACC && MACC.score ? MACC.score("m:" + id) : "";
   function block(b, color) {
     if (b.k === "h") return `<h2 class="rh">${esc(b.text)}</h2>`;
     if (b.k === "p") return `<p class="rp${b.strong ? " strong" : ""}">${esc(b.text)}</p>`;
-    if (b.k === "card") return `<div class="deck still"><article class="card rcard c-${b.color || color}${b.secret ? " secret" : ""}"><span class="tag">${esc(b.tag)}</span><p class="q">${esc(b.text)}</p>${b.sub ? `<p class="rule">${esc(b.sub)}</p>` : ""}</article></div>`;
+    if (b.k === "card") return `<div class="deck still rdeck"><article class="card rcard c-${b.color || color}${b.secret ? " secret" : ""}"><span class="tag">${esc(b.tag)}</span><p class="q${qSize(b.text)}">${esc(b.text)}</p>${b.sub ? `<p class="rule">${esc(b.sub)}</p>` : ""}</article></div>`;
     if (b.k === "letter") return `<article class="letter"><span>${esc(b.from)}</span><p>${esc(b.text)}</p></article>`;
     if (b.k === "big") return `<div class="rbig c-${color}"><b>${esc(b.text)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}</div>`;
     if (b.k === "wait") return b.names.length ? `<p class="note rwait">${esc(X.waiting(b.names.join(", ")))}</p>` : "";
@@ -241,7 +248,7 @@
     const inf = info(id), tx = MEIVI.mtexts[id], d = DEFS[id];
     return `<header class="stack c-${inf.color} ghead">
         <span class="ico lg" aria-hidden="true">${inf.icon}</span>
-        <h1>${esc(gameName(id))}</h1>
+        ${score(id)}<h1${longest(gameName(id)) >= 15 ? ` class="long"` : ""}>${esc(gameName(id))}</h1>
         <p class="note">${esc(T.players(d.min, d.max))} · ${esc(tx.time)}${inf.adult ? ` · <i class="age">18+</i>` : ""}</p>
       </header>
       <p class="how">${esc(tx.about)}</p>
@@ -288,13 +295,24 @@
     const btn = (b, kind) => `<button class="btn${b.ghost ? " ghost" : ""}" data-act="${kind}" data-c="${esc(b.cmd || b.local)}" ${b.dis ? "disabled" : ""}>${esc(b.sure && ui.sure === (b.cmd || b.local) ? X.sure : b.t)}</button>`;
     return `<div class="top"><span class="rtitle c-${V.top.color}"><span class="ico" aria-hidden="true">${V.top.icon}</span><b>${esc(V.top.title)}</b></span><button class="btn ghost small" data-act="r-local" data-c="rules">${esc(X.rules)}</button></div>
       <p class="rsub">${esc(V.sub || "")}</p>
+      ${V.bar != null ? `<div class="bar rbar c-${V.top.color}"><i style="width:${+V.bar}%"></i></div>` : ""}
       ${banner ? `<p class="flash">${esc(banner)}</p>` : ""}
       ${(V.blocks || []).map(b => block(b, V.top.color)).join("")}
       ${input(V.input, ui.draft)}
       ${V.note ? `<p class="note rnote">${esc(V.note)}</p>` : ""}
+      ${V.party && st.game && window.MACC && MACC.gameRating ? `<div class="stack">${MACC.gameRating("m:" + st.game)}</div>` : ""}
       ${V.host ? `<div class="stack rhost">${V.host.map(b => btn(b, "r-cmd")).join("")}</div>` : ""}
       ${V.foot ? `<div class="stack rhost">${V.foot.map(b => btn(Object.assign({ ghost: true }, b), "r-local")).join("")}</div>` : ""}
-      ${ui.rules && st.game ? `<div class="sheet rsheet" data-act="r-local" data-c="rules-close"><div role="dialog">${rulesHtml(st.game)}<div class="stack rfoot"><button class="btn" data-act="r-local" data-c="rules-close">${esc(X.close)}</button></div></div></div>` : ""}`;
+      ${ui.rules && st.game ? `<div class="sheet rsheet" data-act="r-local" data-c="rules-close"><div role="dialog">${rulesHtml(st.game)}<div class="stack rfoot"><button class="btn" data-act="r-local" data-c="rules-close">${esc(X.close)}</button></div></div></div>` : ""}
+      ${V.party && window.MACC && MACC.ratingSheet ? MACC.ratingSheet() : ""}`;
+  }
+  /* The mood of the page while a game is played in the room (the styles "mood-<name>", set by app.js):
+     a game for two has the mood of the couples' games, an adult one the dark one, a game for a company the friends' one.
+     The room before the game (the code, who is in) keeps the plain page. */
+  function mood() {
+    const st = room.st, snap = st.mode && !st.closed && st.snap, inf = snap && info(snap.game);
+    if (!inf || snap.phase === "lobby" || !room.myView()) return null;
+    return { grp: inf.adult ? "adult" : inf.max === 2 ? "couples" : "friends", play: snap.phase === "play" };
   }
   function enter() { ui.sheet = null; ui.err = ""; ui.sure = ""; ui.rules = false; MEIVI.app.show("room"); keepAwake(); }
   function click(act, b, target) {
@@ -348,12 +366,16 @@
     const box = document.querySelector("[data-qr]");
     if (box && !box.innerHTML) drawQr(box);
     const ta = document.getElementById("rText");
-    if (ta) {
-      ta.addEventListener("input", () => { ui.draft = ta.value; });
-      if (ui.typing) { ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {} }
-      ta.addEventListener("focus", () => { ui.typing = true; });
-      ta.addEventListener("blur", () => { setTimeout(() => { if (document.activeElement !== document.getElementById("rText")) ui.typing = false; }, 0); });
-    } else ui.typing = false;
+    if (ta) { ta.addEventListener("input", () => { ui.draft = ta.value; }); keepTyping(ta, "typing"); } else ui.typing = false;
+    /* the opinion of the game, written on the last screen */
+    const op = document.getElementById("opText");
+    if (op) keepTyping(op, "opTyping"); else ui.opTyping = false;
+  }
+  /* Someone in the middle of writing stays in the field when the room is drawn again. */
+  function keepTyping(el, flag) {
+    if (ui[flag]) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} }
+    el.addEventListener("focus", () => { ui[flag] = true; });
+    el.addEventListener("blur", () => { setTimeout(() => { if (document.activeElement !== document.getElementById(el.id)) ui[flag] = false; }, 0); });
   }
   function drawQr(box) {
     const link = box.dataset.qr;
@@ -385,7 +407,7 @@
     else if (saved) store.set(null);
   }
 
-  window.MROOM = { view, overlay, click, submit, after, boot, room, ui };
+  window.MROOM = { view, overlay, click, submit, after, boot, room, ui, mood };
 
   /* ---------- the line between the phones ----------
      open(code, myId, {message(event, data), peers(ids), status("open" | "lost")}) -> {send(event, data), close()}

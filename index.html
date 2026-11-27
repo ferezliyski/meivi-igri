@@ -36,7 +36,7 @@
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --hand:"Caveat","Segoe Script",cursive;
   /* Colours of what stands straight on the page (not on a white surface). A dark mood changes them; a window sets them back. */
-  --on:var(--ink); --on-muted:var(--muted); --ghost:var(--surface); --ghost-ink:var(--ink); --ghost-sh:var(--sh);
+  --on:var(--ink); --on-soft:#4A3D3D; --on-muted:var(--muted); --ghost:var(--surface); --ghost-ink:var(--ink); --ghost-sh:var(--sh);
   --track:#EDD3D1; --flashc:var(--hot); --pressed:var(--ink); --pressed-ink:#fff;
   --b1:#CB3A33; --b2:#A92423; --b-ink:#fff; --b-sh:rgba(177,42,41,.75);
 }
@@ -177,7 +177,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .seg button{flex:1;border:0;border-radius:999px;background:transparent;padding:10px 6px;min-height:42px;font-weight:500;font-size:15px;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--surface);box-shadow:var(--sh);padding:6px 6px 6px 15px;font-weight:700;max-width:100%}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;color:var(--ink);background:var(--surface);box-shadow:var(--sh);padding:6px 6px 6px 15px;font-weight:700;max-width:100%}
 .chip.first{background:#FDE3D6}
 .chip > span,.chip .nm{overflow-wrap:anywhere}
 .chip .nm{border:0;background:none;padding:0;text-align:left;font-weight:700}
@@ -286,6 +286,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 body.play #app{padding-bottom:max(26px, env(safe-area-inset-bottom))}
 body.play .deck{flex:1 1 auto;display:flex;max-height:620px;margin-bottom:auto}
 body.play .deck .card{flex:1;min-height:210px}
+/* in a room a screen may hold nothing but its card: the card stops growing earlier */
+body.play .rdeck{max-height:470px}
 body.play .cover{flex:1 1 auto;max-height:660px;margin-bottom:auto}
 /* the line for a short message takes room only while it says something */
 body.play .flash:empty{display:none}
@@ -293,6 +295,8 @@ body.play .flash:empty{display:none}
 @media (max-height:640px){
   body.play #app{gap:16px;padding-top:14px;padding-bottom:max(18px, env(safe-area-inset-bottom))}
   body.play .deck{margin-top:26px}
+  /* a room has the answers under the card: the card gives them room */
+  body.play .rdeck .card{min-height:150px;padding-top:18px;padding-bottom:20px}
 }
 /* A mood for every shelf: the page behind the card. */
 body[class*="mood-"]{transition:background-color .3s}
@@ -312,7 +316,7 @@ body.mood-quiz{background:
   radial-gradient(75% 42% at 0% 100%, #33309A 0, transparent 70%) fixed, #0E2B52;
   --b1:#FFD466; --b2:#F4A621; --b-ink:#2A1B00; --b-sh:rgba(0,0,0,.55); --flashc:#FFE7A6}
 body.dark{
-  color:#fff; --on:#fff; --on-muted:rgba(255,255,255,.76); --ghost:rgba(255,255,255,.14); --ghost-ink:#fff;
+  color:#fff; --on:#fff; --on-soft:rgba(255,255,255,.9); --on-muted:rgba(255,255,255,.76); --ghost:rgba(255,255,255,.14); --ghost-ink:#fff;
   --ghost-sh:inset 0 0 0 1px rgba(255,255,255,.2); --track:rgba(255,255,255,.2); --pressed:#FFCB52; --pressed-ink:#1F1F1F;
 }
 body.dark .bar i{background:linear-gradient(90deg, color-mix(in srgb, var(--m, #fff) 45%, #fff), #fff)}
@@ -324,7 +328,7 @@ body.dark .deck::after{opacity:.16}
 body.dark .opt.other{border-color:rgba(255,255,255,.35)}
 
 /* Scores */
-table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;background:var(--surface);border-radius:22px;box-shadow:var(--sh);overflow:hidden}
+table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;color:var(--ink);background:var(--surface);border-radius:22px;box-shadow:var(--sh);overflow:hidden}
 th,td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--line)}
 tr:last-child td{border-bottom:0}
 th:first-child,td:first-child{text-align:left;overflow-wrap:anywhere;font-weight:700}
@@ -337,7 +341,7 @@ html.noscroll body{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .sheet > div > *{flex-shrink:0}
 a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;font:inherit!important}
 .sheet > div{width:100%;max-width:480px;max-height:85%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:24px 18px 26px;display:flex;flex-direction:column;gap:16px;
-  color:var(--ink); --on:var(--ink); --on-muted:var(--muted); --ghost:var(--surface); --ghost-ink:var(--ink); --ghost-sh:var(--sh); --track:#EDD3D1;
+  color:var(--ink); --on:var(--ink); --on-soft:#4A3D3D; --on-muted:var(--muted); --ghost:var(--surface); --ghost-ink:var(--ink); --ghost-sh:var(--sh); --track:#EDD3D1;
   --flashc:var(--hot); --pressed:var(--ink); --pressed-ink:#fff; --b1:#CB3A33; --b2:#A92423; --b-ink:#fff; --b-sh:rgba(177,42,41,.75)}
 
 /* Share poster */
@@ -540,7 +544,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .gate{background:rgba(255,255,255,.72);border-radius:24px;padding:16px}
 .gate a.btn,.sheet a.btn{display:block;text-align:center;text-decoration:none}
 /* A locked game is a little grey, so that the games a player owns stand out. */
-.tile.locked,.mrow.locked{filter:grayscale(.9);opacity:.68;box-shadow:0 6px 16px -12px rgba(60,40,40,.35)}
+.tile.locked{filter:grayscale(.9);opacity:.68;box-shadow:0 6px 16px -12px rgba(60,40,40,.35)}
 h2.mid{text-align:center}
 .tile .lock{position:absolute;top:12px;right:12px;font-style:normal;font-size:15px}
 .tile.big .lock{top:auto;bottom:14px;right:16px}
@@ -551,10 +555,12 @@ textarea{font:inherit;color:inherit}
 .rtitle{display:flex;align-items:center;gap:10px;min-width:0}
 .rtitle .ico{flex:none;width:38px;height:38px;border-radius:13px;display:grid;place-items:center;font-size:21px;background:color-mix(in srgb, var(--m) 18%, #fff)}
 .rtitle b{font-family:var(--display);font-weight:600;font-size:14.5px;line-height:1.2;overflow-wrap:anywhere}
-.rsub{margin-top:-12px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rsub{margin-top:-12px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-muted)}
+/* how far the game has come: a line in the colour of the game, right under the round */
+.rbar{margin-top:-12px}
 .rh{margin-bottom:-10px}
-.rp{font-size:15.5px;color:#4A3D3D}
-.rp.strong{font-weight:700;color:var(--ink);font-size:16.5px}
+.rp{font-size:15.5px;color:var(--on-soft)}
+.rp.strong{font-weight:700;color:var(--on);font-size:16.5px}
 .rcard{min-height:210px}
 .rcard .q{font-size:23px}
 .rcard.secret .tag::before{content:"🔒 "}
@@ -568,7 +574,7 @@ textarea{font:inherit;color:inherit}
 .rrows tr.dim td{opacity:.5}
 .rchip{padding:8px 15px}
 .rchip small{font-weight:500;font-size:12px;color:var(--muted)}
-.rchip.on{background:var(--ink);color:#fff}
+.rchip.on{background:var(--pressed);color:var(--pressed-ink)}
 .rchip.dim{opacity:.45;box-shadow:none;text-decoration:line-through}
 .rcode{background:var(--surface);border-radius:28px;box-shadow:var(--sh);padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .rcode > span{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -577,9 +583,9 @@ textarea{font:inherit;color:inherit}
 .rcode .qr svg{display:block;width:100%;height:auto}
 .rcode small{font-size:13.5px;color:var(--muted);max-width:300px}
 .rform{display:flex;flex-direction:column;gap:12px}
-.rform textarea{width:100%;border-radius:22px;border:1.5px solid var(--line);background:var(--surface);padding:14px 16px;resize:none;font-size:16px;line-height:1.4}
+.rform textarea{width:100%;border-radius:22px;border:1.5px solid var(--line);color:var(--ink);background:var(--surface);padding:14px 16px;resize:none;font-size:16px;line-height:1.4}
 .rform textarea:focus{outline:none;border-color:var(--hot)}
-.letter{background:var(--surface);border-radius:22px;box-shadow:var(--sh);padding:14px 18px 16px;display:flex;flex-direction:column;gap:4px}
+.letter{color:var(--ink);background:var(--surface);border-radius:22px;box-shadow:var(--sh);padding:14px 18px 16px;display:flex;flex-direction:column;gap:4px}
 .letter span{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .letter p{font-family:var(--hand);font-size:25px;line-height:1.15;white-space:pre-wrap;overflow-wrap:anywhere}
 .rnote{text-align:center}
@@ -597,8 +603,8 @@ textarea{font:inherit;color:inherit}
 .opt[data-act="r-ans"]{display:flex;flex-direction:column;gap:2px}
 .opt small{font-weight:500;font-size:12.5px;color:var(--muted)}
 .opt i{font-style:normal;font-weight:700;font-size:12px;color:var(--hot);overflow-wrap:anywhere}
-.opt[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff;animation:pop .22s ease-out}
-.opt[aria-pressed="true"] small{color:rgba(255,255,255,.75)}
+.opt[aria-pressed="true"]{background:var(--pressed);border-color:var(--pressed);color:var(--pressed-ink);animation:pop .22s ease-out}
+.opt[aria-pressed="true"] small{color:inherit;opacity:.75}
 .opt[data-act="r-ans"][disabled]{opacity:.5;box-shadow:none}
 .ans{margin-top:12px;font-size:16px}
 .ans summary{cursor:pointer;font-weight:700;color:var(--m,#B12A29)}
@@ -611,7 +617,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27b";
+  var MEIVI_RELEASE = "2026-11-27c";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
