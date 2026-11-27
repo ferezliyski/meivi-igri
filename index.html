@@ -697,6 +697,7 @@ textarea{font:inherit;color:inherit}
 .rbig span{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
 .rrows td:last-child{overflow-wrap:anywhere}
 .rrows tr.hot td{color:var(--hot)}
+.rrows tr.ok td{color:var(--mint)}
 .rrows tr.dim td{opacity:.5}
 .rchip{padding:8px 15px}
 .rchip small{font-weight:500;font-size:12px;color:var(--muted)}
@@ -731,7 +732,8 @@ textarea{font:inherit;color:inherit}
 .opt i{font-style:normal;font-weight:700;font-size:12px;color:var(--hot);overflow-wrap:anywhere}
 .opt[aria-pressed="true"]{background:var(--pressed);border-color:var(--pressed);color:var(--pressed-ink);animation:pop .22s ease-out}
 .opt[aria-pressed="true"] small{color:inherit;opacity:.75}
-.opt[data-act="r-ans"][disabled]{opacity:.5;box-shadow:none}
+.opt[data-act="r-ans"][disabled]:not([aria-pressed="true"]){opacity:.5;box-shadow:none}
+.opt.abc[data-act="r-ans"]{flex-direction:row}
 .ans{margin-top:12px;font-size:16px}
 .ans summary{cursor:pointer;font-weight:700;color:var(--m,#B12A29)}
 .ans b{display:block;margin-top:8px;font-size:20px}
@@ -743,7 +745,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27j";
+  var MEIVI_RELEASE = "2026-11-27k";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

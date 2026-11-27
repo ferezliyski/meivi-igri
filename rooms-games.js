@@ -14,9 +14,10 @@
   const fillIn = (g, ids) => { ids.forEach(id => { if (!(id in g.in)) g.in[id] = null; }); };
   const waitNote = (c, g, ids) => { const names = ids.filter(id => !(id in g.in)).map(c.name); return names.length ? c.ui.waiting(names.join(", ")) : ""; };
   const skipBtn = (c, g, ids) => ids.some(id => !(id in g.in)) ? [{ t: c.ui.skipWait, cmd: "skip", ghost: true, sure: true }] : [];
-  const nextBtn = (c, g) => [{ t: g.round >= g.rounds ? c.ui.toEnd : c.ui.nextRound, cmd: "next" }];
+  /* a game may call its rounds otherwise (t.round, t.nextRound in its text: "Въпрос 3 от 15", "Следващ въпрос") */
+  const nextBtn = (c, g) => [{ t: g.round >= g.rounds ? c.ui.toEnd : (c.tx.t && c.tx.t.nextRound) || c.ui.nextRound, cmd: "next" }];
   const people = (c, ids) => ids.map(id => ({ v: id, t: c.name(id) }));
-  const round = (c, g) => c.ui.round(g.round, g.rounds);
+  const round = (c, g) => ((c.tx.t && c.tx.t.round) || c.ui.round)(g.round, g.rounds);
   const table = (c, score, title) => ({ k: "rows", title, rows: c.ids.slice().sort((a, b) => score[b] - score[a]).map(id => ({ l: c.name(id), r: String(score[id]) })) });
   const best = (c, score) => { const top = Math.max(...c.ids.map(id => score[id])); return c.ids.filter(id => score[id] === top).map(c.name); };
   const order = (c, list) => c.shuffle(list.map((_, i) => i));
@@ -92,6 +93,74 @@
       const win = best(c, g.score).join(", ");
       return { blocks: [{ k: "big", text: win, sub: c.ui.winner }, table(c, g.score, c.ui.scores)],
         poster: { hero: { kind: "name", label: c.ui.winner, name: win }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) } };
+    }
+  });
+
+  /* ---------- The big quiz on every phone ----------
+     The same question on every phone at once. A right answer is 1 point; the fastest right answer gets 1 more,
+     but only when more than one player answered right. Every phone measures its own time, from the moment the
+     question showed on it to the tap (sent with the answer as ms), so a slow line does not count against a player.
+     The questions are those of the one-phone quiz; the state keeps only their places (topic, question). */
+  const quizTopics = c => { const s = c.tx.source && c.tx.source(); return (s && s.topics) || []; };
+  G("quiz", {
+    min: 2, max: 10, over,
+    needs: () => !!(MEIVI.mtexts.quiz && MEIVI.mtexts.quiz.source() && MEIVI.mtexts.quiz.source().topics),
+    /* as many questions as in the one-phone quiz: 30, 50 or 100 */
+    rounds: [30, 50, 100], pool: c => quizTopics(c).reduce((n, t) => n + t.questions.length, 0),
+    setup(c) {
+      const all = []; quizTopics(c).forEach((t, ti) => t.questions.forEach((q, qi) => all.push([ti, qi])));
+      const want = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
+      const g = { id: c.rnd(1e9), round: 0, rounds: Math.min(want, all.length), score: blank(c.ids), right: blank(c.ids), qs: c.shuffle(all).slice(0, want) };
+      this.deal(c, g); return g;
+    },
+    deal(c, g) { g.round++; g.at = c.now(); g.perm = c.shuffle([0, 1, 2, 3]); g.phase = "ask"; g.in = {}; g.ms = {}; g.last = null; },
+    /* the question now: its topic, its text and the four answers in the order they are shown (the right one is perm.indexOf(0)) */
+    ask(c, g) {
+      const [ti, qi] = g.qs[g.round - 1], tp = quizTopics(c)[ti], q = tp.questions[qi];
+      return { topic: tp.name, text: q[0], opts: g.perm.map(k => q[1][k]), right: String(g.perm.indexOf(0)) };
+    },
+    view(c, g, pid) {
+      const t = c.tx.t, sub = round(c, g), Q = this.ask(c, g), mine = g.in[pid];
+      if (g.phase === "ask") return { sub, key: "g" + g.id + "q" + g.round, timed: true,
+        blocks: [{ k: "card", tag: Q.topic, text: Q.text }],
+        input: { k: "choice", abc: true, options: Q.opts.map((o, i) => ({ v: String(i), t: o, dis: pid in g.in })), done: mine },
+        note: pid in g.in ? waitNote(c, g, c.ids) : t.hint, host: skipBtn(c, g, c.ids) };
+      const L = g.last, ok = mine === Q.right;
+      const order = L.correct.concat(c.ids.filter(id => !L.correct.includes(id)));
+      return { sub, blocks: [
+          { k: "card", tag: mine == null ? t.youNone : ok ? t.youRight : t.youWrong, color: ok ? "mint" : "hot", text: Q.text, sub: t.answerIs(Q.opts[+Q.right]) },
+          { k: "rows", title: t.who, rows: order.map(id => ({ l: c.name(id),
+            r: L.correct.includes(id) ? t.rowRight(t.secs(g.ms[id]), id === L.fast ? 2 : 1) : g.in[id] == null ? t.noAnswer : t.rowWrong, ok: L.correct.includes(id), dim: !L.correct.includes(id) })) },
+          { k: "p", strong: true, text: L.fast ? t.fastest(c.name(L.fast)) : L.correct.length === 1 ? t.onlyOne(c.name(L.correct[0])) : t.nobody },
+          table(c, g.score, c.ui.scores)
+        ], host: nextBtn(c, g) };
+    },
+    ans(c, g, pid, v, ms) {
+      if (g.phase !== "ask" || pid in g.in || !/^[0-3]$/.test(String(v))) return;
+      g.in[pid] = String(v);
+      /* the phone's own time; without it (or if it makes no sense), the time the host received the answer */
+      const own = +ms, host = c.now() - g.at;
+      g.ms[pid] = own > 0 && own < 600000 ? Math.round(own) : Math.max(0, host);
+      if (allIn(g, c.ids)) this.score(c, g);
+    },
+    score(c, g) {
+      const right = this.ask(c, g).right;
+      const correct = c.ids.filter(id => g.in[id] === right).sort((a, b) => g.ms[a] - g.ms[b]);
+      correct.forEach(id => { g.score[id]++; g.right[id]++; });
+      const fast = correct.length >= 2 ? correct[0] : null;
+      if (fast) g.score[fast]++;
+      g.last = { correct, fast }; g.phase = "result";
+    },
+    cmd(c, g, name) {
+      if (name === "skip" && g.phase === "ask") { fillIn(g, c.ids); this.score(c, g); }
+      else if (name === "next" && g.phase === "result") { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); }
+    },
+    final(c, g) {
+      const t = c.tx.t, win = best(c, g.score).join(", ");
+      const order = c.ids.slice().sort((a, b) => g.score[b] - g.score[a] || g.right[b] - g.right[a]);
+      return { blocks: [{ k: "big", text: win, sub: c.ui.winner }, table(c, g.score, c.ui.scores)],
+        poster: { hero: { kind: "name", label: c.ui.winner, name: win },
+                  rank: { head: c.ui.ranking, cols: [t.colRight, c.ui.scores], list: order.map(id => ({ p: c.name(id), v: [g.right[id], g.score[id]] })) } } };
     }
   });
 

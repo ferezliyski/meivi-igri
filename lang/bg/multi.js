@@ -3,6 +3,7 @@
    "desc" is one short line about the game, shown under its name. */
 MEIVI.multi = {
   games: {
+    quiz: { name: "Голямата викторина", desc: "Всеки отговаря от своя телефон" },
     mole: { name: "Къртицата", desc: "Един от вас не знае думата" },
     conquer: { name: "Завладей България", desc: "Тайно избираш област" },
     whoofus: { name: "Кой от нас?", desc: "Тайно сочите един от вас" },

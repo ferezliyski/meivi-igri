@@ -7,7 +7,8 @@
 
    What travels between the phones (through MEIVI.transport, see the end of this file):
      guest -> host   "hello" {id, name}       I am here (also after a lost connection)
-                     "act"   {id, a}          the player did something: a = {k: "ans", v}
+                     "act"   {id, a}          the player did something: a = {k: "ans", v, ms}
+                                              (ms: on a timed question, how long it showed on this phone before the tap)
                      "bye"   {id}             I left
      host -> all     "snap"  {seq, code, game, phase, host, views: {playerId: view}}
                      "closed"                 the host closed the room
@@ -37,7 +38,7 @@
   const info = id => (MEIVI.catalog.multi || []).find(g => g.id === id) || null;
   const gameName = id => ((MEIVI.multi.games[id] || {}).name) || id;
   /* A game can be played when it is marked ready in the catalogue and both its rules and its text are loaded. */
-  MEIVI.mready = id => { const i = info(id); return !!(i && i.ready && DEFS[id] && MEIVI.mtexts[id]); };
+  MEIVI.mready = id => { const i = info(id), d = DEFS[id]; return !!(i && i.ready && d && MEIVI.mtexts[id] && (!d.needs || d.needs())); };
 
   /* ---------- one room, as one phone sees it ---------- */
   function createRoom(env) {
@@ -85,11 +86,11 @@
       const top = { icon: inf.icon, title: gameName(st.game), color: inf.color };
       if (st.late.some(p => p.id === pid)) return { top, sub: X.room(st.code), blocks: [{ k: "p", text: X.lateJoin }], foot: [{ t: X.leave, local: "leave" }] };
       if (st.phase === "lobby") {
-        const n = st.players.length, ok = n >= d.min && n <= d.max, rc = roundChoices();
+        const n = st.players.length, ok = n >= d.min && n <= d.max, rc = roundChoices(), TT = (MEIVI.mtexts[st.game] || {}).t || {};
         /* the number of rounds: the host chooses it, the others see it */
         const rounds = !rc.length ? [] : isHost && rc.length > 1
-          ? [{ k: "h", text: X.roundsAsk }, { k: "pick", cmd: true, options: rc.map(r => ({ v: "rounds:" + r, t: String(r) })), done: "rounds:" + st.opts.rounds }]
-          : [{ k: "p", text: X.roundsAre(st.opts.rounds) }];
+          ? [{ k: "h", text: TT.roundsAsk || X.roundsAsk }, { k: "pick", cmd: true, options: rc.map(r => ({ v: "rounds:" + r, t: String(r) })), done: "rounds:" + st.opts.rounds }]
+          : [{ k: "p", text: (TT.roundsAre || X.roundsAre)(st.opts.rounds) }];
         /* the mode of the game: the host chooses it, the others see it */
         const M = d.modes && (ctx().tx.t || {}).modes, mode = M && M[st.opts.mode];
         if (M && isHost) rounds.push({ k: "h", text: X.modeAsk }, { k: "pick", cmd: true, options: d.modes.map(m => ({ v: "mode:" + m.id, t: M[m.id].name, sub: M[m.id].sub })), done: "mode:" + st.opts.mode });
@@ -141,7 +142,7 @@
     }
     function act(id, a) {
       if (st.mode !== "host" || st.phase !== "play" || !a || a.k !== "ans" || !st.players.some(p => p.id === id)) return;
-      def().ans(ctx(), st.g, id, a.v); settle();
+      def().ans(ctx(), st.g, id, a.v, a.ms); settle();
     }
 
     /* ----- guest ----- */
@@ -191,9 +192,9 @@
     }
 
     /* ----- what the player on this phone does ----- */
-    function answer(v) {
-      if (st.mode === "host") act(st.me.id, { k: "ans", v });
-      else if (st.mode === "guest") line.send("act", { id: st.me.id, a: { k: "ans", v } });
+    function answer(v, ms) {
+      if (st.mode === "host") act(st.me.id, { k: "ans", v, ms });
+      else if (st.mode === "guest") line.send("act", { id: st.me.id, a: { k: "ans", v, ms } });
     }
     function leave() {
       if (st.mode === "guest" && line) line.send("bye", { id: st.me.id });
@@ -277,7 +278,7 @@
     if (b.k === "letter") return `<article class="letter"><span>${esc(b.from)}</span><p>${esc(b.text)}</p></article>`;
     if (b.k === "big") return `<div class="rbig c-${color}"><b>${esc(b.text)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}</div>`;
     if (b.k === "wait") return b.names.length ? `<p class="note rwait">${esc(X.waiting(b.names.join(", ")))}</p>` : "";
-    if (b.k === "rows") return `${b.title ? `<h2 class="rh">${esc(b.title)}</h2>` : ""}<table class="rrows"><tbody>${b.rows.map(r => `<tr class="${r.hot ? "hot" : ""}${r.dim ? " dim" : ""}"><td>${esc(r.l)}</td><td>${esc(r.r)}</td></tr>`).join("")}</tbody></table>`;
+    if (b.k === "rows") return `${b.title ? `<h2 class="rh">${esc(b.title)}</h2>` : ""}<table class="rrows"><tbody>${b.rows.map(r => `<tr class="${r.hot ? "hot" : ""}${r.ok ? " ok" : ""}${r.dim ? " dim" : ""}"><td>${esc(r.l)}</td><td>${esc(r.r)}</td></tr>`).join("")}</tbody></table>`;
     if (b.k === "chips") return `${b.title ? `<h2 class="rh">${esc(b.title)}</h2>` : ""}<div class="chips">${b.items.map(i => `<span class="chip rchip${i.on ? " on" : ""}${i.dim ? " dim" : ""}">${esc(i.t)}${i.sub ? `<small>${esc(i.sub)}</small>` : ""}</span>`).join("")}</div>`;
     if (b.k === "code") return `<section class="rcode"><span>${esc(X.roomCode)}</span><b>${esc(b.code)}</b><div class="qr" data-qr="${esc(b.link)}">${qrCache[b.link] || ""}</div><small>${esc(X.scan(CFG.playAt || location.host))}</small></section>`;
     return "";
@@ -333,11 +334,12 @@
     } catch (e) {}
     story.sheet = true;   /* no sharing of pictures on this phone: show it, to be kept by hand */
   }
-  function input(i, draft) {
+  function input(i, draft, color) {
     if (!i) return "";
     if (i.k === "choice") {
-      const cls = i.pills ? "pick" : "opts" + (i.cols === 2 ? " two" : "");
-      return `<div class="${cls}">${i.options.map(o => `<button class="${i.pills ? "" : "opt"}" data-act="r-ans" data-v="${esc(o.v)}" aria-pressed="${String(i.done) === String(o.v)}" ${o.dis ? "disabled" : ""}>${i.pills ? esc(o.t) : `<span>${esc(o.t)}</span>${o.sub ? `<small>${esc(o.sub)}</small>` : ""}${o.tag ? `<i>${esc(o.tag)}</i>` : ""}`}</button>`).join("")}</div>`;
+      /* "abc": a letter in front of every answer, as in the one-phone quiz */
+      const cls = i.pills ? "pick" : "opts" + (i.cols === 2 ? " two" : "") + (color ? " c-" + color : "");
+      return `<div class="${cls}">${i.options.map((o, n) => `<button class="${i.pills ? "" : "opt" + (i.abc ? " abc" : "")}" data-act="r-ans" data-v="${esc(o.v)}" aria-pressed="${String(i.done) === String(o.v)}" ${o.dis ? "disabled" : ""}>${i.pills ? esc(o.t) : `${i.abc ? `<span class="ltr" aria-hidden="true">${esc(T.letters[n] || "")}</span>` : ""}<span class="t">${esc(o.t)}</span>${o.sub ? `<small>${esc(o.sub)}</small>` : ""}${o.tag ? `<i>${esc(o.tag)}</i>` : ""}`}</button>`).join("")}</div>`;
     }
     /* "paper": the field is a sheet of paper; once sent, the letter is shown by the game itself (a bottle) */
     if (i.k === "text") return i.sent
@@ -348,7 +350,7 @@
   }
 
   /* ---------- the room on this phone: screens, taps, the connection ---------- */
-  const ui = { sheet: null, name: "", code: "", err: "", sure: "", draft: "", draftKey: "", rules: false, lastHtml: "", shelf: {} };
+  const ui = { sheet: null, name: "", code: "", err: "", sure: "", draft: "", draftKey: "", rules: false, lastHtml: "", shelf: {}, seenAt: {} };
   /* Trying things out between tabs of one browser (?local=1): each tab must remember its own room. */
   const wantLocal = (() => { try { return new URLSearchParams(location.search).has("local"); } catch (e) { return false; } })();
   const box = () => wantLocal ? sessionStorage : localStorage;
@@ -415,13 +417,15 @@
     const banner = !st.online ? (st.wasOn ? X.offline : X.connecting) : (st.mode === "guest" && !st.hostOn ? X.hostAway : "");
     const key = V.key || "";
     if (ui.draftKey !== key) { ui.draftKey = key; ui.draft = ""; }
+    /* a timed question: when it first showed on this phone */
+    if (V.timed && key && !ui.seenAt[key]) ui.seenAt[key] = Date.now();
     const btn = (b, kind) => `<button class="btn${b.ghost ? " ghost" : ""}" data-act="${kind}" data-c="${esc(b.cmd || b.local)}" ${b.dis ? "disabled" : ""}>${esc(b.sure && ui.sure === (b.cmd || b.local) ? X.sure : b.t)}</button>`;
     return `<div class="top"><span class="rtitle c-${V.top.color}"><span class="ico" aria-hidden="true">${V.top.icon}</span><b>${esc(V.top.title)}</b></span><button class="btn ghost small" data-act="r-local" data-c="rules">${esc(X.rules)}</button></div>
       <p class="rsub">${esc(V.sub || "")}</p>
       ${V.bar != null ? `<div class="bar rbar c-${V.top.color}"><i style="width:${+V.bar}%"></i></div>` : ""}
       ${banner ? `<p class="flash">${esc(banner)}</p>` : ""}
       ${V.poster ? poster(V.poster, V.top, openedLetters(V)) + (V.rest || []).map(b => block(b, V.top.color)).join("") : (V.blocks || []).map(b => block(b, V.top.color)).join("")}
-      ${input(V.input, ui.draft)}
+      ${input(V.input, ui.draft, V.top.color)}
       ${V.note ? `<p class="note rnote">${esc(V.note)}</p>` : ""}
       ${V.party ? `<div class="stack">${V.poster && MEIVI.story ? `<button class="btn" data-act="r-local" data-c="share">${esc(story.wanted && !story.file ? T.shareWait : T.shareStory)}</button>` : ""}${st.game && window.MACC && MACC.gameRating ? MACC.gameRating("m:" + st.game) : ""}</div>` : ""}
       ${V.host ? `<div class="stack rhost">${V.host.map(b => btn(V.poster ? Object.assign({ ghost: true }, b) : b, "r-cmd")).join("")}</div>` : ""}
@@ -456,7 +460,10 @@
       ui.err = "";
       return true;
     }
-    if (act === "r-ans") { room.answer(b.dataset.v); return true; }
+    if (act === "r-ans") {
+      const V = room.myView(), t0 = V && V.timed && ui.seenAt[V.key];
+      room.answer(b.dataset.v, t0 ? Date.now() - t0 : undefined); return true;
+    }
     if (act === "r-cmd") {
       const sure = (room.myView().host || []).find(x => x.cmd === c && x.sure);
       if (sure && ui.sure !== c) { ui.sure = c; return true; }
