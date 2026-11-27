@@ -60,7 +60,7 @@ MEIVI.catalog.multi = [
   { id: "quiz", icon: "🧠", color: "sky", min: 2, max: 10, ready: true, mood: "quiz" },
   /* from three */
   { id: "mole", icon: "🕵️", color: "hot", min: 3, max: 10, ready: true },
-  { id: "conquer", icon: "🗺️", color: "sky", min: 3, max: 8, ready: true },
+  { id: "conquer", icon: "🗺️", color: "sky", min: 3, max: 8, ready: true, map: true },
   { id: "whoofus", icon: "👉", color: "gold", min: 3, max: 10, ready: true },
   { id: "bomb", icon: "💣", color: "mint", min: 3, max: 10, ready: true },
   /* from five */

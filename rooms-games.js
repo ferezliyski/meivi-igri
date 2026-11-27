@@ -164,49 +164,80 @@
     }
   });
 
-  /* ---------- 2. Conquer the country: a region is yours only if nobody else reached for it ----------
-     The regions and what each is worth come from the text file (regions: [[name, points], ...]),
-     so the game of another country has its own map. */
+  /* ---------- 2. Conquer the country: reach in secret for a place nobody else wants ----------
+     The map of the country is data (c.tx.map(): the capital, the regions, their municipalities, one village per
+     municipality). A place is named by an id: "c" the capital, "r3" region 3, "m3.5" municipality 5 of region 3,
+     "v3.5" the village of that municipality. The capital and the regions are open from the start; a municipality
+     opens once its region is taken, a village once its municipality is taken. Points are in the text (points). */
+  const cq = {
+    /* the place an id names: {k, r, j, n (name), up (id of the place that opens it)} or null */
+    place(M, id) {
+      const m = /^(c)$|^r(\d+)$|^([mv])(\d+)\.(\d+)$/.exec(String(id)); if (!m) return null;
+      if (m[1]) return { k: "c", n: M.cap.n };
+      if (m[2] != null) { const R = M.regs[+m[2]]; return R ? { k: "r", r: +m[2], n: R.n, area: !!R.area } : null; }
+      const R = M.regs[+m[4]], P = R && R.ms[+m[5]]; if (!P) return null;
+      if (m[3] === "m") return { k: "m", r: +m[4], j: +m[5], n: P.n, up: "r" + m[4] };
+      return P.v ? { k: "v", r: +m[4], j: +m[5], n: P.v, up: "m" + m[4] + "." + m[5] } : null;
+    },
+    free(M, g, id) { const p = cq.place(M, id); return !!p && !g.own[id] && (!p.up || !!g.own[p.up]); },
+    /* every place that can be taken right now */
+    open(M, g) {
+      const out = []; if (!g.own.c) out.push("c");
+      M.regs.forEach((R, r) => {
+        if (!g.own["r" + r]) return out.push("r" + r);
+        R.ms.forEach((P, j) => { const m = "m" + r + "." + j; if (!g.own[m]) out.push(m); else if (P.v && !g.own["v" + r + "." + j]) out.push("v" + r + "." + j); });
+      });
+      return out;
+    },
+    /* what the phones draw: who holds what, as the number of the player (its colour) */
+    own(c, g) { const o = {}; Object.keys(g.own).forEach(id => { o[id] = c.ids.indexOf(g.own[id]); }); return o; },
+    name(c, M, id) { const p = cq.place(M, id); return c.tx.t.place(p.k, p.n, p.area); }
+  };
   G("conquer", {
-    min: 3, max: 8, over,
-    setup(c) { return { round: 1, rounds: 7, score: blank(c.ids), owner: {}, phase: "pick", in: {}, last: null }; },
-    free: (c, g) => c.tx.regions.filter((r, i) => !g.owner[i]).length,
+    min: 3, max: 8, over, rounds: [15, 30, 50],
+    needs: () => !!(MEIVI.mtexts.conquer && MEIVI.mtexts.conquer.map && MEIVI.mtexts.conquer.map()),
+    setup(c) {
+      const rounds = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
+      return { round: 1, rounds, score: blank(c.ids), own: {}, phase: "pick", in: {}, last: null };
+    },
     view(c, g, pid) {
-      const t = c.tx.t, sub = round(c, g), R = c.tx.regions;
-      if (g.phase === "pick") return { sub, blocks: [{ k: "h", text: t.pick }, { k: "p", text: t.pickHint }],
-        input: { k: "choice", cols: 2, done: g.in[pid], options: R.map(([name, p], i) => ({ v: String(i), t: name, sub: t.pts(p), dis: !!g.owner[i], tag: g.owner[i] ? c.name(g.owner[i]) : "" })) },
-        note: waitNote(c, g, c.ids), host: skipBtn(c, g, c.ids) };
-      return { sub, blocks: [
+      const t = c.tx.t, sub = round(c, g), M = c.tx.map(), map = { own: cq.own(c, g), names: c.ids.map(c.name), scores: c.ids.map(id => g.score[id]), me: c.ids.indexOf(pid), pts: c.tx.points };
+      if (g.phase === "pick") return { sub, key: "pick" + g.round, blocks: [{ k: "h", text: t.pick }],
+        input: Object.assign({ k: "map", done: g.in[pid] || null }, map), note: waitNote(c, g, c.ids), host: skipBtn(c, g, c.ids) };
+      return { sub, key: "res" + g.round, blocks: [
           { k: "h", text: t.result },
-          { k: "rows", rows: g.last.map(r => ({ l: c.name(r.id), r: r.region == null ? t.nothing : r.won ? t.took(R[r.region][0], r.pts) : t.clash(R[r.region][0]), hot: r.won })) },
-          table(c, g.score, c.ui.scores),
-          { k: "p", text: t.left(this.free(c, g)) }
+          { k: "rows", keep: true, rows: g.last.map(r => ({ l: c.name(r.id), r: r.place == null ? t.nothing : r.won ? t.took(cq.name(c, M, r.place), r.pts) : t.clash(cq.name(c, M, r.place)), ok: r.won, dim: r.place == null })) },
+          /* the points stand next to the names under the map, so the screen stays short: this game has many rounds */
+          Object.assign({ k: "map", fresh: g.last.filter(r => r.won).map(r => r.place) }, map)
         ], host: nextBtn(c, g) };
     },
     ans(c, g, pid, v) {
-      const i = +v;
-      if (g.phase !== "pick" || !c.tx.regions[i] || String(i) !== String(v) || g.owner[i]) return;
-      g.in[pid] = String(i); if (allIn(g, c.ids)) this.resolve(c, g);
+      if (g.phase !== "pick" || !cq.free(c.tx.map(), g, v)) return;
+      g.in[pid] = String(v); if (allIn(g, c.ids)) this.resolve(c, g);
     },
+    /* A place goes to the only player who reached for it; if two or more did, nobody gets it. */
     resolve(c, g) {
+      const M = c.tx.map();
       g.last = c.ids.map(id => {
-        const region = g.in[id] == null ? null : g.in[id], rivals = region == null ? 0 : c.ids.filter(o => g.in[o] === region).length;
-        return { id, region, won: rivals === 1, pts: region == null ? 0 : c.tx.regions[region][1] };
+        const place = g.in[id] == null ? null : g.in[id], rivals = place == null ? 0 : c.ids.filter(o => g.in[o] === place).length;
+        return { id, place, won: rivals === 1, pts: place == null ? 0 : c.tx.points[cq.place(M, place).k] };
       });
-      g.last.forEach(r => { if (r.won) { g.owner[r.region] = r.id; g.score[r.id] += r.pts; } });
+      g.last.forEach(r => { if (r.won) { g.own[r.place] = r.id; g.score[r.id] += r.pts; } });
       g.phase = "result";
     },
     cmd(c, g, name) {
       if (name === "skip" && g.phase === "pick") { fillIn(g, c.ids); this.resolve(c, g); }
       else if (name === "next" && g.phase === "result") {
-        if (g.round >= g.rounds || this.free(c, g) === 0) g.end = true; else { g.round++; g.phase = "pick"; g.in = {}; }
+        if (g.round >= g.rounds || !cq.open(c.tx.map(), g).length) g.end = true; else { g.round++; g.phase = "pick"; g.in = {}; }
       }
     },
     final(c, g) {
-      const lands = id => c.tx.regions.filter((r, i) => g.owner[i] === id).map(r => r[0]).join(", ") || c.tx.t.noLand;
-      const win = best(c, g.score).join(", "), owned = { k: "rows", title: c.tx.t.lands, rows: c.ids.map(id => ({ l: c.name(id), r: lands(id) })) };
-      return { blocks: [{ k: "big", text: win, sub: c.tx.t.ruler }, table(c, g.score, c.ui.scores), owned],
-        poster: { hero: { kind: "name", label: c.tx.t.ruler, name: win }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) }, rest: [owned] };
+      const t = c.tx.t, n = {}; c.ids.forEach(id => { n[id] = { c: 0, r: 0, m: 0, v: 0 }; });
+      Object.keys(g.own).forEach(id => { n[g.own[id]][id[0]]++; });
+      const win = best(c, g.score).join(", "), map = { k: "map", own: cq.own(c, g), names: c.ids.map(c.name), pts: c.tx.points };
+      const owned = { k: "rows", keep: true, title: t.lands, rows: sorted(c, g.score).map(id => ({ l: c.name(id), r: t.holds(n[id]) || t.noLand })) };
+      return { blocks: [{ k: "big", text: win, sub: t.ruler }, table(c, g.score, c.ui.scores), owned],
+        poster: { hero: { kind: "name", label: t.ruler, name: win }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) }, rest: [map, owned] };
     }
   });
 
