@@ -237,6 +237,9 @@ MEIVI.ui = {
     skipWait: "Продължи без чакане",
     scores: "Точки",
     winner: "Победител",
+    /* the number of rounds, chosen by the host before the game */
+    roundsAsk: "Колко рунда?",
+    roundsAre: n => `Рундове: ${n}`,
     /* the card on the last screen */
     ranking: "Класиране",
     and: "и"

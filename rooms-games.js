@@ -342,7 +342,12 @@
   /* ---------- 7. One mind (for two): pick the same thing without a word ---------- */
   G("onemind", {
     min: 2, max: 2, over,
-    setup(c) { const g = { round: 0, rounds: 10, goal: 6, hits: 0, order: order(c, c.tx.prompts) }; this.deal(c, g); return g; },
+    /* the host chooses 15, 30 or 50 rounds (only as many as there are questions); the goal is 6 of every 10 */
+    rounds: [15, 30, 50], pool: c => c.tx.prompts.length,
+    setup(c) {
+      const rounds = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
+      const g = { round: 0, rounds, goal: Math.ceil(rounds * 0.6), hits: 0, order: order(c, c.tx.prompts) }; this.deal(c, g); return g;
+    },
     deal(c, g) {
       g.round++; g.q = c.tx.prompts[g.order[(g.round - 1) % g.order.length]]; g.phase = "ask"; g.in = {}; g.same = false;
       g.opts = {}; c.ids.forEach(id => { g.opts[id] = c.shuffle(g.q[1]); });   /* each sees the choices in another order */
@@ -365,8 +370,9 @@
     },
     final(c, g) {
       const t = c.tx.t, out = g.hits >= g.goal ? t.won : t.lost;
-      return { blocks: [{ k: "big", text: g.hits + " / " + g.rounds, sub: out }, { k: "p", text: t.tier(g.hits) }],
-        poster: { hero: { kind: "ring", big: g.hits + "/" + g.rounds, p: Math.round(g.hits / g.rounds * 100), word: out, title: t.tier(g.hits), names: pair(c) } } };
+      const pct = Math.round(g.hits / g.rounds * 100);
+      return { blocks: [{ k: "big", text: g.hits + " / " + g.rounds, sub: out }, { k: "p", text: t.tier(pct) }],
+        poster: { hero: { kind: "ring", big: g.hits + "/" + g.rounds, p: pct, word: out, title: t.tier(pct), names: pair(c) } } };
     }
   });
 

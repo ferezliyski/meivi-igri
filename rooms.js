@@ -16,13 +16,16 @@
      { top: {icon, title, color}, sub, bar, blocks: [...], input, note, host: [...], foot: [...] }
      bar     how far the game has come, in percent (a line under the round), when the game counts rounds
      On the last screen also: poster (the result as one card, see rooms-games.js) and rest (blocks under the card).
-     blocks  {k: "h" | "p" | "card" | "rows" | "chips" | "code" | "wait" | "big" | "letter", ...}
+     blocks  {k: "h" | "p" | "card" | "rows" | "chips" | "code" | "wait" | "big" | "letter" | "pick", ...}
+             pick: {options: [{v, t}], done, cmd}: a row of buttons; with cmd it sends a command of the host (the number of rounds)
      input   {k: "choice", options: [{v, t, sub, dis, tag}], done, pills, cols}
              {k: "text", max, ph, sent} | {k: "btn", t, v}
      host    buttons only the host has: {t, cmd, ghost, dis, sure}
 
    A game (MEIVI.mgame(id, {...})) gives: min, max, setup(c), view(c, g, playerId), ans(c, g, playerId, value),
    cmd(c, g, name), over(g), final(c, g) and, if it uses a timer, wake(c, g). Its state g must be plain data.
+   A game may also give rounds: [15, 30, 50] and pool(c) (how many questions it has): the host then chooses the number
+   of rounds before the game, among those the questions can fill, and the game reads it as c.opts.rounds.
    No text of any language is in this file: words come from T.rooms and from lang/<lang>/multi/<id>.js.
    ===================================================================== */
 (function () {
@@ -37,7 +40,7 @@
 
   /* ---------- one room, as one phone sees it ---------- */
   function createRoom(env) {
-    const st = { mode: null, code: null, me: null, game: null, players: [], late: [], phase: "lobby", g: null, seq: 0,
+    const st = { mode: null, code: null, me: null, game: null, players: [], late: [], phase: "lobby", g: null, seq: 0, opts: {},
                  snap: null, online: false, hostOn: true, closed: false, link: "" };
     let line = null, timers = [], helloAt = 0;
     const rnd = n => Math.floor(env.random() * n);
@@ -47,7 +50,7 @@
     const ctx = () => ({
       ids: st.players.map(p => p.id),
       name: id => { const p = st.players.find(p => p.id === id); return p ? p.name : "?"; },
-      tx: MEIVI.mtexts[st.game], ui: X, rnd, shuffle, pick: a => a[rnd(a.length)], now: env.now,
+      tx: MEIVI.mtexts[st.game], ui: X, rnd, shuffle, pick: a => a[rnd(a.length)], now: env.now, opts: st.opts,
       /* Asks for a command to arrive after some time (the bomb's fuse). Only the host keeps time. */
       later: (ms, cmd) => { timers.push(env.timer(() => { if (st.mode === "host" && st.phase === "play") { def().cmd(ctx(), st.g, cmd); settle(); } }, ms)); }
     });
@@ -57,7 +60,7 @@
     function save() {
       if (!st.mode) return env.store.set(null);
       const s = { mode: st.mode, code: st.code, me: st.me, game: st.game, ts: env.now() };
-      if (st.mode === "host") Object.assign(s, { players: st.players, late: st.late, phase: st.phase, g: st.g, seq: st.seq });
+      if (st.mode === "host") Object.assign(s, { players: st.players, late: st.late, phase: st.phase, g: st.g, seq: st.seq, opts: st.opts });
       env.store.set(s);
     }
 
@@ -65,20 +68,30 @@
     function host(game, name) {
       Object.assign(st, { mode: "host", game, code: String(10000 + rnd(90000)), me: { id: newId(), name }, late: [], phase: "lobby", g: null, seq: 0, snap: null, closed: false, online: false, wasOn: false, hostOn: true });
       st.players = [{ id: st.me.id, name, on: true }];
+      st.opts = {}; const r = roundChoices(); if (r.length) st.opts.rounds = r[0];
       st.link = env.link(st.code);
       open(); publish();
+    }
+    /* The numbers of rounds the host may choose: those the questions of the game can fill (at least the smallest). */
+    function roundChoices() {
+      const d = def(); if (!d || !d.rounds) return [];
+      const n = d.pool ? d.pool(ctx()) : Infinity, fit = d.rounds.filter(r => r <= n);
+      return fit.length ? fit : d.rounds.slice(0, 1);
     }
     function viewFor(pid) {
       const d = def(), inf = info(st.game), isHost = pid === st.me.id;
       const top = { icon: inf.icon, title: gameName(st.game), color: inf.color };
       if (st.late.some(p => p.id === pid)) return { top, sub: X.room(st.code), blocks: [{ k: "p", text: X.lateJoin }], foot: [{ t: X.leave, local: "leave" }] };
       if (st.phase === "lobby") {
-        const n = st.players.length, ok = n >= d.min && n <= d.max;
+        const n = st.players.length, ok = n >= d.min && n <= d.max, rc = roundChoices();
+        /* the number of rounds: the host chooses it, the others see it */
+        const rounds = !rc.length ? [] : isHost && rc.length > 1
+          ? [{ k: "h", text: X.roundsAsk }, { k: "pick", cmd: true, options: rc.map(r => ({ v: "rounds:" + r, t: String(r) })), done: "rounds:" + st.opts.rounds }]
+          : [{ k: "p", text: X.roundsAre(st.opts.rounds) }];
         return { top, sub: X.room(st.code), blocks: [
             { k: "code", code: st.code, link: st.link },
-            { k: "chips", title: X.inRoom(n), items: st.players.map(p => ({ t: p.name, sub: p.id === st.me.id ? X.hostTag : "", dim: !p.on })) },
-            { k: "p", text: ok ? (isHost ? X.canStart : X.waitHost) : X.needPlayers(d.min, d.max, n) }
-          ],
+            { k: "chips", title: X.inRoom(n), items: st.players.map(p => ({ t: p.name, sub: p.id === st.me.id ? X.hostTag : "", dim: !p.on })) }
+          ].concat(rounds, [{ k: "p", text: ok ? (isHost ? X.canStart : X.waitHost) : X.needPlayers(d.min, d.max, n) }]),
           host: isHost ? [{ t: X.start, cmd: "start", dis: !ok }, { t: X.closeRoom, cmd: "close", ghost: true, sure: true }] : null,
           foot: isHost ? null : [{ t: X.leave, local: "leave" }] };
       }
@@ -109,6 +122,8 @@
       if (c === "start" && st.phase === "lobby") {
         const n = st.players.length; if (n < d.min || n > d.max) return;
         st.g = d.setup(ctx()); st.phase = "play"; settle();
+      } else if (/^rounds:\d+$/.test(c) && st.phase === "lobby") {
+        const r = +c.slice(7); if (roundChoices().includes(r)) { st.opts.rounds = r; publish(); }
       } else if (c === "again" && st.phase === "end") {
         while (st.late.length && st.players.length < d.max) st.players.push(st.late.shift());
         st.phase = "lobby"; st.g = null; publish();
@@ -180,7 +195,7 @@
     /* Coming back after the page was closed or reloaded. */
     function resume(s) {
       if (s.mode === "host") {
-        Object.assign(st, { mode: "host", code: s.code, me: s.me, game: s.game, players: s.players || [], late: s.late || [], phase: s.phase || "lobby", g: s.g || null, seq: s.seq || 0, closed: false });
+        Object.assign(st, { mode: "host", code: s.code, me: s.me, game: s.game, players: s.players || [], late: s.late || [], phase: s.phase || "lobby", g: s.g || null, seq: s.seq || 0, opts: s.opts || {}, closed: false });
         st.link = env.link(st.code);
         open();
         if (st.phase === "play" && def().wake) def().wake(ctx(), st.g);
@@ -204,6 +219,7 @@
     if (b.k === "h") return `<h2 class="rh">${esc(b.text)}</h2>`;
     if (b.k === "p") return `<p class="rp${b.strong ? " strong" : ""}">${esc(b.text)}</p>`;
     if (b.k === "card") return `<div class="deck still rdeck"><article class="card rcard c-${b.color || color}${b.secret ? " secret" : ""}"><span class="tag">${esc(b.tag)}</span><p class="q${qSize(b.text)}">${esc(b.text)}</p>${b.sub ? `<p class="rule">${esc(b.sub)}</p>` : ""}</article></div>`;
+    if (b.k === "pick") return `<div class="seg">${b.options.map(o => `<button data-act="${b.cmd ? "r-cmd" : "r-ans"}" data-c="${esc(o.v)}" data-v="${esc(o.v)}" aria-pressed="${String(b.done) === String(o.v)}">${esc(o.t)}</button>`).join("")}</div>`;
     if (b.k === "letter") return `<article class="letter"><span>${esc(b.from)}</span><p>${esc(b.text)}</p></article>`;
     if (b.k === "big") return `<div class="rbig c-${color}"><b>${esc(b.text)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}</div>`;
     if (b.k === "wait") return b.names.length ? `<p class="note rwait">${esc(X.waiting(b.names.join(", ")))}</p>` : "";
