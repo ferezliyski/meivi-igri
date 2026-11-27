@@ -385,7 +385,13 @@
   /* ---------- 3. Who of us: everyone points at someone in secret ---------- */
   G("whoofus", {
     min: 3, max: 10, over,
-    setup(c) { const g = { round: 0, rounds: 8, score: blank(c.ids), pointed: blank(c.ids), order: order(c, c.tx.questions) }; this.deal(c, g); return g; },
+    /* the host chooses how many questions: 15, 30 or 50 */
+    rounds: [15, 30, 50], pool: c => c.tx.questions.length,
+    setup(c) {
+      const rounds = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
+      const g = { round: 0, rounds: Math.min(rounds, c.tx.questions.length), score: blank(c.ids), pointed: blank(c.ids), order: order(c, c.tx.questions) };
+      this.deal(c, g); return g;
+    },
     deal(c, g) { g.round++; g.q = c.tx.questions[g.order[(g.round - 1) % g.order.length]]; g.phase = "vote"; g.in = {}; g.votes = null; g.tops = []; },
     view(c, g, pid) {
       const t = c.tx.t, sub = round(c, g), card = { k: "card", tag: t.lead, text: g.q };
