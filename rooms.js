@@ -215,7 +215,47 @@
   const qSize = s => { const n = String(s).length, w = longest(s); return n <= 42 && w <= 11 ? " xl" : n <= 80 && w <= 13 ? " lg" : ""; };
   /* How players rate a game: "★ 4,8 (23)" above its name, once enough people have rated it (account.js). */
   const score = id => window.MACC && MACC.score ? MACC.score("m:" + id) : "";
+  /* ---------- Letters in a bottle ---------- */
+  /* An animation plays once: the first time a thing is drawn it starts; when the screen is drawn again in the middle of it,
+     it goes on from where it was (a negative delay, --el in the styles); afterwards the thing simply stands at its end. */
+  const played = {};
+  function once(key, ms) {
+    const now = Date.now(), t = played[key] || (played[key] = now), el = now - t;
+    return el >= ms ? { c: " done", el: 0 } : { c: " play", el };
+  }
+  const keyOf = k => (room.st.code || "") + ":" + k;
+  /* a glass bottle with a rolled letter and a cork (the parts are coloured and moved by the styles) */
+  const bottle = () => `<svg viewBox="0 0 60 140" aria-hidden="true"><path class="b-g" d="M14 52Q14 40 22 36V12H38V36Q46 40 46 52V126Q46 136 36 136H24Q14 136 14 126Z"/><path class="b-hl" d="M19 58V122"/><rect class="b-roll" x="22" y="60" width="16" height="58" rx="7"/><rect class="b-rib" x="22" y="85" width="16" height="5"/><rect class="b-cork" x="20.5" y="2" width="19" height="15" rx="3.5"/></svg>`;
+  const waves = (front) => `<span class="sun"></span><i class="wave w1"></i>${front}<i class="wave w2"></i>`;
+  /* the letter of the other, written letter by letter */
+  function inked(text) {
+    const ch = Array.from(String(text)), step = Math.max(12, Math.min(40, Math.round(3000 / Math.max(1, ch.length))));
+    return { step, ms: 1600 + ch.length * step + 300, html: ch.map((x, i) => `<span style="--i:${i}">${esc(x)}</span>`).join("") };
+  }
+  function letterBlock(b) {
+    if (b.k === "sea") {
+      const k = keyOf(b.key), me = b.me ? once(k + ":me", 2200) : null, ot = b.other ? once(k + ":other", 2000) : null;
+      return `<div class="sea">${waves(
+        (me ? `<span class="bot me${me.c}" style="--el:-${me.el}ms"><span class="bob">${bottle()}</span><b>${esc(b.me)}</b><i class="splash"></i></span>` : "") +
+        (ot ? `<span class="bot other${ot.c}" style="--el:-${ot.el}ms"><span class="bob">${bottle()}</span><b>${esc(b.other)}</b></span>` : ""))}</div>`;
+    }
+    if (b.k === "shore") {
+      const k = keyOf(b.key), opened = !!played[k + ":open"], ink = inked(b.text), o = opened ? once(k + ":open", ink.ms) : null;
+      const st = o ? ` style="--el:-${o.el}ms;--step:${ink.step}ms"` : "";
+      return `<div class="sea shore">${waves(`<span class="bot me"><span class="bob">${bottle()}</span><b>${esc(b.me)}</b></span>` +
+          `<button class="bot other tap${opened ? " opened" + o.c : ""}"${st} data-act="r-local" data-c="open-bottle" data-k="${esc(k)}" aria-label="${esc(b.tap)}" ${opened ? "disabled" : ""}><span class="bob">${bottle()}</span><b>${esc(b.other)}</b></button>`)}</div>
+        ${opened ? `<article class="paper from${o.c}"${st}><span>${esc(b.from)}</span><p class="type">${ink.html}</p></article>
+        <article class="paper mine${o.c}"${st}><span>${esc(b.mineLabel)}</span><p>${esc(b.mine)}</p></article>` : `<p class="note rnote">${esc(b.tap)}</p>`}`;
+    }
+    if (b.k === "bshelf") {
+      const k = keyOf(b.key), sel = ui.shelf[k], it = b.items[sel];
+      return `<div class="bshelf">${b.items.map((x, i) => `<button class="sbot${sel === i ? " on" : ""}" data-act="r-local" data-c="shelf" data-k="${esc(k)}" data-i="${i}" aria-pressed="${sel === i}">${bottle()}<b>${i + 1}</b></button>`).join("")}</div>
+        ${it ? `<p class="rp strong">${esc(it.q)}</p>${it.a.map(a => `<article class="paper"><span>${esc(a.from)}</span><p>${esc(a.text)}</p></article>`).join("")}` : `<p class="note rnote">${esc(b.hint)}</p>`}`;
+    }
+    return "";
+  }
   function block(b, color) {
+    if (b.k === "sea" || b.k === "shore" || b.k === "bshelf") return letterBlock(b);
     if (b.k === "h") return `<h2 class="rh">${esc(b.text)}</h2>`;
     if (b.k === "p") return `<p class="rp${b.strong ? " strong" : ""}">${esc(b.text)}</p>`;
     if (b.k === "card") return `<div class="deck still rdeck"><article class="card rcard c-${b.color || color}${b.secret ? " secret" : ""}"><span class="tag">${esc(b.tag)}</span><p class="q${qSize(b.text)}">${esc(b.text)}</p>${b.sub ? `<p class="rule">${esc(b.sub)}</p>` : ""}</article></div>`;
@@ -237,6 +277,8 @@
     if (h.kind === "ring") hero = `<div class="ring" style="--p:${Math.max(0, Math.min(100, +h.p || 0))}"><b${String(h.big).length > 3 ? ` class="sm"` : ""}>${esc(h.big)}</b><span${String(h.word).length > 12 ? ` class="sm"` : ""}>${esc(h.word)}</span></div>
         <p class="ptitle${/\S{15,}/.test(h.title) ? " long" : ""}">${esc(h.title)}</p>
         <p class="pnames">${esc(h.names)}</p>`;
+    else if (h.kind === "bottle") hero = `<div class="pbottle">${bottle()}<div><b>${esc(h.big)}</b><span>${esc(h.word)}</span></div></div>
+        <p class="ptitle">${esc(h.title)}</p><p class="pnames">${esc(h.names)}</p>`;
     else if (h.kind === "name") hero = `<p class="plabel">${esc(h.label)}</p><p class="pname${String(h.name).length > 12 ? " long" : ""}">${esc(h.name)}</p>`;
     else hero = `<p class="pname long">${esc(h.title)}</p>`;
     const rank = r ? `<div class="prank${wideRank(r) ? " wide" : ""}" style="--c:${r.cols.length}">
@@ -280,15 +322,16 @@
       const cls = i.pills ? "pick" : "opts" + (i.cols === 2 ? " two" : "");
       return `<div class="${cls}">${i.options.map(o => `<button class="${i.pills ? "" : "opt"}" data-act="r-ans" data-v="${esc(o.v)}" aria-pressed="${String(i.done) === String(o.v)}" ${o.dis ? "disabled" : ""}>${i.pills ? esc(o.t) : `<span>${esc(o.t)}</span>${o.sub ? `<small>${esc(o.sub)}</small>` : ""}${o.tag ? `<i>${esc(o.tag)}</i>` : ""}`}</button>`).join("")}</div>`;
     }
+    /* "paper": the field is a sheet of paper; once sent, the letter is shown by the game itself (a bottle) */
     if (i.k === "text") return i.sent
-      ? `<article class="letter mine"><span>${esc(X.sent)}</span><p>${esc(i.sent)}</p></article>`
-      : `<form class="rform" id="rForm"><textarea id="rText" maxlength="${i.max || 240}" rows="4" placeholder="${esc(i.ph || "")}">${esc(draft || "")}</textarea><button class="btn" type="submit">${esc(X.send)}</button></form>`;
+      ? (i.paper ? "" : `<article class="letter mine"><span>${esc(X.sent)}</span><p>${esc(i.sent)}</p></article>`)
+      : `<form class="rform${i.paper ? " onpaper" : ""}" id="rForm"><textarea id="rText" maxlength="${i.max || 240}" rows="4" placeholder="${esc(i.ph || "")}">${esc(draft || "")}</textarea><button class="btn" type="submit">${esc(i.send || X.send)}</button></form>`;
     if (i.k === "btn") return `<button class="btn rgo" data-act="r-ans" data-v="${esc(i.v)}">${esc(i.t)}</button>`;
     return "";
   }
 
   /* ---------- the room on this phone: screens, taps, the connection ---------- */
-  const ui = { sheet: null, name: "", code: "", err: "", sure: "", draft: "", draftKey: "", rules: false, lastHtml: "" };
+  const ui = { sheet: null, name: "", code: "", err: "", sure: "", draft: "", draftKey: "", rules: false, lastHtml: "", shelf: {} };
   /* Trying things out between tabs of one browser (?local=1): each tab must remember its own room. */
   const wantLocal = (() => { try { return new URLSearchParams(location.search).has("local"); } catch (e) { return false; } })();
   const box = () => wantLocal ? sessionStorage : localStorage;
@@ -375,11 +418,12 @@
   }
   /* The mood of the page while a game is played in the room (the styles "mood-<name>", set by app.js):
      a game for two has the mood of the couples' games, an adult one the dark one, a game for a company the friends' one.
+     A game may have a mood of its own ("mood" in catalog.js: "sea" for the letters in a bottle).
      The room before the game (the code, who is in) keeps the plain page. */
   function mood() {
     const st = room.st, snap = st.mode && !st.closed && st.snap, inf = snap && info(snap.game);
     if (!inf || snap.phase === "lobby" || !room.myView()) return null;
-    return { grp: inf.adult ? "adult" : inf.max === 2 ? "couples" : "friends", play: snap.phase === "play" };
+    return { grp: inf.mood || (inf.adult ? "adult" : inf.max === 2 ? "couples" : "friends"), play: snap.phase === "play" };
   }
   function enter() { ui.sheet = null; ui.err = ""; ui.sure = ""; ui.rules = false; MEIVI.app.show("room"); keepAwake(); }
   function click(act, b, target) {
@@ -408,6 +452,8 @@
       if (c === "rules") ui.rules = true;
       else if (c === "rules-close") { if (b.classList.contains("sheet") && target !== b) return false; ui.rules = false; }
       else if (c === "share") shareStory();
+      else if (c === "open-bottle") { if (!played[b.dataset.k + ":open"]) played[b.dataset.k + ":open"] = Date.now(); }
+      else if (c === "shelf") { const k = b.dataset.k, i = +b.dataset.i; ui.shelf[k] = ui.shelf[k] === i ? undefined : i; }
       else if (c === "story-close") { if (b.classList.contains("sheet") && target !== b) return false; story.sheet = false; }
       else if (c === "leave") { room.leave(); MEIVI.app.show("multi"); }
       return true;
@@ -471,7 +517,8 @@
   function boot() {
     let code = "";
     try { code = (new URLSearchParams(location.search).get("room") || "").replace(/\D/g, "").slice(0, 5); } catch (e) {}
-    const saved = store.get();
+    let saved = store.get();
+    if (saved && saved.game && !MEIVI.mready(saved.game)) { store.set(null); saved = null; }
     if (code && !(saved && saved.code === code)) { ui.code = code; ui.name = lastName(); ui.sheet = { k: "join" }; MEIVI.app.show("multi"); }
     else if (saved && saved.code && Date.now() - (saved.ts || 0) < 3 * 3600 * 1000) { ui.sheet = { k: "resume", saved }; MEIVI.app.show("multi"); }
     else if (saved) store.set(null);

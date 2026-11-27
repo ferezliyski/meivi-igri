@@ -376,55 +376,25 @@
     }
   });
 
-  /* ---------- 8. The deal (for two): share, or take it all ---------- */
-  G("deal", {
-    min: 2, max: 2, over,
-    setup(c) { const g = { round: 0, rounds: 8, score: blank(c.ids), order: order(c, c.tx.stakes) }; this.deal(c, g); return g; },
-    deal(c, g) { g.round++; g.s = c.tx.stakes[g.order[(g.round - 1) % g.order.length]]; g.phase = "ask"; g.in = {}; g.out = null; },
-    view(c, g, pid) {
-      const t = c.tx.t, sub = round(c, g), val = g.s[1];
-      if (g.phase === "ask") return { sub, blocks: [{ k: "card", tag: t.stake(val), text: g.s[0], sub: t.hint }],
-        input: { k: "choice", options: [{ v: "share", t: t.share, sub: t.shareSub(val / 2) }, { v: "take", t: t.take, sub: t.takeSub(val) }], done: g.in[pid] }, note: waitNote(c, g, c.ids), host: skipBtn(c, g, c.ids) };
-      const label = v => v === "take" ? t.take : v === "share" ? t.share : t.noAnswer;
-      return { sub, blocks: [
-          { k: "card", tag: t.outTag, color: g.out.k === "shared" ? "mint" : "hot", text: g.out.k === "shared" ? t.bothShare(val / 2) : g.out.k === "taken" ? t.oneTook(c.name(g.out.who), val) : t.bothTook, sub: g.s[0] },
-          { k: "rows", rows: c.ids.map(id => ({ l: c.name(id), r: label(g.in[id]), hot: g.in[id] === "take" })) },
-          table(c, g.score, c.ui.scores)
-        ], host: nextBtn(c, g) };
-    },
-    ans(c, g, pid, v) { if (g.phase !== "ask" || (v !== "share" && v !== "take")) return; g.in[pid] = v; if (allIn(g, c.ids)) this.settle(c, g); },
-    /* Both share: half each. One takes: all of it. Both take: nothing for anyone. No answer counts as sharing. */
-    settle(c, g) {
-      const [a, b] = c.ids, ta = g.in[a] === "take", tb = g.in[b] === "take", val = g.s[1];
-      if (!ta && !tb) { g.score[a] += val / 2; g.score[b] += val / 2; g.out = { k: "shared" }; }
-      else if (ta && tb) g.out = { k: "none" };
-      else { const who = ta ? a : b; g.score[who] += val; g.out = { k: "taken", who }; }
-      g.phase = "result";
-    },
-    cmd(c, g, name) {
-      if (name === "skip" && g.phase === "ask") { fillIn(g, c.ids); this.settle(c, g); }
-      else if (name === "next" && g.phase === "result") { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); }
-    },
-    final(c, g) {
-      const t = c.tx.t, names = best(c, g.score);
-      const draw = names.length > 1;
-      return { blocks: [{ k: "big", text: draw ? t.draw : names[0], sub: draw ? t.drawSub : t.winnerSub }, table(c, g.score, c.ui.scores), { k: "p", text: t.prize }],
-        poster: { hero: draw ? { kind: "name", label: t.drawSub, name: t.draw } : { kind: "name", label: c.ui.winner, name: names[0] }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) },
-        rest: [{ k: "p", text: t.prize }] };
-    }
-  });
-
   /* ---------- 9. Letters in a bottle (for two): both write, both read at the same moment ---------- */
   G("letters", {
     min: 2, max: 2, over,
-    setup(c) { const g = { round: 0, rounds: 6, log: [], order: order(c, c.tx.prompts) }; this.deal(c, g); return g; },
+    /* g.id tells one game from the next in the same room, so that every animation plays once (rooms.js) */
+    setup(c) { const g = { id: c.rnd(1e9), round: 0, rounds: 6, log: [], order: order(c, c.tx.prompts) }; this.deal(c, g); return g; },
     deal(c, g) { g.round++; g.q = c.tx.prompts[g.order[(g.round - 1) % g.order.length]]; g.phase = "write"; g.in = {}; },
+    /* Writing on a sheet of paper; a sent letter goes into a bottle on the sea, and the bottle of the other floats in when it is sent.
+       When both are in, each opens the bottle of the other on the shore (see the blocks "sea" and "shore" in rooms.js). */
     view(c, g, pid) {
-      const t = c.tx.t, sub = round(c, g), other = c.ids.find(id => id !== pid), card = { k: "card", tag: t.tag, text: g.q };
-      if (g.phase === "write") return { sub, key: "letter" + g.round, blocks: [card],
-        input: { k: "text", max: 240, ph: t.placeholder, sent: g.in[pid] || "" },
-        note: pid in g.in ? c.ui.waiting(c.name(other)) : other in g.in ? t.otherSent(c.name(other)) : t.secret, host: skipBtn(c, g, c.ids) };
-      return { sub, blocks: [card].concat(c.ids.map(id => ({ k: "letter", from: c.name(id), text: g.in[id] || t.empty }))), host: nextBtn(c, g) };
+      const t = c.tx.t, sub = round(c, g), other = c.ids.find(id => id !== pid), card = { k: "card", tag: t.tag, text: g.q }, key = "g" + g.id + "r" + g.round;
+      if (g.phase === "write") {
+        const mine = pid in g.in, theirs = other in g.in;
+        const sea = { k: "sea", key, me: mine ? t.you : "", other: theirs ? c.name(other) : "" };
+        return { sub, key: "letter" + g.round, blocks: [card].concat(mine || theirs ? [sea] : []),
+          input: { k: "text", max: 240, ph: t.placeholder, sent: g.in[pid] || "", paper: true, send: t.seal },
+          note: mine ? c.ui.waiting(c.name(other)) : theirs ? t.otherSent(c.name(other)) : t.secret, host: skipBtn(c, g, c.ids) };
+      }
+      return { sub, blocks: [card, { k: "shore", key, me: t.you, other: c.name(other), text: g.in[other] || t.empty, mine: g.in[pid] || t.empty,
+        tap: t.tapToOpen(c.name(other)), from: t.from(c.name(other)), mineLabel: t.yourLetter }], host: nextBtn(c, g) };
     },
     ans(c, g, pid, v) {
       if (g.phase !== "write" || pid in g.in) return;
@@ -441,7 +411,9 @@
       g.log.forEach(e => { blocks.push({ k: "p", strong: true, text: e.q }); c.ids.forEach((id, i) => blocks.push({ k: "letter", from: c.name(id), text: e.a[i] || t.empty })); });
       /* the letters are for the two of them: the card (and the picture to share) says only how many were written */
       const n = g.log.reduce((sum, e) => sum + e.a.filter(Boolean).length, 0);
-      return { blocks, poster: { hero: { kind: "ring", big: String(n), p: 100, word: t.written(n), title: t.keepTitle, names: pair(c) } }, rest: blocks };
+      /* in the room: every round a bottle on a shelf, which opens the two letters of that round */
+      const shelf = { k: "bshelf", key: "g" + g.id + "end", hint: t.shelfHint, items: g.log.map(e => ({ q: e.q, a: c.ids.map((id, i) => ({ from: c.name(id), text: e.a[i] || t.empty })) })) };
+      return { blocks, poster: { hero: { kind: "bottle", big: String(n), word: t.written(n), title: t.keepTitle, names: pair(c) } }, rest: [{ k: "h", text: t.keep }, shelf] };
     }
   });
 

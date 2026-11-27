@@ -484,6 +484,95 @@ button.mrow:active{transform:scale(.98)}
 .msoon{border:1px dashed #DDBFBE;border-radius:999px;background:rgba(255,255,255,.6);padding:12px 16px;min-height:46px;font-weight:700;font-size:14px;color:var(--muted)}
 .seg button[data-act="mn"]{font-weight:700;font-size:17px}
 
+/* ---------- Letters in a bottle ---------- */
+/* the page: a sea at sunset */
+body.mood-sea{background:
+  radial-gradient(70% 32% at 50% 0%, #FFD2AA 0, transparent 70%) fixed,
+  linear-gradient(180deg, #FFEBDA 0%, #FBDCD0 48%, #D3E8F0 100%) fixed, #FBE6DC; --track:#F1CDBE}
+/* the sheet to write on */
+.rform.onpaper textarea{min-height:190px;border:0;border-radius:6px 6px 18px 18px;padding:8px 18px 12px;font-family:var(--hand);font-size:25px;line-height:34px;color:#3B2B1C;
+  background:repeating-linear-gradient(180deg, transparent 0 33px, rgba(150,110,60,.22) 33px 34px) local, radial-gradient(120% 80% at 0% 0%, rgba(214,170,110,.22), transparent 60%) local, #FBF2DF;
+  box-shadow:0 18px 30px -18px rgba(90,50,20,.55), inset 0 0 0 1px rgba(150,110,60,.18);transform:rotate(-.6deg)}
+.rform.onpaper textarea::placeholder{color:rgba(90,60,30,.45)}
+.rform.onpaper textarea:focus{outline:none;box-shadow:0 18px 30px -18px rgba(90,50,20,.55), inset 0 0 0 2px rgba(150,110,60,.38)}
+/* a letter on paper */
+.paper{position:relative;color:#3B2B1C;border-radius:6px 6px 16px 16px;padding:10px 18px 14px;display:flex;flex-direction:column;gap:2px;transform:rotate(-.8deg);
+  background:repeating-linear-gradient(180deg, transparent 0 33px, rgba(150,110,60,.2) 33px 34px), radial-gradient(120% 80% at 100% 0%, rgba(214,170,110,.2), transparent 60%), #FBF2DF;
+  box-shadow:0 18px 30px -18px rgba(90,50,20,.55)}
+.paper.mine{transform:rotate(.7deg)}
+.paper > span{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8B6A45;line-height:24px}
+.paper p{font-family:var(--hand);font-size:25px;line-height:34px;white-space:pre-wrap;overflow-wrap:anywhere}
+/* the sea, the shore and the bottles */
+.sea{position:relative;flex:none;height:178px;border-radius:30px;overflow:hidden;
+  background:linear-gradient(180deg,#FFE7CF 0%,#FFCDB2 42%,#A8D4E6 64%,#5C9DC4 100%);box-shadow:0 22px 40px -26px rgba(40,80,120,.7)}
+.sea.shore{background:linear-gradient(180deg,#FFE7CF 0%,#FFCDB2 40%,#A8D4E6 56%,#6FA9CB 68%,#F2D7A8 69%,#E6C38B 100%)}
+.sea .sun{position:absolute;left:50%;top:34px;width:78px;height:78px;margin-left:-39px;border-radius:50%;background:radial-gradient(circle,#FFF6DF 0 30%,#FFC089 66%,rgba(255,192,137,0) 71%)}
+.sea .wave{position:absolute;left:0;width:200%;height:64px;background-repeat:repeat-x;background-size:160px 64px;animation:drift 9s linear infinite}
+.sea .w1{bottom:30px;opacity:.75;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='64'%3E%3Cpath d='M0 18 Q40 4 80 18 T160 18 V64 H0Z' fill='%2378B5D7'/%3E%3C/svg%3E")}
+.sea .w2{z-index:2;bottom:-8px;animation-duration:6s;animation-direction:reverse;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='64'%3E%3Cpath d='M0 20 Q40 8 80 20 T160 20 V64 H0Z' fill='%234D8FBA'/%3E%3C/svg%3E")}
+.sea.shore .w1{bottom:46px;height:30px;background-size:160px 64px}
+.sea.shore .w2{display:none}
+@keyframes drift{to{transform:translateX(-160px)}}
+.bot{position:absolute;bottom:22px;width:38px;border:0;background:none;padding:0;display:flex;flex-direction:column-reverse;align-items:center;gap:5px;z-index:1;color:inherit}
+.bot.me{left:calc(30% - 19px)}
+.bot.other{left:calc(70% - 19px)}
+.sea.shore .bot{bottom:12px}
+.bot svg{display:block;width:38px;height:auto;overflow:visible}
+.bot svg *,.sbot svg *,.pbottle svg *{transform-box:fill-box;transform-origin:50% 50%}
+.bot b{font-size:11.5px;font-weight:700;color:#5A3B22;background:rgba(255,255,255,.8);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.b-g{fill:rgba(214,244,238,.55);stroke:rgba(255,255,255,.95);stroke-width:2}
+.b-hl{fill:none;stroke:rgba(255,255,255,.75);stroke-width:3;stroke-linecap:round}
+.b-roll{fill:#FBF0D9;stroke:#D9C08F;stroke-width:1}
+.b-rib{fill:#C0392B}
+.b-cork{fill:#C98F55;stroke:#A06A35;stroke-width:1}
+.bob{display:block;transform-origin:50% 90%;animation:bob2 3.2s ease-in-out infinite alternate}
+.bot.other .bob{animation-delay:-1.6s}
+@keyframes bob2{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-6px) rotate(6deg)}}
+.sea.shore .bob{animation:none;transform:rotate(-10deg)}
+.sea.shore .bot.other .bob{transform:rotate(12deg)}
+/* sending: the rolled letter slides in, the cork drops on, the bottle falls into the sea */
+.bot.me.play{animation:drop .5s cubic-bezier(.5,0,.8,.4) calc(1.05s + var(--el,0ms)) both}
+@keyframes drop{from{transform:translateY(-50px)}to{transform:none}}
+.bot.me.play .b-roll,.bot.me.play .b-rib{animation:slidein .7s ease-out var(--el,0ms) both}
+@keyframes slidein{from{transform:translateY(-70px) scale(1.4,1);opacity:0}25%{opacity:1}to{transform:none;opacity:1}}
+.bot.me.play .b-cork{animation:corkin .4s cubic-bezier(.3,1.6,.5,1) calc(.65s + var(--el,0ms)) both}
+@keyframes corkin{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
+.bot .splash{position:absolute;left:50%;bottom:28px;width:66px;height:18px;margin-left:-33px;border-radius:50%;border:2px solid rgba(255,255,255,.95);opacity:0;z-index:3;pointer-events:none}
+.bot.me.play .splash{animation:splash .7s ease-out calc(1.5s + var(--el,0ms)) both}
+@keyframes splash{from{transform:scale(.3);opacity:.95}to{transform:scale(1.6);opacity:0}}
+/* the bottle of the other floats in */
+.bot.other.play{animation:arrive 2s cubic-bezier(.2,.7,.3,1) var(--el,0ms) both}
+@keyframes arrive{from{transform:translateX(170px) rotate(25deg)}60%{transform:translateX(-6px) rotate(-6deg)}to{transform:none}}
+/* on the shore: the bottle of the other calls to be opened; the cork pops, the letter flies out and unrolls */
+.bot.tap{cursor:pointer}
+.bot.tap:not(.opened) .bob{animation:nudge 1.3s ease-in-out infinite alternate}
+@keyframes nudge{from{transform:rotate(12deg);filter:drop-shadow(0 0 0 rgba(255,255,255,0))}to{transform:rotate(4deg) translateY(-5px);filter:drop-shadow(0 0 10px #fff)}}
+.bot.opened .b-cork,.bot.opened .b-roll,.bot.opened .b-rib{opacity:0}
+.bot.opened.play .b-cork{animation:pop .55s cubic-bezier(.2,.7,.4,1) var(--el,0ms) both}
+@keyframes pop{from{transform:none;opacity:1}to{transform:translate(-26px,-56px) rotate(-200deg);opacity:0}}
+.bot.opened.play .b-roll,.bot.opened.play .b-rib{animation:rise .7s ease-in calc(.35s + var(--el,0ms)) both}
+@keyframes rise{from{transform:none;opacity:1}70%{opacity:1}to{transform:translateY(-90px);opacity:0}}
+.paper.from.play{transform-origin:50% 0;animation:unroll .6s ease-out calc(1s + var(--el,0ms)) both}
+@keyframes unroll{from{transform:rotate(-.8deg) scaleY(.05);opacity:0}to{transform:rotate(-.8deg);opacity:1}}
+.paper.from.play .type span{animation:ink .2s ease-out calc(1.6s + var(--i) * var(--step) + var(--el,0ms)) both}
+@keyframes ink{from{opacity:0}to{opacity:1}}
+.paper.mine.play{animation:ink .6s ease-out calc(1.6s + var(--el,0ms)) both}
+/* the end: all bottles on a shelf */
+.bshelf{position:relative;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px;padding:16px 16px 0;border-radius:24px;background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.25))}
+.bshelf::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:12px;border-radius:6px;background:linear-gradient(180deg,#C18A55,#8E5B2E);box-shadow:0 8px 14px -8px rgba(80,40,10,.7)}
+.sbot{border:0;background:none;padding:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .2s}
+.sbot svg{width:30px;height:auto;display:block;overflow:visible}
+.sbot b{font-size:12px;font-weight:700;color:#7A5333}
+.sbot[aria-pressed="true"]{transform:translateY(-8px)}
+.sbot[aria-pressed="true"] svg{filter:drop-shadow(0 0 8px rgba(255,190,110,.95))}
+/* the bottle on the card of the result */
+.pbottle{display:flex;align-items:center;justify-content:center;gap:18px}
+.pbottle svg{width:70px;height:auto;overflow:visible}
+.pbottle .b-g{fill:rgba(255,255,255,.22);stroke:#fff}
+.pbottle b{display:block;font-family:var(--display);font-weight:800;font-size:64px;line-height:1}
+.pbottle span{display:block;font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.88;margin-top:6px}
+@media (prefers-reduced-motion:reduce){.sea .wave,.bob,.bot,.bot *,.paper,.paper *{animation:none !important}}
+
 /* The result as a picture, when the phone cannot share it directly */
 .storyimg{display:block;width:min(100%,300px);margin:0 auto;border-radius:22px;box-shadow:var(--sh);-webkit-touch-callout:default}
 a.btn{display:block;text-align:center;text-decoration:none}
@@ -623,7 +712,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27e";
+  var MEIVI_RELEASE = "2026-11-27f";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

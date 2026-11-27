@@ -55,8 +55,7 @@ MEIVI.catalog.multi = [
   /* for two */
   { id: "mirror", icon: "👀", color: "lilac", min: 2, max: 2, ready: true },
   { id: "onemind", icon: "💡", color: "mint", min: 2, max: 2, ready: true },
-  { id: "deal", icon: "📝", color: "sky", min: 2, max: 2, ready: true },
-  { id: "letters", icon: "✉️", color: "hot", min: 2, max: 2, ready: true },
+  { id: "letters", icon: "✉️", color: "hot", min: 2, max: 2, ready: true, mood: "sea" },
   { id: "distance", icon: "✈️", color: "sky", min: 2, max: 2, ready: true },
   { id: "wishes18", icon: "🔥", color: "gold", min: 2, max: 2, ready: true, adult: true },
   { id: "knowme", icon: "🎯", color: "lilac", min: 2, max: 2 },

@@ -73,7 +73,7 @@ const tagCls = s => String(s).length >= 14 ? "tag long" : "tag";
 const qSize = s => { const n = String(s).length, w = longest(s); return n <= 42 && w <= 11 ? " xl" : n <= 80 && w <= 13 ? " lg" : ""; };
 /* The mood of a shelf while one of its games is played: the page behind the card (styles "mood-<shelf>"),
    whether it is dark, and the colour of the phone's own bar above the page. */
-const MOODS = {couples:{bar:"#FBE2E0"}, friends:{bar:"#FFF1D2"}, adult:{bar:"#1B070C", dark:true}, quiz:{bar:"#0E2B52", dark:true}};
+const MOODS = {sea:{bar:"#FFE7D3"}, couples:{bar:"#FBE2E0"}, friends:{bar:"#FFF1D2"}, adult:{bar:"#1B070C", dark:true}, quiz:{bar:"#0E2B52", dark:true}};
 function setMood(){
   if(!document.body) return;
   /* a game in a room says its own mood (rooms.js) */

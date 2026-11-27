@@ -2,7 +2,7 @@
    Meivi games: the result as a picture for a story (1080 × 1920), drawn on a canvas.
    app.js hands over plain data (no language here):
      { color, icon, game, brand, foot,
-       hero: {kind: "ring", big, word, title, names, p} | {kind: "podium", label, top: [{p, b}]}
+       hero: {kind: "ring", big, word, title, names, p} | {kind: "bottle", big, word, title, names} | {kind: "podium", label, top: [{p, b}]}
            | {kind: "name", label, name} | {kind: "title", title},
        rows: [[label, value]], rank: {head, cols: [title], list: [{p, v: [..]}], colW, plain} | null }
      ring: "p" is how much of the ring is filled, in percent, when "big" is not a percentage itself.
@@ -82,6 +82,24 @@
       let nm = fit(x, h.names, "700 #px " + BODY, 46, 34, inner, 1);
       if (x.measureText(nm.lines[0]).width > inner || nm.lines[0].endsWith("…")) nm = fit(x, h.names, "700 #px " + BODY, 34, 34, inner, 2);
       x.globalAlpha = 0.95; y += 20; nm.lines.forEach((l, k) => { if (k) y += nm.size * 1.25; x.fillText(l, W / 2, y); }); x.globalAlpha = 1; y += 70;
+      x.textAlign = "left";
+    } else if (h.kind === "bottle") {
+      /* a glass bottle with a rolled letter, and the number beside it */
+      const s = 3, bx = W / 2 - 230, by = y + 10;
+      x.save(); x.translate(bx, by); x.scale(s, s);
+      x.beginPath(); x.moveTo(14, 52); x.quadraticCurveTo(14, 40, 22, 36); x.lineTo(22, 12); x.lineTo(38, 12); x.lineTo(38, 36); x.quadraticCurveTo(46, 40, 46, 52);
+      x.lineTo(46, 126); x.quadraticCurveTo(46, 136, 36, 136); x.lineTo(24, 136); x.quadraticCurveTo(14, 136, 14, 126); x.closePath();
+      x.fillStyle = "rgba(255,255,255,.22)"; x.fill(); x.strokeStyle = "#fff"; x.lineWidth = 2; x.stroke();
+      x.fillStyle = "#FBF0D9"; round(x, 22, 60, 16, 58, 7); x.fill(); x.fillStyle = m; x.fillRect(22, 85, 16, 5);
+      x.fillStyle = "#C98F55"; round(x, 20.5, 2, 19, 15, 3.5); x.fill();
+      x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 3; x.lineCap = "round"; x.beginPath(); x.moveTo(19, 58); x.lineTo(19, 122); x.stroke(); x.lineCap = "butt";
+      x.restore();
+      x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 170px " + DISPLAY; x.fillText(h.big, W / 2 - 20, by + 270);
+      x.font = "700 34px " + BODY; x.fillText(String(h.word).toUpperCase(), W / 2 - 14, by + 330);
+      y = by + 420 + 110; x.textAlign = "center";
+      const t = fit(x, h.title, "800 #px " + DISPLAY, 64, 44, inner, 2);
+      t.lines.forEach(l => { x.fillText(l, W / 2, y); y += t.size * 1.2; });
+      x.font = "700 46px " + BODY; x.globalAlpha = 0.95; y += 20; x.fillText(lines(x, h.names, inner, 1)[0], W / 2, y); x.globalAlpha = 1; y += 70;
       x.textAlign = "left";
     } else if (h.kind === "podium") {
       x.font = "700 34px " + BODY; x.globalAlpha = 0.9; x.fillText(String(h.label).toUpperCase(), PAD, y + 20); x.globalAlpha = 1; y += 70;
