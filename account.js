@@ -69,7 +69,9 @@
   }
   async function unlock(key) {
     st.busy = true; st.error = ""; redraw();
-    try { const d = await api("unlock", "POST", { game: key }); st.account = d.account; save(); if (d.result !== "ok" && d.result !== "owned") st.error = X.noCredits; }
+    try { const d = await api("unlock", "POST", { game: key }); st.account = d.account; save();
+      /* "no_credits" only when the credits are short; any other refusal (an unknown game) is a plain failure */
+      if (d.result !== "ok" && d.result !== "owned") st.error = d.result === "no_credits" ? X.noCredits : X.failed; }
     catch (e) { st.error = X.failed; }
     st.busy = false; st.sure = ""; redraw();
   }
