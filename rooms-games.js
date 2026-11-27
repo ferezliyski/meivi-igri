@@ -37,19 +37,46 @@
   /* ---------- 1. The mole: everyone knows the word except one ---------- */
   G("mole", {
     min: 3, max: 10, over,
-    setup(c) { const g = { round: 0, rounds: 5, score: blank(c.ids), used: [] }; this.deal(c, g); return g; },
+    /* the host chooses how many rounds: 7, 15 or 30; each round has a word not used before in the game */
+    rounds: [7, 15, 30], pool: c => c.tx.words.reduce((n, s) => n + s[1].length, 0),
+    setup(c) {
+      const rounds = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
+      const g = { round: 0, rounds, score: blank(c.ids), used: [] }; this.deal(c, g); return g;
+    },
     deal(c, g) {
       g.round++;
-      const sets = c.tx.words; let i = c.rnd(sets.length), tries = 0;
-      while (g.used.includes(i) && tries++ < 50) i = c.rnd(sets.length);
-      g.used.push(i); g.set = i; g.cat = sets[i][0]; g.word = c.pick(sets[i][1]);
-      g.mole = c.pick(c.ids); g.first = c.pick(c.ids); g.phase = "talk"; g.in = {}; g.out = null; g.options = null; g.votes = null;
+      /* a word not used yet; a category not used for as long as possible (one round after another never the same) */
+      const sets = c.tx.words, n = {}; g.used.forEach(k => { const i = +k.split(".")[0]; n[i] = (n[i] || 0) + 1; });
+      let free = []; sets.forEach((s, i) => s[1].forEach((w, j) => { if (!g.used.includes(i + "." + j)) free.push([i, j]); }));
+      if (!free.length) { g.used = []; sets.forEach((s, i) => s[1].forEach((w, j) => free.push([i, j]))); }
+      const least = Math.min(...free.filter(p => p[0] !== g.set).map(p => n[p[0]] || 0));
+      const fit = free.filter(p => p[0] !== g.set && (n[p[0]] || 0) === least);
+      const [i, w] = c.pick(fit.length ? fit : free);
+      g.used.push(i + "." + w); g.set = i; g.cat = sets[i][0]; g.word = sets[i][1][w]; g.hint = (sets[i][2] || [])[w] || "";
+      g.mole = c.pick(c.ids); g.phase = "talk"; g.in = {}; g.out = null; g.options = null; g.votes = null;
+      /* three circles of words said aloud, in a fixed order that starts with someone at random */
+      const start = c.rnd(c.ids.length); g.order = c.ids.slice(start).concat(c.ids.slice(0, start)); g.turn = 0; g.circle = 1;
+    },
+    circles: 3,
+    /* the next one in the circle; after the last circle the vote begins */
+    pass(c, g) {
+      if (++g.turn < g.order.length) return;
+      g.turn = 0;
+      if (++g.circle > this.circles) { g.phase = "vote"; g.in = {}; }
     },
     view(c, g, pid) {
       const t = c.tx.t, sub = round(c, g), isMole = pid === g.mole, moleName = c.name(g.mole);
-      const secret = isMole ? { k: "card", secret: true, tag: t.moleTag, text: t.youAreMole, sub: t.category(g.cat) }
+      const secret = isMole ? { k: "card", secret: true, tag: t.moleTag, text: t.youAreMole, sub: (g.hint ? t.hint(g.hint) + " · " : "") + t.category(g.cat) }
                             : { k: "card", secret: true, tag: t.wordTag, text: g.word, sub: t.category(g.cat) };
-      if (g.phase === "talk") return { sub, blocks: [secret, { k: "p", text: t.talk(c.name(g.first)) }], host: [{ t: t.toVote, cmd: "vote" }] };
+      if (g.phase === "talk") {
+        const now = g.order[g.turn], mine = now === pid;
+        return { sub, key: "talk" + g.round + "." + g.circle + "." + g.turn, blocks: [secret,
+            { k: "p", strong: true, text: t.circle(g.circle, this.circles) + " · " + (mine ? t.yourTurn : t.turnOf(c.name(now))) },
+            { k: "chips", items: g.order.map((id, i) => ({ t: c.name(id), on: i === g.turn, dim: i < g.turn })) },
+            { k: "p", text: mine ? (isMole ? t.sayItMole : t.sayIt) : t.listen }],
+          input: mine ? { k: "btn", t: t.said, v: "said" } : null,
+          host: mine ? [] : [{ t: t.skipTurn(c.name(now)), cmd: "pass", ghost: true, sure: true }] };
+      }
       if (g.phase === "vote") return { sub, blocks: [secret, { k: "h", text: t.whoIsMole }],
         input: { k: "choice", pills: true, options: people(c, c.ids.filter(id => id !== pid)), done: g.in[pid] }, note: waitNote(c, g, c.ids), host: skipBtn(c, g, c.ids) };
       if (g.phase === "guess") return isMole
@@ -63,7 +90,8 @@
         ], host: nextBtn(c, g) };
     },
     ans(c, g, pid, v) {
-      if (g.phase === "vote") { if (v !== pid && c.ids.includes(v)) g.in[pid] = v; if (allIn(g, c.ids)) this.count(c, g); }
+      if (g.phase === "talk") { if (v === "said" && pid === g.order[g.turn]) this.pass(c, g); }
+      else if (g.phase === "vote") { if (v !== pid && c.ids.includes(v)) g.in[pid] = v; if (allIn(g, c.ids)) this.count(c, g); }
       else if (g.phase === "guess" && pid === g.mole && g.options.includes(v)) this.finish(c, g, v === g.word ? "guessed" : "caught");
     },
     count(c, g) {
@@ -84,7 +112,7 @@
       else c.ids.forEach(id => { if (id !== g.mole) g.score[id]++; });
     },
     cmd(c, g, name) {
-      if (name === "vote" && g.phase === "talk") { g.phase = "vote"; g.in = {}; }
+      if (name === "pass" && g.phase === "talk") this.pass(c, g);
       else if (name === "skip" && g.phase === "vote") { fillIn(g, c.ids); this.count(c, g); }
       else if (name === "skip" && g.phase === "guess") this.finish(c, g, "caught");
       else if (name === "next" && g.phase === "result") { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); }
