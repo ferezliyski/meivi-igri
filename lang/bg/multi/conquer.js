@@ -1,5 +1,5 @@
 /* Meivi games · several phones · text of the game "conquer" · Bulgarian
-   The map itself (shapes, names of regions, municipalities and villages) is in conquer-map.js: another country has its own.
+   The map itself (shapes, names of regions, municipalities and villages) is in conquer-map.js, loaded when the game is opened: another country has its own.
    points: what a place is worth, by its kind (c capital, r regional town, m municipality, v village),
            the bonus for a region held whole (region) and for the largest kingdom at the end (kingdom).
    source: the questions of the attacks, those of the one-phone quiz. */
@@ -18,7 +18,7 @@ MEIVI.mtext("conquer", {
     "Накрая най-голямото царство носи +10 точки: това са най-много съседни области, в които държиш областния град. Печели който има най-много точки."
   ],
   points: { c: 10, r: 5, m: 3, v: 1, region: 20, kingdom: 10 },
-  map: () => (MEIVI.mdata || {}).conquer,
+  map: () => MEIVI.data["multi/conquer-map"],
   source: () => MEIVI.texts && MEIVI.texts.quiz,
   t: {
     pick: "Какво завладяваш?",

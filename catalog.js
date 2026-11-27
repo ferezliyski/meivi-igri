@@ -13,6 +13,7 @@
      modes     card kinds can be switched on and off      drink  offers "a sip" as the penalty for a pass
      ordered   cards are played in their written order, not shuffled
      rounds    the choices for the number of cards, when not the usual 15, 30, 50
+     data      files with heavy data, loaded when the game is opened (see MEIVI.load below)
    A quiz whose text has "topics" asks which of them take part before the game. */
 window.MEIVI = window.MEIVI || {};
 /* Text files call this to hand over the text of their game. */
@@ -21,6 +22,34 @@ MEIVI.text = function (id, text) { MEIVI.texts[id] = text; };
 /* The same for the games played on several phones (lang/<language>/multi/<id>.js). */
 MEIVI.mtexts = {};
 MEIVI.mtext = function (id, text) { MEIVI.mtexts[id] = text; };
+/* Heavy data of a game (a map, the questions of the quiz, a long list of words) is not loaded with the app.
+   It lives in files of its own, lang/<language>/<key>.js, each of which fills MEIVI.data[key], and is loaded
+   when the game is opened: MEIVI.load(["multi/conquer-map"], function (ok) { ... }). A game names its files in
+   the catalogue: "data" is what the phone that runs the game needs, "draw" what every phone needs to show it.
+   The answer comes at once when everything is already there. */
+MEIVI.data = {};
+MEIVI.load = (function () {
+  var waiting = {};     /* key -> the callbacks waiting for that file */
+  function one(key, done) {
+    if (key in MEIVI.data) return done(true);
+    if (waiting[key]) return waiting[key].push(done);
+    waiting[key] = [done];
+    var el = document.createElement("script"), end = function () {
+      var list = waiting[key]; delete waiting[key];
+      if (!(key in MEIVI.data) && el.parentNode) el.parentNode.removeChild(el);      /* so that it can be tried again */
+      list.forEach(function (f) { f(key in MEIVI.data); });
+    };
+    el.src = "lang/" + MEIVI.config.lang + "/" + key + ".js" + (typeof MEIVI_RELEASE === "string" ? "?v=" + MEIVI_RELEASE : "");
+    el.onload = end; el.onerror = end;
+    document.head.appendChild(el);
+  }
+  return function (keys, done) {
+    var need = (keys || []).filter(function (k) { return !(k in MEIVI.data); }), left = need.length, all = true;
+    if (!left) return done(true);
+    need.forEach(function (k) { one(k, function (ok) { all = all && ok; if (!--left) done(all); }); });
+  };
+})();
+MEIVI.loaded = function (keys) { return (keys || []).every(function (k) { return k in MEIVI.data; }); };
 
 MEIVI.catalog = {
   categories: ["couples", "adult", "friends", "quiz"],
@@ -43,7 +72,7 @@ MEIVI.catalog = {
     { id: "truth", cat: "friends", color: "hot", eng: "cards", players: [2, 12], icon: "🎯" },
     { id: "lies", cat: "friends", color: "lilac", eng: "cards", players: [3, 10], icon: "🤥" },
     { id: "hotseat", cat: "friends", color: "hot", eng: "cards", players: [3, 12], icon: "🔥" },
-    { id: "quiz", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🧠", rounds: [30, 50, 100] }
+    { id: "quiz", cat: "quiz", color: "sky", eng: "quiz", players: [1, 8], icon: "🧠", rounds: [30, 50, 100], data: ["games/quiz-data"] }
   ]
 };
 
@@ -57,10 +86,10 @@ MEIVI.catalog.multi = [
   { id: "onemind", icon: "💡", color: "mint", min: 2, max: 2, ready: true },
   { id: "letters", icon: "✉️", color: "hot", min: 2, max: 2, ready: true, mood: "sea" },
   /* from two up */
-  { id: "quiz", icon: "🧠", color: "sky", min: 2, max: 10, ready: true, mood: "quiz" },
+  { id: "quiz", icon: "🧠", color: "sky", min: 2, max: 10, ready: true, mood: "quiz", data: ["games/quiz-data"] },
   /* from three */
-  { id: "mole", icon: "🕵️", color: "hot", min: 3, max: 10, ready: true },
-  { id: "conquer", icon: "🗺️", color: "sky", min: 3, max: 8, ready: true, map: true },
+  { id: "mole", icon: "🕵️", color: "hot", min: 3, max: 10, ready: true, data: ["multi/mole-words"] },
+  { id: "conquer", icon: "🗺️", color: "sky", min: 3, max: 8, ready: true, draw: ["multi/conquer-map"], data: ["games/quiz-data"] },
   { id: "whoofus", icon: "👉", color: "gold", min: 3, max: 10, ready: true },
   { id: "bomb", icon: "💣", color: "mint", min: 3, max: 10, ready: true },
   /* from five */

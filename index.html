@@ -794,7 +794,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27t";
+  var MEIVI_RELEASE = "2026-11-27u";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
@@ -807,9 +807,10 @@ textarea{font:inherit;color:inherit}
     }
     var c = MEIVI.config, v = "?v=" + MEIVI_RELEASE, dir = "lang/" + c.lang + "/";
     var games = MEIVI.catalog.games.map(function (g) { return g.id; }).filter(function (id) { return !c.games || c.games.indexOf(id) >= 0; });
-    /* Games for several phones: the text of every game that is built (and its map, if it has one), then the rooms and the rules. */
+    /* Games for several phones: the text of every game that is built, then the rooms and the rules.
+       Heavy data (a map, the questions of the quiz) is loaded later, when its game is opened: MEIVI.load in catalog.js. */
     var ready = [];
-    (MEIVI.catalog.multi || []).forEach(function (g) { if (g.ready) { if (g.map) ready.push(dir + "multi/" + g.id + "-map.js"); ready.push(dir + "multi/" + g.id + ".js"); } });
+    (MEIVI.catalog.multi || []).forEach(function (g) { if (g.ready) ready.push(dir + "multi/" + g.id + ".js"); });
     var files = [dir + "ui.js", dir + "multi.js"].concat(ready, games.map(function (id) { return dir + "games/" + id + ".js"; }), ready.length ? ["rooms.js", "rooms-games.js"] : [], c.account ? ["account.js"] : [], ["story.js", "app.js"]);
     document.write(files.map(function (f) { return '<script src="' + f + v + '"><\/script>'; }).join(""));
   })();

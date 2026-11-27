@@ -21,13 +21,23 @@ const GAMES = MEIVI.catalog.games
   .filter(m => MEIVI.texts[m.id] && (!CFG.games || CFG.games.includes(m.id)))
   .map(m => {
     const t = MEIVI.texts[m.id];
-    return Object.assign({}, t, {
+    const g = Object.assign({}, t, {
       id: m.id, grp: m.cat, c: m.color, eng: m.eng, n: m.players, ico: m.icon,
       adult: m.adult, levels: m.levels, modes: m.modes, drinkOpt: m.drink, ordered: m.ordered,
       cat: t.label, aw: t.awards, rounds: m.rounds || [15, 30, 50],
-      /* A quiz with topics: every question also carries the number of its topic. */
-      qs: t.topics ? t.topics.flatMap((tp, i) => tp.questions.map(([q, o]) => [q, o, i])) : t.questions
+      /* files with heavy data (the questions of the quiz), loaded when the game is opened: see needData() */
+      data: m.data || null
     });
+    /* A quiz with topics: every question also carries the number of its topic. The questions may come later,
+       with their data file, so the list is made when it is asked for and made again when there are more of them. */
+    let qs = null, had = -1;
+    Object.defineProperty(g, "qs", { enumerable: true, get() {
+      if (!t.topics) return t.questions;
+      const n = t.topics.reduce((a, tp) => a + tp.questions.length, 0);
+      if (n !== had) { had = n; qs = t.topics.flatMap((tp, i) => tp.questions.map(([q, o]) => [q, o, i])); }
+      return qs;
+    } });
+    return g;
   });
 
 /* Games for several phones are only announced for now; a site without them starts straight at the list. */
@@ -265,16 +275,27 @@ function viewRules(){
   </div></div>`;
 }
 
+/* The heavy data of a game (catalog.js: "data") is fetched when the game is opened. Until it is here the game
+   cannot start; "fail" means the phone could not get it (no connection) and offers to try again. */
+const dataState = g => !g || !g.data || MEIVI.loaded(g.data) ? "ok" : S.dataFail === g.id ? "fail" : "wait";
+function needData(g){
+  if(!g || !g.data || MEIVI.loaded(g.data) || S.dataBusy === g.id) return;
+  S.dataBusy = g.id; S.dataFail = null;
+  MEIVI.load(g.data, ok => { S.dataBusy = null; S.dataFail = ok ? null : g.id; render(); });
+}
+
 /* ---------- Before the game ---------- */
 function viewSetup(){
   const g = game(), n = S.players.length;
   if(!g.rounds.includes(S.rounds)) S.rounds = g.rounds[0];
+  const data = dataState(g);
+  if(data === "wait") needData(g);
   const anyKind = !g.modes || Object.values(S.kinds).some(Boolean);
   const pool = g.eng==="cards" ? poolOf(g).length : g.topics ? quizPool(g).length : 0;
-  const anyTopic = !g.topics || pool > 0;
+  const anyTopic = !g.topics || pool > 0 || data !== "ok";
   /* A quiz with topics is played with exactly the chosen number of questions, so the chosen topics must hold that many. */
-  const enough = !g.topics || pool >= S.rounds;
-  const ok = n >= g.n[0] && n <= g.n[1] && anyKind && anyTopic && enough;
+  const enough = !g.topics || pool >= S.rounds || data !== "ok";
+  const ok = n >= g.n[0] && n <= g.n[1] && anyKind && anyTopic && enough && data === "ok";
   const extra = `${g.topics ? `<section class="stack"><div class="headrow"><h2>${T.topics}</h2>
       <button class="btn ghost small" data-act="topics-all">${g.topics.some(t => S.topicsOff[t.id]) ? T.topicsAll : T.topicsNone}</button></div>
     <div class="modes topics">${g.topics.map(t => `<button class="mode c-${g.c}" data-act="topic" data-k="${t.id}" aria-pressed="${!S.topicsOff[t.id]}"><b><span aria-hidden="true">${t.icon}</span> ${h(t.name)}</b></button>`).join("")}</div>
@@ -315,7 +336,10 @@ function viewSetup(){
     <div class="seg times">${g.rounds.map(n => `<button data-act="rounds" data-v="${n}" aria-pressed="${S.rounds===n}"><b>${n}</b><small>${T.time[g.eng][n]}</small></button>`).join("")}</div>
     ${g.eng==="cards" && anyKind && pool < S.rounds ? `<p class="note">${T.poolNote(pool)}</p>` : ""}${anyTopic && !enough ? `<p class="flash" style="text-align:left">${T.needTopics(S.rounds, Math.ceil(S.rounds / Math.min(...g.topics.map(t => t.questions.length))))}</p>` : ""}
   </section>
-  ${window.MACC && MACC.locked("s:" + g.id) ? MACC.gate("s:" + g.id, "s:" + g.id) : `<button class="btn" data-act="start" ${ok ? "" : "disabled"}>${g.adult ? T.startAdult : T.start}</button>`}`;
+  ${data === "fail" ? `<p class="flash" style="text-align:left">${T.loadFailed}</p>` : ""}
+  ${window.MACC && MACC.locked("s:" + g.id) ? MACC.gate("s:" + g.id, "s:" + g.id)
+    : data === "fail" ? `<button class="btn" data-act="data-retry">${T.retry}</button>`
+    : `<button class="btn" data-act="start" ${ok ? "" : "disabled"}>${data === "wait" ? T.loading : g.adult ? T.startAdult : T.start}</button>`}`;
 }
 
 /* ---------- Shared parts ---------- */
@@ -715,7 +739,8 @@ app.addEventListener("click", e => {
     case "cat": if(b.dataset.i === "mine" && !S.shelfOpen.mine){ S.shelfOpen.mine = true; render(); }
       document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
     /* A game chosen from the list: first its rules, then its first screen. */
-    case "open": S.rules = b.dataset.g; break;
+    case "open": S.rules = b.dataset.g; needData(GAMES.find(x => x.id === S.rules)); break;
+    case "data-retry": S.dataFail = null; needData(game()); break;
     case "rules-go": S.g = S.rules; S.rules = null; S.screen = "setup"; window.scrollTo(0,0); break;
     case "rules-show": S.rules = S.g; break;
     case "rules-close": if(b.classList.contains("sheet") && e.target !== b) return; S.rules = null; break;

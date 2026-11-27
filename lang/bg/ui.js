@@ -37,6 +37,10 @@ MEIVI.ui = {
   },
   shelfCount: (have, all) => `${have} от ${all}`,
   /* the cards of the shelves */
+  /* a game whose data is still on its way to the phone */
+  loading: "Зареждане…",
+  loadFailed: "Играта не се зареди. Провери интернета и опитай пак.",
+  retry: "Опитай пак",
   myGames: "Моите игри",
   opened: n => n === 1 ? "1 отключена" : `${n} отключени`,
   showAll: n => `Виж всички ${n} ›`,

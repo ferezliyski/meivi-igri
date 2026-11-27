@@ -10,8 +10,13 @@
                      "act"   {id, a}          the player did something: a = {k: "ans", v, ms}
                                               (ms: on a timed question, how long it showed on this phone before the tap)
                      "bye"   {id}             I left
-     host -> all     "snap"  {seq, code, game, phase, host, views: {playerId: view}}
+     host -> all     "snap"  {seq, code, game, phase, host, hpub, boxes: {playerId: sealed view}, views: {playerId: view}}
                      "closed"                 the host closed the room
+
+   Everything on the line reaches every phone of the room, so what a player sees is sealed for that player:
+   every phone has a pair of keys (MEIVI.box, below), a guest sends its public key with "hello", and the host
+   puts each view in a box only that guest's phone can open ("boxes"; "hpub" is the host's public key).
+   "views" carries, unsealed, only the views of phones that sent no key (a browser without the means for it).
 
    A view is plain data, never HTML:
      { top: {icon, title, color}, sub, bar, blocks: [...], input, note, host: [...], foot: [...] }
@@ -46,6 +51,9 @@
     const st = { mode: null, code: null, me: null, game: null, players: [], late: [], phase: "lobby", g: null, seq: 0, opts: {},
                  snap: null, online: false, hostOn: true, closed: false, link: "" };
     let line = null, timers = [], helloAt = 0;
+    /* this phone's keys, once they are made (see MEIVI.box); null where views cannot be sealed */
+    let keys = null;
+    const goodPub = p => typeof p === "string" && p.length > 20 && p.length < 300;
     const rnd = n => Math.floor(env.random() * n);
     const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     const newId = () => "p" + rnd(1e9).toString(36) + rnd(1e9).toString(36);
@@ -59,10 +67,17 @@
     });
     const stopTimers = () => { timers.forEach(env.clear); timers = []; };
 
-    function open() { line = env.transport(st.code, st.me.id, { message: onMessage, peers: onPeers, status: onStatus }); }
+    function open() {
+      /* A guest keeps its keys for as long as it is in the room (also over a reload): the host takes the first key
+         it gets for a player and no other, so nobody else can ask for that player's views. */
+      keys = env.box ? env.box.keys(st.mode === "guest" ? st.keys : null) : null;
+      if (keys) keys.then(k => { if (st.mode === "guest" && !st.keys) { st.keys = { pub: k.pub, jwk: k.jwk }; save(); } }, () => { keys = null; });
+      line = env.transport(st.code, st.me.id, { message: onMessage, peers: onPeers, status: onStatus });
+    }
     function save() {
       if (!st.mode) return env.store.set(null);
       const s = { mode: st.mode, code: st.code, me: st.me, game: st.game, ts: env.now() };
+      if (st.mode === "guest" && st.keys) s.keys = st.keys;
       if (st.mode === "host") Object.assign(s, { players: st.players, late: st.late, phase: st.phase, g: st.g, seq: st.seq, opts: st.opts });
       env.store.set(s);
     }
@@ -120,7 +135,21 @@
       const views = {};
       st.players.concat(st.late).forEach(p => { views[p.id] = viewFor(p.id); });
       st.snap = { seq: st.seq, code: st.code, game: st.game, phase: st.phase, host: st.me.id, views };
-      line.send("snap", st.snap); save(); env.changed();
+      post(st.snap); save(); env.changed();
+    }
+    /* Sends what everyone sees: each view sealed for its player where that phone gave a key. */
+    function post(snap) {
+      const head = { seq: snap.seq, code: snap.code, game: snap.game, phase: snap.phase, host: snap.host };
+      const others = st.players.concat(st.late).filter(p => p.id !== st.me.id), open = {}, boxes = {}, to = line;
+      const sealed = keys ? others.filter(p => p.pub) : [];
+      others.forEach(p => { if (!sealed.includes(p)) open[p.id] = snap.views[p.id]; });
+      if (!sealed.length) return line.send("snap", Object.assign(head, { views: open }));
+      keys.then(k => {
+        let left = sealed.length;
+        const one = () => { if (--left || line !== to || !line) return; line.send("snap", Object.assign(head, { hpub: k.pub, views: open, boxes })); };
+        /* a view that cannot be sealed (a key that is no key) is not sent at all: that phone will ask again */
+        sealed.forEach(p => env.box.seal(k, p.pub, snap.views[p.id]).then(b => { boxes[p.id] = b; one(); }, () => one()));
+      }, () => {});
     }
     /* After anything changed in a game: is it over? Then tell everyone. */
     function settle() { if (st.phase === "play" && def().over(st.g)) { st.phase = "end"; stopTimers(); } publish(); }
@@ -147,11 +176,15 @@
     }
 
     /* ----- guest ----- */
-    function join(code, name, id) {
-      Object.assign(st, { mode: "guest", code: String(code), me: { id: id || newId(), name }, snap: null, closed: false, game: null, online: false, wasOn: false, hostOn: true });
+    function join(code, name, id, savedKeys) {
+      Object.assign(st, { mode: "guest", code: String(code), me: { id: id || newId(), name }, snap: null, closed: false, game: null, online: false, wasOn: false, hostOn: true, keys: savedKeys || null });
       open(); save(); env.changed();
     }
-    function hello() { helloAt = env.now(); line.send("hello", { id: st.me.id, name: st.me.name }); }
+    function hello() {
+      helloAt = env.now();
+      const to = line, say = k => { if (line === to && line && st.mode === "guest") line.send("hello", { id: st.me.id, name: st.me.name, pub: k ? k.pub : undefined }); };
+      if (keys) keys.then(say, () => say(null)); else say(null);
+    }
 
     /* ----- the line ----- */
     function onStatus(s) {
@@ -171,9 +204,10 @@
         if (e === "hello" && d && d.id) {
           const name = String(d.name || "").slice(0, 18) || "?";
           const p = st.players.find(p => p.id === d.id) || st.late.find(p => p.id === d.id);
-          if (p) { p.name = name; p.on = true; }
-          else if (st.phase === "lobby" && st.players.length < def().max) st.players.push({ id: d.id, name, on: true });
-          else st.late.push({ id: d.id, name, on: true });
+          const pub = goodPub(d.pub) ? d.pub : undefined;
+          if (p) { p.name = name; p.on = true; if (!p.pub && pub) p.pub = pub; }
+          else if (st.phase === "lobby" && st.players.length < def().max) st.players.push({ id: d.id, name, on: true, pub });
+          else st.late.push({ id: d.id, name, on: true, pub });
           publish();
         } else if (e === "act" && d) act(d.id, d.a);
         else if (e === "bye" && d) {
@@ -183,11 +217,20 @@
           publish();
         }
       } else if (st.mode === "guest") {
-        if (e === "snap" && d && d.views) {
-          st.snap = d; st.game = d.game; st.hostOn = true;
-          /* The host does not know me (it restarted, or I came back): say hello again, but not in a loop. */
-          if (!d.views[st.me.id] && env.now() - helloAt > 1500) hello();
-          env.changed();
+        if (e === "snap" && d && (d.views || d.boxes)) {
+          const plain = d.views && d.views[st.me.id], box = d.boxes && d.boxes[st.me.id], to = line;
+          /* Keeps only this player's view. One that took longer to open may arrive after a newer one: it is dropped. */
+          const take = view => {
+            if (line !== to || st.mode !== "guest" || (st.snap && st.snap.host === d.host && d.seq < st.snap.seq)) return;
+            st.snap = { seq: d.seq, code: d.code, game: d.game, phase: d.phase, host: d.host, views: {} };
+            if (view) st.snap.views[st.me.id] = view;
+            st.game = d.game; st.hostOn = true;
+            /* The host does not know me (it restarted, or I came back): say hello again, but not in a loop. */
+            if (!view && env.now() - helloAt > 1500) hello();
+            env.changed();
+          };
+          if (plain || !box || !keys || !d.hpub) take(plain || null);
+          else keys.then(k => env.box.open(k, d.hpub, box).then(take, () => take(null)), () => take(null));
         } else if (e === "closed") { st.closed = true; env.store.set(null); env.changed(); }
       }
     }
@@ -210,7 +253,7 @@
         open();
         if (st.phase === "play" && def().wake) def().wake(ctx(), st.g);
         publish();
-      } else join(s.code, s.me.name, s.me.id);
+      } else join(s.code, s.me.name, s.me.id, s.keys);
     }
     const myView = () => (st.snap && st.me && st.snap.views[st.me.id]) || null;
 
@@ -304,7 +347,9 @@
     return v * (b.fin ? 2 : 1);
   }
   function mapBlock(b, pick) {
-    const { M, W, tx } = mapOf(); if (!M || !W) return "";
+    const { M, W, tx } = mapOf();
+    /* the map is still on its way to this phone (or could not be fetched) */
+    if (!M || !W) return `<section class="cmap"><p class="note">${esc(ui.dataFail ? T.loadFailed : T.loading)}</p>${ui.dataFail ? `<button class="btn ghost" data-act="r-local" data-c="data-retry">${esc(T.retry)}</button>` : ""}</section>`;
     const own = b.own || {}, fresh = b.fresh || [], names = b.names || [], key = (room.myView() || {}).key || "", e = b.ev;
     if (mapUi.key !== key) { mapUi.key = key; mapUi.zoom = null; mapUi.sel = null; }
     if (!pick || mapUi.sel === b.done || !mapCan(M, b, mapUi.sel)) mapUi.sel = null;
@@ -473,8 +518,44 @@
     return "";
   }
 
+  /* ---------- a sealed view: only the phone it is for can open it ----------
+     keys(saved) -> {pub, jwk, priv}: a pair of keys of this phone (ECDH P-256); "saved" brings back a pair kept earlier.
+     seal(mine, theirPub, data) -> text and open(mine, theirPub, text) -> data: AES-GCM with the key the two pairs share.
+     All three answer with a promise. Missing where the browser cannot do it (then views travel unsealed, as before). */
+  MEIVI.box = MEIVI.box || (typeof crypto !== "undefined" && crypto.subtle && typeof TextEncoder !== "undefined" ? (() => {
+    const EC = { name: "ECDH", namedCurve: "P-256" }, sub = crypto.subtle, shared = new Map();
+    const b64 = buf => { const a = new Uint8Array(buf); let t = ""; for (let i = 0; i < a.length; i += 8192) t += String.fromCharCode.apply(null, a.subarray(i, i + 8192)); return btoa(t); };
+    const raw = t => Uint8Array.from(atob(t), ch => ch.charCodeAt(0));
+    /* the key two phones share, worked out once for each pair */
+    const common = (mine, pub) => {
+      const id = mine.pub + "|" + pub;
+      if (!shared.has(id)) shared.set(id, sub.importKey("raw", raw(pub), EC, false, [])
+        .then(theirs => sub.deriveKey({ name: "ECDH", public: theirs }, mine.priv, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"])));
+      return shared.get(id);
+    };
+    return {
+      keys(saved) {
+        const fresh = () => sub.generateKey(EC, true, ["deriveKey"]).then(pair =>
+          Promise.all([sub.exportKey("raw", pair.publicKey), sub.exportKey("jwk", pair.privateKey)]).then(([pub, jwk]) => ({ pub: b64(pub), jwk, priv: pair.privateKey })));
+        return saved && saved.pub && saved.jwk
+          ? sub.importKey("jwk", saved.jwk, EC, true, ["deriveKey"]).then(priv => ({ pub: saved.pub, jwk: saved.jwk, priv }), fresh)
+          : fresh();
+      },
+      seal(mine, pub, data) {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        return common(mine, pub).then(key => sub.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(data))))
+          .then(buf => { const out = new Uint8Array(12 + buf.byteLength); out.set(iv); out.set(new Uint8Array(buf), 12); return b64(out); });
+      },
+      open(mine, pub, text) {
+        const all = raw(text);
+        return common(mine, pub).then(key => sub.decrypt({ name: "AES-GCM", iv: all.subarray(0, 12) }, key, all.subarray(12)))
+          .then(buf => JSON.parse(new TextDecoder().decode(buf)));
+      }
+    };
+  })() : null);
+
   /* ---------- the room on this phone: screens, taps, the connection ---------- */
-  const ui = { sheet: null, name: "", code: "", err: "", sure: "", draft: "", draftKey: "", rules: false, lastHtml: "", shelf: {}, seenAt: {} };
+  const ui = { sheet: null, name: "", code: "", err: "", sure: "", draft: "", draftKey: "", rules: false, lastHtml: "", shelf: {}, seenAt: {}, busy: false, dataBusy: false, dataFail: false };
   /* Trying things out between tabs of one browser (?local=1): each tab must remember its own room. */
   const wantLocal = (() => { try { return new URLSearchParams(location.search).has("local"); } catch (e) { return false; } })();
   const box = () => wantLocal ? sessionStorage : localStorage;
@@ -484,13 +565,30 @@
   };
   const hasServer = () => !!(CFG.rooms && CFG.rooms.url && CFG.rooms.key) || MEIVI.transport.local;
   const room = createRoom({
-    transport: (code, id, on) => MEIVI.transport.open(code, id, on),
+    transport: (code, id, on) => MEIVI.transport.open(code, id, on), box: MEIVI.box,
     store, random: Math.random, now: () => Date.now(),
     timer: (fn, ms) => setTimeout(fn, ms), clear: h => clearTimeout(h),
     link: code => location.origin + location.pathname + "?room=" + code + (wantLocal ? "&local=1" : ""),
     changed: () => { if (MEIVI.app) MEIVI.app.refresh(); }
   });
   const lastName = () => { try { return localStorage.getItem("meivi.room.name") || ""; } catch (e) { return ""; } };
+  /* The data files a game needs on this phone (catalog.js): "draw" on every phone, "data" also on the one that runs the game. */
+  const needOf = (id, runs) => { const i = info(id) || {}; return (i.draw || []).concat(runs ? i.data || [] : []); };
+  /* Does something once the data of a game is on this phone. While it is on its way the open window says so;
+     if it cannot be fetched (no connection) the window says that and the thing is not done. */
+  function withData(id, runs, go) {
+    const need = needOf(id, runs);
+    if (MEIVI.loaded(need)) return go();
+    ui.busy = true; ui.err = "";
+    MEIVI.load(need, ok => { ui.busy = false; if (ok) go(); else ui.err = T.loadFailed; if (MEIVI.app) MEIVI.app.refresh(); });
+  }
+  /* A guest learns which game is played from the host, so what it needs to draw the game is fetched then. */
+  function fetchDraw(id) {
+    const need = needOf(id, false);
+    if (!id || MEIVI.loaded(need) || ui.dataBusy || ui.dataFail) return;
+    ui.dataBusy = true;
+    MEIVI.load(need, ok => { ui.dataBusy = false; ui.dataFail = !ok; if (MEIVI.app) MEIVI.app.refresh(); });
+  }
   const keepName = n => { try { localStorage.setItem("meivi.room.name", n); } catch (e) {} };
 
   function rulesHtml(id) {
@@ -517,7 +615,7 @@
       body = `<h1 class="rsheet-h">${esc(gameName(s.game))}</h1>
         <form class="stack" id="rName"><label class="rlabel">${esc(X.yourName)}<input id="rNameIn" maxlength="18" autocomplete="off" value="${esc(ui.name)}" placeholder="${esc(X.namePh)}"></label>
         ${ui.err ? `<p class="flash">${esc(ui.err)}</p>` : ""}
-        <button class="btn" type="submit">${esc(X.make)}</button></form>
+        <button class="btn" type="submit" ${ui.busy ? "disabled" : ""}>${esc(ui.busy ? T.loading : X.make)}</button></form>
         <button class="btn ghost" data-act="r-sheet" data-c="close">${esc(X.cancel)}</button>`;
     } else if (s.k === "join") {
       body = `<h1 class="rsheet-h">${esc(X.joinRoom)}</h1>
@@ -529,7 +627,8 @@
         <button class="btn ghost" data-act="r-sheet" data-c="close">${esc(X.cancel)}</button>`;
     } else if (s.k === "resume") {
       body = `<h1 class="rsheet-h">${esc(X.resume(s.saved.code))}</h1>
-        <button class="btn" data-act="r-sheet" data-c="resume">${esc(X.resumeYes)}</button>
+        ${ui.err ? `<p class="flash">${esc(ui.err)}</p>` : ""}
+        <button class="btn" data-act="r-sheet" data-c="resume" ${ui.busy ? "disabled" : ""}>${esc(ui.busy ? T.loading : X.resumeYes)}</button>
         <button class="btn ghost" data-act="r-sheet" data-c="forget">${esc(X.resumeNo)}</button>`;
     }
     return `<div class="sheet rsheet" data-act="r-sheet" data-c="close"><div role="dialog">${body}</div></div>`;
@@ -538,6 +637,7 @@
     const st = room.st, V = room.myView();
     if (st.closed) return `<section class="cover"><p class="note">${esc(X.closed)}</p><button class="btn" data-act="r-local" data-c="leave">${esc(X.backToGames)}</button></section>`;
     if (!V) return `<section class="cover"><b class="rwaiting">${esc(X.room(st.code))}</b><p class="note">${esc(st.online ? X.noRoom : X.connecting)}</p><button class="btn ghost" data-act="r-local" data-c="leave">${esc(X.leave)}</button></section>`;
+    fetchDraw(st.game);
     const banner = !st.online ? (st.wasOn ? X.offline : X.connecting) : (st.mode === "guest" && !st.hostOn ? X.hostAway : "");
     const key = V.key || "";
     if (ui.draftKey !== key) { ui.draftKey = key; ui.draft = ""; }
@@ -573,13 +673,22 @@
   function enter() { ui.sheet = null; ui.err = ""; ui.sure = ""; ui.rules = false; MEIVI.app.show("room"); keepAwake(); }
   function click(act, b, target) {
     const c = b.dataset.c;
-    if (act === "r-open") { ui.sheet = { k: "rules", game: b.dataset.g }; ui.err = ""; ui.name = ui.name || lastName(); return true; }
+    if (act === "r-open") {
+      ui.sheet = { k: "rules", game: b.dataset.g }; ui.err = ""; ui.name = ui.name || lastName();
+      MEIVI.load(needOf(b.dataset.g, true), () => {});      /* the data of the game starts coming while the rules are read */
+      return true;
+    }
     if (act === "r-join") { ui.sheet = { k: "join" }; ui.err = ""; ui.name = ui.name || lastName(); return true; }
     if (act === "r-sheet") {
       if (c === "close") { if (b.classList.contains("sheet") && target !== b) return false; ui.sheet = null; }
       else if (c === "name") ui.sheet = { k: "name", game: ui.sheet.game };
       else if (c === "join") ui.sheet = { k: "join" };
-      else if (c === "resume") { const s = ui.sheet.saved; ui.sheet = null; room.resume(s); enter(); }
+      else if (c === "resume") {
+        if (ui.busy) return true;
+        const s = ui.sheet.saved, back = () => { ui.sheet = null; room.resume(s); enter(); };
+        if (s.mode === "host") withData(s.game, true, back); else back();
+        return true;
+      }
       else if (c === "forget") { store.set(null); ui.sheet = null; }
       ui.err = "";
       return true;
@@ -601,6 +710,7 @@
       else if (c === "rules-close") { if (b.classList.contains("sheet") && target !== b) return false; ui.rules = false; }
       else if (c === "share") shareStory();
       else if (c === "map") mapTap(b.dataset.p, !!b.dataset.x);
+      else if (c === "data-retry") { ui.dataFail = false; fetchDraw(room.st.game); }
       else if (c === "open-bottle") { if (!played[b.dataset.k + ":open"]) played[b.dataset.k + ":open"] = Date.now(); }
       else if (c === "shelf") { const k = b.dataset.k, i = +b.dataset.i; ui.shelf[k] = ui.shelf[k] === i ? undefined : i; ui.toLetters = ui.shelf[k] != null; }
       else if (c === "story-close") { if (b.classList.contains("sheet") && target !== b) return false; story.sheet = false; }
@@ -614,7 +724,9 @@
     if (form.id === "rName") {
       ui.name = val("rNameIn");
       if (!ui.name) { ui.err = X.needName; return; }
-      keepName(ui.name); room.host(ui.sheet.game, ui.name); enter();
+      if (ui.busy) return;
+      const game = ui.sheet.game, name = ui.name;
+      keepName(name); withData(game, true, () => { room.host(game, name); enter(); });
     } else if (form.id === "rJoin") {
       ui.name = val("rNameIn"); ui.code = val("rCodeIn").replace(/\D/g, "");
       if (ui.code.length !== 5) { ui.err = X.badCode; return; }

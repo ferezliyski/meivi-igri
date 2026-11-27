@@ -292,7 +292,6 @@
   };
   G("conquer", {
     min: 3, max: 8, over, rounds: [15, 30, 50],
-    needs: () => !!(MEIVI.mtexts.conquer && MEIVI.mtexts.conquer.map && MEIVI.mtexts.conquer.map()),
     setup(c) {
       const rounds = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
       const g = { id: c.rnd(1e9), round: 0, rounds, score: blank(c.ids), own: {}, evs: c.shuffle(CQ_EVENTS.map((e, i) => i)), evi: 0, asked: [] };
