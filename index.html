@@ -126,6 +126,11 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .gcard{background:var(--surface);border-radius:28px;box-shadow:var(--sh);padding:16px 16px 6px;border-top:6px solid var(--m);display:flex;flex-direction:column;scroll-margin-top:14px}
 .ghd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:8px}
 .ghd h2{font-size:17px}
+.gtoggle{width:100%;border:0;background:none;color:var(--ink);text-align:left;align-items:center;padding:0 0 8px}
+.gtoggle h2 .cnt{font-family:var(--body);font-weight:600;font-size:15px;color:var(--muted)}
+.gtoggle .gsee{flex:none;font-weight:700;font-size:14px;color:var(--m)}
+.gcard.shut{padding-bottom:16px}
+.gcard.shut .gtoggle{padding-bottom:0}
 .grow{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:13px 0;color:var(--ink)}
 .grow:active{transform:scale(.99)}
 .grow .ico{flex:none;width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:27px;line-height:1;background:color-mix(in srgb, var(--m) 20%, #fff)}
@@ -745,7 +750,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27n";
+  var MEIVI_RELEASE = "2026-11-27o";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

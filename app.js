@@ -210,8 +210,13 @@ function viewHome(){
   mine.sort((a, b) => (last.includes(a.id) ? last.indexOf(a.id) : 999) - (last.includes(b.id) ? last.indexOf(b.id) : 999));
   const showMine = mine.length > 0 && mine.length < GAMES.length;
   const card = (id, title, gs, color, isMine) => {
-    /* A shelf shows all its games. Only "My games" (which repeats games of the shelves below) folds after four. */
-    const open = !isMine || S.shelfOpen[id], shown = open ? gs : gs.slice(0, 4);
+    /* A shelf shows all its games. "My games" repeats games of the shelves below,
+       so it stays closed (only its title line) until the player opens it. */
+    const open = !isMine || !!S.shelfOpen[id];
+    if(isMine) return `<section class="gcard mine c-${color}${open ? "" : " shut"}" id="cat-${id}">
+      <button class="ghd gtoggle" data-act="shelf-more" data-i="${id}" aria-expanded="${open}"><h2>${title} <span class="cnt">(${gs.length})</span></h2><span class="gsee">${open ? T.hideMine : T.seeMine}</span></button>
+      ${open ? gs.map(g => row(g, T.shelves[g.grp])).join("") : ""}
+    </section>`;
     /* A shelf with one game is that game alone, as one large panel. */
     if(!isMine && gs.length === 1){ const g = gs[0]; return `<button class="tile big gbig c-${g.c}" id="cat-${id}" data-act="open" data-g="${g.id}">
       <span class="ico" aria-hidden="true">${g.ico || "🎲"}</span>
@@ -219,9 +224,8 @@ function viewHome(){
         <small>👥 ${forWhom(g)} · ${locked(g) ? `🔒 ${T.price1}` : T.play}</small></span>
     </button>`; }
     return `<section class="gcard c-${color}" id="cat-${id}">
-      <div class="ghd"><h2>${title}</h2><span class="cnt">${isMine ? T.opened(gs.length) : T.gamesCount(gs.length)}</span></div>
-      ${shown.map(g => row(g, isMine ? T.shelves[g.grp] : "")).join("")}
-      ${isMine && gs.length > 4 ? `<button class="gmore" data-act="shelf-more" data-i="${id}">${open ? T.showLess : T.showAll(gs.length)}</button>` : ""}
+      <div class="ghd"><h2>${title}</h2><span class="cnt">${T.gamesCount(gs.length)}</span></div>
+      ${gs.map(g => row(g, "")).join("")}
     </section>`;
   };
   return `
@@ -708,7 +712,8 @@ app.addEventListener("click", e => {
   /* ...and everything that starts with "a-" to the account. */
   if(act.startsWith("a-")){ if(window.MACC && MACC.click(act, b, e.target)) render(); return; }
   switch(act){
-    case "cat": document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
+    case "cat": if(b.dataset.i === "mine" && !S.shelfOpen.mine){ S.shelfOpen.mine = true; render(); }
+      document.getElementById("cat-" + b.dataset.i)?.scrollIntoView?.({behavior: calm() ? "auto" : "smooth", block:"start"}); return;
     /* A game chosen from the list: first its rules, then its first screen. */
     case "open": S.rules = b.dataset.g; break;
     case "rules-go": S.g = S.rules; S.rules = null; S.screen = "setup"; window.scrollTo(0,0); break;
