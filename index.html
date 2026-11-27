@@ -712,11 +712,12 @@ textarea{font:inherit;color:inherit}
 .cmap .mtop button{flex:none;white-space:nowrap;border:0;background:#F4E6E5;border-radius:999px;padding:8px 13px;min-height:36px;font-weight:700;font-size:13px;color:var(--ink);box-shadow:none}
 .mdot{display:inline-block;flex:none;width:11px;height:11px;border-radius:50%;background:var(--pc);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
 .mp{fill:#FFF9F1;stroke:#B5A396;stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
-.cmap.pick .mp, .mp.own:not(.seat), .mbadge{cursor:pointer}
+.cmap.pick .mp, .mp.own, .mbadge{cursor:pointer}
 .mp.own{fill:var(--pc);stroke:rgba(0,0,0,.35)}
 .mp.cap.free{fill:#FFE08A}
 .mp.ghost{fill:#F1EBE4;stroke:#DDD3C9;pointer-events:none}
-.mp.seat{pointer-events:none}
+.mp.shut{opacity:.38;pointer-events:none}
+.mp.gold{stroke:#B77B00;stroke-width:2.6}
 .mo{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .mo.sel{stroke:var(--ink);stroke-width:3.5;fill:rgba(31,31,31,.16)}
 .mo.mine{stroke:var(--ink);stroke-width:2.5;stroke-dasharray:6 4}
@@ -737,6 +738,11 @@ textarea{font:inherit;color:inherit}
 .mbar span{display:flex;flex-direction:column;gap:2px;min-width:0}
 .mbar b{font-weight:700;font-size:15px;line-height:1.25;overflow-wrap:anywhere}
 .mbar small{font-size:12.5px;color:var(--muted)}
+.mbar b i{font-style:normal;font-weight:500;color:var(--muted)}
+.mbar .btn.war, .mlist .opt.war[aria-pressed="true"]{background:var(--hot);border-color:var(--hot);color:#fff}
+.mlist .opt i{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.mlist .opt[aria-pressed="true"] i{color:inherit}
+.mlist .opt em.mdot{width:9px;height:9px}
 .mbar .btn{width:auto;flex:none;min-height:46px;padding:10px 22px;background:var(--ink);color:#fff;box-shadow:none}
 .mlist .opt{display:flex;flex-direction:column;gap:2px;min-height:0;padding:9px 12px;font-size:14.5px;box-shadow:none;background:#FBF6F3}
 .mlist .opt[disabled]{opacity:.55}
@@ -788,7 +794,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27p";
+  var MEIVI_RELEASE = "2026-11-27q";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

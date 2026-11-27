@@ -168,19 +168,54 @@
      The map of the country is data (c.tx.map(): the capital, the regions, their municipalities, one village per
      municipality). A place is named by an id: "c" the capital, "r3" region 3, "m3.5" municipality 5 of region 3,
      "v3.5" the village of that municipality. The capital and the regions are open from the start; a municipality
-     opens once its region is taken, a village once its municipality is taken. Points are in the text (points). */
+     opens once its region is taken, a village once its municipality is taken. Points are in the text (points).
+
+     A free place goes to the only player who reached for it. A place that someone holds can be attacked: the
+     attacker and the holder get the same question (one question for all the attacks of a round, taken from the
+     one-phone quiz). Attacker right and holder wrong, or both right and the attacker faster: the place and its
+     points change hands. Holder right (and faster, if both are right): the holder keeps it and gets its points.
+     Both wrong: both lose its points. Two players attacking the same place clash, like on a free place.
+
+     Every fourth round has an event (CQ_EVENTS) and in the last three rounds everything counts double.
+     A player who holds a regional town and all its municipalities has a bonus for as long as that lasts;
+     at the end the largest group of neighbouring regions (by their towns, the capital counts) gets one more. */
+  const CQ_EVENTS = [
+    { id: "villages", kind: "v", x: 3 },          /* villages count three times */
+    { id: "munis", kind: "m", x: 2 },             /* municipalities count double */
+    { id: "sea", group: "sea", x: 2 },            /* everything in these regions counts double */
+    { id: "danube", group: "danube", x: 2 },
+    { id: "north", group: "north", closed: true },   /* nothing can be chosen in these regions */
+    { id: "south", group: "south", closed: true },
+    { id: "peace", peace: true }                  /* no attacks */
+  ];
   const cq = {
     /* the place an id names: {k, r, j, n (name), up (id of the place that opens it)} or null */
     place(M, id) {
       const m = /^(c)$|^r(\d+)$|^([mv])(\d+)\.(\d+)$/.exec(String(id)); if (!m) return null;
-      if (m[1]) return { k: "c", n: M.cap.n };
-      if (m[2] != null) { const R = M.regs[+m[2]]; return R ? { k: "r", r: +m[2], n: R.n, area: !!R.area } : null; }
+      if (m[1]) return { k: "c", n: M.cap.n, at: "c" };
+      if (m[2] != null) { const R = M.regs[+m[2]]; return R ? { k: "r", r: +m[2], at: +m[2], n: R.n, area: !!R.area } : null; }
       const R = M.regs[+m[4]], P = R && R.ms[+m[5]]; if (!P) return null;
-      if (m[3] === "m") return { k: "m", r: +m[4], j: +m[5], n: P.n, up: "r" + m[4] };
-      return P.v ? { k: "v", r: +m[4], j: +m[5], n: P.v, up: "m" + m[4] + "." + m[5] } : null;
+      if (m[3] === "m") return { k: "m", r: +m[4], at: +m[4], j: +m[5], n: P.n, up: "r" + m[4] };
+      return P.v ? { k: "v", r: +m[4], at: +m[4], j: +m[5], n: P.v, up: "m" + m[4] + "." + m[5] } : null;
     },
-    free(M, g, id) { const p = cq.place(M, id); return !!p && !g.own[id] && (!p.up || !!g.own[p.up]); },
-    /* every place that can be taken right now */
+    name(c, M, id) { const p = cq.place(M, id); return c.tx.t.place(p.k, p.n, p.area); },
+    finale: g => g.round > g.rounds - 3,
+    questions(c) { const s = c.tx.source && c.tx.source(); return (s && s.topics) || []; },
+    /* what a place is worth this round */
+    val(c, g, M, id) {
+      const p = cq.place(M, id), e = g.ev; let v = c.tx.points[p.k];
+      if (e && e.x && (e.kind === p.k || (e.regs && e.regs.includes(p.at)))) v *= e.x;
+      return v * (cq.finale(g) ? 2 : 1);
+    },
+    /* what a player may do with a place now: "claim" a free one, "attack" one that another holds, or nothing */
+    can(c, g, M, pid, id) {
+      const p = cq.place(M, id), e = g.ev; if (!p) return null;
+      if (e && e.closed && e.regs.includes(p.at)) return null;
+      const o = g.own[id];
+      if (o) return o === pid || (e && e.peace) || !cq.questions(c).length ? null : "attack";
+      return !p.up || g.own[p.up] ? "claim" : null;
+    },
+    /* every free place that can be taken right now */
     open(M, g) {
       const out = []; if (!g.own.c) out.push("c");
       M.regs.forEach((R, r) => {
@@ -191,53 +226,159 @@
     },
     /* what the phones draw: who holds what, as the number of the player (its colour) */
     own(c, g) { const o = {}; Object.keys(g.own).forEach(id => { o[id] = c.ids.indexOf(g.own[id]); }); return o; },
-    name(c, M, id) { const p = cq.place(M, id); return c.tx.t.place(p.k, p.n, p.area); }
+    /* the regions held whole (the town and every municipality), by player */
+    whole(c, M, g) {
+      const out = {}; c.ids.forEach(id => { out[id] = []; });
+      M.regs.forEach((R, r) => { const o = g.own["r" + r]; if (o && out[o] && R.ms.every((P, j) => g.own["m" + r + "." + j] === o)) out[o].push(r); });
+      return out;
+    },
+    /* the points of a player: what was won and lost, and the bonus for the regions held whole right now */
+    totals(c, M, g) { const w = cq.whole(c, M, g), t = {}; c.ids.forEach(id => { t[id] = g.score[id] + w[id].length * c.tx.points.region; }); return t; },
+    /* the largest group of neighbouring regions a player holds (the towns; the capital counts as one) */
+    kingdom(M, g, pid) {
+      const mine = k => g.own[k === "c" ? "c" : "r" + k] === pid, seen = {}; let best = 0;
+      ["c"].concat(M.regs.map((R, r) => r)).forEach(k => {
+        if (!mine(k) || seen[k]) return;
+        let n = 0; const todo = [k]; seen[k] = 1;
+        while (todo.length) { const x = todo.pop(); n++; (x === "c" ? M.cap.adj : M.regs[x].adj).forEach(y => { if (mine(y) && !seen[y]) { seen[y] = 1; todo.push(y); } }); }
+        best = Math.max(best, n);
+      });
+      return best;
+    },
+    /* the event of a round: every fourth round, not in the last three; one that makes sense on the map as it is */
+    event(c, g, M) {
+      if (g.round % 4 || cq.finale(g)) return null;
+      const open = cq.open(M, g), fits = e => {
+        if (e.group && !(M.groups && M.groups[e.group])) return false;
+        if (e.kind) return open.some(id => id[0] === e.kind);
+        if (e.closed) return open.some(id => !M.groups[e.group].includes(cq.place(M, id).at));
+        if (e.peace) return Object.keys(g.own).length > 0 && cq.questions(c).length > 0;
+        return true;
+      };
+      for (let n = 0; n < g.evs.length; n++) {
+        const e = CQ_EVENTS[g.evs[(g.evi + n) % g.evs.length]];
+        if (fits(e)) { g.evi = (g.evi + n + 1) % g.evs.length; return { id: e.id, kind: e.kind, x: e.x, regs: e.group ? M.groups[e.group] : undefined, closed: e.closed, peace: e.peace }; }
+      }
+      return null;
+    }
   };
   G("conquer", {
     min: 3, max: 8, over, rounds: [15, 30, 50],
     needs: () => !!(MEIVI.mtexts.conquer && MEIVI.mtexts.conquer.map && MEIVI.mtexts.conquer.map()),
     setup(c) {
       const rounds = this.rounds.includes(c.opts && c.opts.rounds) ? c.opts.rounds : this.rounds[0];
-      return { round: 1, rounds, score: blank(c.ids), own: {}, phase: "pick", in: {}, last: null };
+      const g = { id: c.rnd(1e9), round: 0, rounds, score: blank(c.ids), own: {}, evs: c.shuffle(CQ_EVENTS.map((e, i) => i)), evi: 0, asked: [] };
+      this.deal(c, g); return g;
     },
+    deal(c, g) { g.round++; g.phase = "pick"; g.in = {}; g.last = null; g.duels = null; g.q = null; g.ev = cq.event(c, g, c.tx.map()); },
+    /* the question of the round: its text and the four answers in the order they are shown */
+    ask(c, g) {
+      const tp = cq.questions(c)[g.q.at[0]], q = tp.questions[g.q.at[1]];
+      return { topic: tp.name, text: q[0], opts: g.q.perm.map(k => q[1][k]), right: String(g.q.perm.indexOf(0)) };
+    },
+    fighters: g => g.duels.reduce((all, d) => all.concat([d.a, d.d].filter(id => !all.includes(id))), []),
     view(c, g, pid) {
-      const t = c.tx.t, sub = round(c, g), M = c.tx.map(), map = { own: cq.own(c, g), names: c.ids.map(c.name), scores: c.ids.map(id => g.score[id]), me: c.ids.indexOf(pid), pts: c.tx.points };
-      if (g.phase === "pick") return { sub, key: "pick" + g.round, blocks: [{ k: "h", text: t.pick }],
+      const t = c.tx.t, M = c.tx.map(), fin = cq.finale(g), sub = round(c, g) + (fin ? " · " + t.doubleTag : ""), tot = cq.totals(c, M, g);
+      const map = { own: cq.own(c, g), names: c.ids.map(c.name), scores: c.ids.map(id => tot[id]), me: c.ids.indexOf(pid), pts: c.tx.points,
+        ev: g.ev || undefined, fin, war: !(g.ev && g.ev.peace) && cq.questions(c).length > 0 };
+      const news = [].concat(g.ev ? [{ k: "p", strong: true, text: t.event(t.events[g.ev.id]) }] : [], fin ? [{ k: "p", strong: true, text: t.double }] : []);
+      if (g.phase === "pick") return { sub, key: "pick" + g.id + "." + g.round, blocks: [{ k: "h", text: t.pick }].concat(news),
         input: Object.assign({ k: "map", done: g.in[pid] || null }, map), note: waitNote(c, g, c.ids), host: skipBtn(c, g, c.ids) };
-      return { sub, key: "res" + g.round, blocks: [
-          { k: "h", text: t.result },
-          { k: "rows", keep: true, rows: g.last.map(r => ({ l: c.name(r.id), r: r.place == null ? t.nothing : r.won ? t.took(cq.name(c, M, r.place), r.pts) : t.clash(cq.name(c, M, r.place)), ok: r.won, dim: r.place == null })) },
-          /* the points stand next to the names under the map, so the screen stays short: this game has many rounds */
-          Object.assign({ k: "map", fresh: g.last.filter(r => r.won).map(r => r.place) }, map)
-        ], host: nextBtn(c, g) };
+      if (g.phase === "duel") {
+        const Q = this.ask(c, g), F = this.fighters(g), inIt = F.includes(pid), wait = F.filter(id => !(id in g.q.in)).map(c.name);
+        const fights = { k: "rows", keep: true, rows: g.duels.map(d => ({ l: c.name(d.a), r: t.attacks(cq.name(c, M, d.p), c.name(d.d), d.w), hot: d.a === pid || d.d === pid })) };
+        return { sub, key: "duel" + g.id + "." + g.round, timed: inIt, blocks: [{ k: "h", text: t.duelTitle }, fights, { k: "card", tag: Q.topic, text: Q.text }],
+          input: inIt ? { k: "choice", abc: true, options: Q.opts.map((o, i) => ({ v: String(i), t: o, dis: pid in g.q.in })), done: g.q.in[pid] } : null,
+          note: inIt && !(pid in g.q.in) ? t.duelHint : wait.length ? c.ui.waiting(wait.join(", ")) : "",
+          host: wait.length ? [{ t: c.ui.skipWait, cmd: "skip", ghost: true, sure: true }] : [] };
+      }
+      const Q = g.q ? this.ask(c, g) : null;
+      return { sub, key: "res" + g.id + "." + g.round, blocks: [{ k: "h", text: t.result }].concat(
+          Q ? [{ k: "p", text: t.answerWas(Q.text, Q.opts[+Q.right]) }] : [],
+          [{ k: "rows", keep: true, rows: g.last.map(r => ({ l: c.name(r.id), r: t.did[r.k](r.p ? cq.name(c, M, r.p) : r.n, r.w, r.vs ? c.name(r.vs) : ""), ok: !!r.good, hot: r.good === false, dim: r.k === "none" })) },
+           /* the points stand next to the names under the map, so the screen stays short: this game has many rounds */
+           Object.assign({ k: "map", fresh: g.last.filter(r => r.fresh).map(r => r.p) }, map)]
+        ), host: nextBtn(c, g) };
     },
-    ans(c, g, pid, v) {
-      if (g.phase !== "pick" || !cq.free(c.tx.map(), g, v)) return;
-      g.in[pid] = String(v); if (allIn(g, c.ids)) this.resolve(c, g);
+    ans(c, g, pid, v, ms) {
+      if (g.phase === "pick") {
+        if (!cq.can(c, g, c.tx.map(), pid, v)) return;
+        g.in[pid] = String(v); if (allIn(g, c.ids)) this.resolve(c, g);
+      } else if (g.phase === "duel") {
+        const F = this.fighters(g);
+        if (!F.includes(pid) || pid in g.q.in || !/^[0-3]$/.test(String(v))) return;
+        g.q.in[pid] = String(v);
+        /* the phone's own time; without it (or if it makes no sense), the time the host received the answer */
+        const own = +ms, host = c.now() - g.q.t0;
+        g.q.ms[pid] = own > 0 && own < 600000 ? Math.round(own) : Math.max(0, host);
+        if (F.every(id => id in g.q.in)) this.settle(c, g);
+      }
     },
-    /* A place goes to the only player who reached for it; if two or more did, nobody gets it. */
+    /* A free place goes to the only player who reached for it; an attack by one player alone becomes a duel. */
     resolve(c, g) {
-      const M = c.tx.map();
-      g.last = c.ids.map(id => {
-        const place = g.in[id] == null ? null : g.in[id], rivals = place == null ? 0 : c.ids.filter(o => g.in[o] === place).length;
-        return { id, place, won: rivals === 1, pts: place == null ? 0 : c.tx.points[cq.place(M, place).k] };
+      const M = c.tx.map(), by = {}; c.ids.forEach(id => { const p = g.in[id]; if (p != null) (by[p] = by[p] || []).push(id); });
+      g.was = cq.whole(c, M, g); g.last = []; g.duels = [];
+      const held = Object.assign({}, g.own);     /* who held what when the choices were made */
+      c.ids.forEach(id => {
+        const p = g.in[id]; if (p == null) return g.last.push({ id, k: "none" });
+        const solo = by[p].length === 1, w = cq.val(c, g, M, p);
+        if (held[p]) { if (solo) g.duels.push({ a: id, d: held[p], p, w }); else g.last.push({ id, k: "aclash", p }); }
+        else if (solo) { g.own[p] = id; g.score[id] += w; g.last.push({ id, k: "took", p, w, good: true, fresh: true }); }
+        else g.last.push({ id, k: "clash", p });
       });
-      g.last.forEach(r => { if (r.won) { g.own[r.place] = r.id; g.score[r.id] += r.pts; } });
-      g.phase = "result";
+      if (!g.duels.length) return this.finish(c, g);
+      /* one question for all the attacks of the round, not asked before in this game */
+      const all = []; cq.questions(c).forEach((tp, ti) => tp.questions.forEach((q, qi) => all.push([ti, qi])));
+      let left = all.filter(a => !g.asked.includes(a[0] + "." + a[1])); if (!left.length) { g.asked = []; left = all; }
+      const at = c.pick(left); g.asked.push(at[0] + "." + at[1]);
+      g.q = { at, perm: c.shuffle([0, 1, 2, 3]), t0: c.now(), in: {}, ms: {} }; g.phase = "duel";
+    },
+    settle(c, g) {
+      const right = this.ask(c, g).right, ok = id => g.q.in[id] === right;
+      g.duels.forEach(d => {
+        const { a, p, w } = d, h = d.d;
+        if (ok(a) && (!ok(h) || g.q.ms[a] < g.q.ms[h])) {
+          g.own[p] = a; g.score[a] += w; g.score[h] -= w;
+          g.last.push({ id: a, k: "won", p, w, vs: h, good: true, fresh: true }, { id: h, k: "lost", p, w, vs: a, good: false });
+        } else if (ok(h)) {
+          g.score[h] += w;
+          g.last.push({ id: a, k: "failed", p, w, vs: h }, { id: h, k: "held", p, w, vs: a, good: true });
+        } else {
+          g.score[a] -= w; g.score[h] -= w;
+          g.last.push({ id: a, k: "both", p, w, vs: h, good: false }, { id: h, k: "both2", p, w, vs: a, good: false });
+        }
+      });
+      this.finish(c, g);
+    },
+    /* a region that became whole in this round, or stopped being whole */
+    finish(c, g) {
+      const M = c.tx.map(), now = cq.whole(c, M, g), b = c.tx.points.region;
+      c.ids.forEach(id => {
+        now[id].filter(r => !g.was[id].includes(r)).forEach(r => g.last.push({ id, k: "whole", n: M.regs[r].n, w: b, good: true }));
+        g.was[id].filter(r => !now[id].includes(r)).forEach(r => g.last.push({ id, k: "broke", n: M.regs[r].n, w: b, good: false }));
+      });
+      g.was = null; g.phase = "result";
     },
     cmd(c, g, name) {
       if (name === "skip" && g.phase === "pick") { fillIn(g, c.ids); this.resolve(c, g); }
+      else if (name === "skip" && g.phase === "duel") { this.fighters(g).forEach(id => { if (!(id in g.q.in)) g.q.in[id] = null; }); this.settle(c, g); }
       else if (name === "next" && g.phase === "result") {
-        if (g.round >= g.rounds || !cq.open(c.tx.map(), g).length) g.end = true; else { g.round++; g.phase = "pick"; g.in = {}; }
+        if (g.round >= g.rounds || !cq.open(c.tx.map(), g).length) g.end = true; else this.deal(c, g);
       }
     },
     final(c, g) {
-      const t = c.tx.t, n = {}; c.ids.forEach(id => { n[id] = { c: 0, r: 0, m: 0, v: 0 }; });
-      Object.keys(g.own).forEach(id => { n[g.own[id]][id[0]]++; });
-      const win = best(c, g.score).join(", "), map = { k: "map", own: cq.own(c, g), names: c.ids.map(c.name), pts: c.tx.points };
-      const owned = { k: "rows", keep: true, title: t.lands, rows: sorted(c, g.score).map(id => ({ l: c.name(id), r: t.holds(n[id]) || t.noLand })) };
-      return { blocks: [{ k: "big", text: win, sub: t.ruler }, table(c, g.score, c.ui.scores), owned],
-        poster: { hero: { kind: "name", label: t.ruler, name: win }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) }, rest: [map, owned] };
+      const t = c.tx.t, M = c.tx.map(), P = c.tx.points, n = {}, tot = cq.totals(c, M, g), whole = cq.whole(c, M, g);
+      c.ids.forEach(id => { n[id] = { c: 0, r: 0, m: 0, v: 0, whole: whole[id].length }; });
+      Object.keys(g.own).forEach(id => { if (n[g.own[id]]) n[g.own[id]][id[0]]++; });
+      /* the largest kingdom: at least two neighbouring regions; everyone who has that many gets the bonus */
+      const size = {}; c.ids.forEach(id => { size[id] = cq.kingdom(M, g, id); });
+      const top = Math.max(...c.ids.map(id => size[id])), kings = top >= 2 ? c.ids.filter(id => size[id] === top) : [];
+      kings.forEach(id => { tot[id] += P.kingdom; });
+      const win = best(c, tot).join(", "), map = { k: "map", own: cq.own(c, g), names: c.ids.map(c.name), scores: c.ids.map(id => tot[id]), pts: P };
+      const king = { k: "p", strong: true, text: kings.length ? t.kingdom(kings.map(c.name).join(", "), top, P.kingdom) : t.noKingdom };
+      const owned = { k: "rows", keep: true, title: t.lands, rows: sorted(c, tot).map(id => ({ l: c.name(id), r: t.holds(n[id]) || t.noLand })) };
+      return { blocks: [{ k: "big", text: win, sub: t.ruler }, table(c, tot, c.ui.scores), king, owned],
+        poster: { hero: { kind: "name", label: t.ruler, name: win }, rank: ranked(c, tot, c.ui.ranking, c.ui.scores) }, rest: [map, king, owned] };
     }
   });
 

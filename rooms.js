@@ -20,7 +20,7 @@
      blocks  {k: "h" | "p" | "card" | "rows" | "chips" | "code" | "wait" | "big" | "letter" | "pick", ...}
              pick: {options: [{v, t}], done, cmd}: a row of buttons; with cmd it sends a command of the host (the number of rounds)
      input   {k: "choice", options: [{v, t, sub, dis, tag}], done, pills, cols}
-             {k: "map", own, names, scores, me, pts, done}: a map to choose a place on (the same without "done" is a block that only shows it)
+             {k: "map", own, names, scores, me, pts, ev, fin, war, done}: a map to choose a place on (the same without "done" is a block that only shows it)
              {k: "text", max, ph, sent} | {k: "btn", t, v}
      host    buttons only the host has: {t, cmd, ghost, dis, sure}
 
@@ -110,7 +110,7 @@
           foot: isHost ? null : [{ t: X.leave, local: "leave" }] };
       }
       const v = d.view(ctx(), st.g, pid);
-      return { top, sub: v.sub, blocks: v.blocks, input: v.input, note: v.note, key: v.key,
+      return { top, sub: v.sub, blocks: v.blocks, input: v.input, note: v.note, key: v.key, timed: v.timed || undefined,
         bar: st.g.rounds ? Math.round(Math.min(1, st.g.round / st.g.rounds) * 100) : null,
         host: isHost ? (v.host || []).concat([{ t: X.endGame, cmd: "stop", ghost: true, sure: true }]) : null };
     }
@@ -271,31 +271,50 @@
     return s ? s.items[ui.shelf[keyOf(s.key)]] || null : null;
   }
   /* ---------- a map to reach for a place on (the game "conquer") ----------
-     The shapes come from MEIVI.mdata[game], the words from the text of the game (t.map). The block says who holds
-     what (own: id of a place -> number of the player, which is also its colour) and, as an input, what this player
-     chose (done). With "me" (a game going on) a taken region shows how many places are still free inside it. A place id: "c" the capital, "r3" a region, "m3.5" a municipality of it, "v3.5" the village of that one.
+     The shapes come from the text of the game (map()), the words from t.map. The block says who holds what
+     (own: id of a place -> number of the player, which is also its colour) and, as an input, what this player
+     chose (done). With "me" (a game going on) a taken region shows how many places are still free inside it.
+     ev is the event of the round ({kind, x, regs, closed, peace}), fin the last rounds (all double), war whether
+     a place of another player may be attacked.
+     A place id: "c" the capital, "r3" a region, "m3.5" a municipality of it, "v3.5" the village of that one.
      Kept on this phone only: the region that is opened (zoom) and the place touched but not chosen yet (sel). */
   const mapUi = { key: "", zoom: null, sel: null };
   const mapOf = () => { const tx = MEIVI.mtexts[room.st.game] || {}; return { M: tx.map && tx.map(), W: (tx.t || {}).map, tx }; };
   function mapPlace(M, id) {
     const m = /^(c)$|^r(\d+)$|^([mv])(\d+)\.(\d+)$/.exec(String(id || "")); if (!m) return null;
-    if (m[1]) return { k: "c", n: M.cap.n, d: M.cap.d };
+    if (m[1]) return { k: "c", at: "c", n: M.cap.n, d: M.cap.d };
     const R = M.regs[+(m[2] != null ? m[2] : m[4])]; if (!R) return null;
-    if (m[2] != null) return { k: "r", r: +m[2], n: R.n, area: !!R.area, d: R.d };
+    if (m[2] != null) return { k: "r", r: +m[2], at: +m[2], n: R.n, area: !!R.area, d: R.d, seat: R.seat && R.seat.d };
     const P = R.ms[+m[5]]; if (!P || (m[3] === "v" && !P.v)) return null;
-    return { k: m[3], r: +m[4], j: +m[5], n: m[3] === "m" ? P.n : P.v, mun: P.n, d: P.d };
+    return { k: m[3], r: +m[4], at: +m[4], j: +m[5], n: m[3] === "m" ? P.n : P.v, mun: P.n, d: P.d };
+  }
+  /* what this player may do with a place: "claim" a free one, "attack" one of another player, or nothing */
+  function mapCan(M, b, id) {
+    const p = mapPlace(M, id), own = b.own || {}, e = b.ev; if (!p) return null;
+    if (e && e.closed && e.regs.includes(p.at)) return null;
+    if (own[id] != null) return own[id] === b.me || !b.war ? null : "attack";
+    if (p.k === "m" && own["r" + p.r] == null) return null;
+    if (p.k === "v" && own["m" + p.r + "." + p.j] == null) return null;
+    return "claim";
+  }
+  /* what a place is worth in this round */
+  function mapVal(b, p) {
+    const e = b.ev; let v = (b.pts || {})[p.k];
+    if (e && e.x && (e.kind === p.k || (e.regs && e.regs.includes(p.at)))) v *= e.x;
+    return v * (b.fin ? 2 : 1);
   }
   function mapBlock(b, pick) {
     const { M, W, tx } = mapOf(); if (!M || !W) return "";
-    const own = b.own || {}, pts = b.pts || {}, fresh = b.fresh || [], names = b.names || [], key = (room.myView() || {}).key || "";
+    const own = b.own || {}, fresh = b.fresh || [], names = b.names || [], key = (room.myView() || {}).key || "", e = b.ev;
     if (mapUi.key !== key) { mapUi.key = key; mapUi.zoom = null; mapUi.sel = null; }
-    if (!pick || mapUi.sel === b.done || own[mapUi.sel] != null) mapUi.sel = null;
+    if (!pick || mapUi.sel === b.done || !mapCan(M, b, mapUi.sel)) mapUi.sel = null;
     const sel = mapUi.sel, z = mapUi.zoom != null && M.regs[mapUi.zoom] && own["r" + mapUi.zoom] != null ? mapUi.zoom : null;
-    const cls = id => own[id] != null ? " own p" + own[id] : " free";
-    const tap = id => `data-act="r-local" data-c="map" data-p="${id}"`;
+    const shut = at => !!(e && e.closed && e.regs.includes(at)), gold = at => !!(e && e.x && e.regs && e.regs.includes(at));
+    const cls = (id, at) => (own[id] != null ? " own p" + own[id] : " free") + (shut(at) ? " shut" : gold(at) ? " gold" : "");
+    const tap = (id, exact) => `data-act="r-local" data-c="map" data-p="${id}"${exact ? ` data-x="1"` : ""}`;
     /* what can be taken inside a region that already has an owner */
     const openIn = r => M.regs[r].ms.reduce((n, P, j) => n + (own["m" + r + "." + j] == null || (P.v && own["v" + r + "." + j] == null) ? 1 : 0), 0);
-    /* the part of the map that is shown, in the shape of the whole map; u is one pixel of a phone in map units */
+    /* the part of the map that is shown; u is one pixel of a phone in map units */
     const pad = 24, full = [-pad, -pad, M.w + 2 * pad, M.h + 2 * pad];
     let vb = full;
     if (z != null) {
@@ -308,16 +327,16 @@
     const text = (c, t, size, k, dy) => `<text class="${k}" x="${c[0]}" y="${f((c[1] / u) + (dy || 0))}" font-size="${f(size)}" stroke-width="${f(2.4)}" text-anchor="middle" dominant-baseline="central">${esc(t)}</text>`;
     let shapes, marks;      /* the places, then what is written on them */
     if (z == null) {
-      shapes = M.regs.map((R, r) => `<path class="mp${cls("r" + r)}" d="${R.d}" ${tap("r" + r)}/>`).join("")
-        + `<path class="mp cap${cls("c")}" d="${M.cap.d}" ${tap("c")}/>`;
+      shapes = M.regs.map((R, r) => `<path class="mp${cls("r" + r, r)}" d="${R.d}" ${tap("r" + r)}/>`).join("")
+        + `<path class="mp cap${cls("c", "c")}" d="${M.cap.d}" ${tap("c")}/>`;
       marks = text(M.cap.c, "★", 12, "mstar")
         + M.regs.map((R, r) => { const n = own["r" + r] != null ? openIn(r) : 0;
             return n && b.me != null ? `<g class="mbadge" ${tap("r" + r)}><circle cx="${R.c[0]}" cy="${R.c[1]}" r="${f(7.5)}"/>${text(R.c, n, 9, "mnum")}</g>` : ""; }).join("");
     } else {
       const R = M.regs[z];
       shapes = M.regs.map((Q, r) => r === z ? "" : `<path class="mp ghost" d="${Q.d}"/>`).join("") + `<path class="mp ghost" d="${M.cap.d}"/>`
-        + R.ms.map((P, j) => `<path class="mp${cls("m" + z + "." + j)}" d="${P.d}" ${tap("m" + z + "." + j)}/>`).join("")
-        + (R.seat ? `<path class="mp seat own p${own["r" + z]}" d="${R.seat.d}"/>` : "");
+        + R.ms.map((P, j) => `<path class="mp${cls("m" + z + "." + j, z)}" d="${P.d}" ${tap("m" + z + "." + j)}/>`).join("")
+        + (R.seat ? `<path class="mp seat${cls("r" + z, z)}" d="${R.seat.d}" ${tap("r" + z)}/>` : "");
       /* a name is written only where it does not cover another one (the list under the map has them all) */
       const boxes = [], room4 = (c, t, size, dy) => {
         const w = String(t).length * size * 0.58 * u, h = size * 1.2 * u, x = c[0] - w / 2, y = c[1] + (dy || 0) * u - h / 2;
@@ -326,26 +345,30 @@
       };
       const seat = R.seat && room4(R.seat.c, R.n, 7.8) ? text(R.seat.c, R.n, 7.8, "mlbl seat") : "";
       marks = R.ms.map((P, j) => { const m = "m" + z + "." + j, v = "v" + z + "." + j, open = own[m] != null && P.v, named = room4(P.c, P.n, 7.2, open ? -4 : 0);
-            return (named ? text(P.c, P.n, 7.2, "mlbl", open ? -4 : 0) : "") + (open ? `<circle class="mv${cls(v)}" cx="${P.c[0]}" cy="${f(P.c[1] / u + (named ? 5 : 0))}" r="${f(3.2)}"/>` : ""); }).join("") + seat;
+            return (named ? text(P.c, P.n, 7.2, "mlbl", open ? -4 : 0) : "") + (open ? `<circle class="mv${own[v] != null ? " own p" + own[v] : " free"}" cx="${P.c[0]}" cy="${f(P.c[1] / u + (named ? 5 : 0))}" r="${f(3.2)}"/>` : ""); }).join("") + seat;
     }
-    /* outlines over the places and under the names: what won this round, this player's choice, the place under the finger */
-    const line = (id, k) => { const p = mapPlace(M, id); return p ? `<path class="mo ${k}" d="${p.d}"/>` : ""; };
+    /* outlines over the places and under the names: what changed hands this round, this player's choice, the place under the finger.
+       A regional town is outlined as the town when its region is opened, as the whole region on the map of the country. */
+    const line = (id, k) => { const p = mapPlace(M, id); return p ? `<path class="mo ${k}" d="${p.k === "r" && z === p.r && p.seat ? p.seat : p.d}"/>` : ""; };
     shapes += fresh.map(id => line(id, "fresh")).join("") + (b.done ? line(b.done, "mine") : "") + (sel ? line(sel, "sel") : "") + marks;
     const Rz = z != null ? M.regs[z] : null;
     const top = Rz ? `<div class="mtop"><b><i class="mdot p${own["r" + z]}"></i>${esc(W.region(Rz.n, Rz.area))}</b><button ${tap("back")}>${esc(W.back)}</button></div>` : "";
     const legend = `<div class="mleg">${names.map((n, i) => `<span${i === b.me ? ` class="me"` : ""}><i class="mdot p${i}"></i>${esc(n)}${b.scores ? `<b>${esc(b.scores[i])}</b>` : ""}</span>`).join("")}</div>`;
     let bar = "", list = "", free = "";
     if (pick) {
-      const kind = p => W.kind[p.k === "r" && p.area ? "area" : p.k] + " · " + W.pts(pts[p.k]) + (p.k === "v" ? " · " + W.inMun(p.mun) : "");
-      const title = p => p.k === "v" ? W.village(p.n) : p.n;
-      const p = sel && mapPlace(M, sel), d = b.done && mapPlace(M, b.done);
-      bar = p ? `<div class="mbar on"><span><b>${esc(title(p))}</b><small>${esc(kind(p))}</small></span><button class="btn" data-act="r-ans" data-v="${esc(sel)}">${esc(W.choose)}</button></div>`
-        : `<div class="mbar"><span>${d ? `<b>${esc(W.yours(tx.t.place(d.k, d.n)))}</b>` : ""}<small>${esc(z == null ? W.hint : W.hintIn)}</small></span></div>`;
-      if (Rz) list = `<div class="opts two mlist">${Rz.ms.map((P, j) => {
-          const m = "m" + z + "." + j, v = "v" + z + "." + j, id = own[m] == null ? m : v, gone = id === v && (!P.v || own[v] != null);
-          const who = gone ? [own[m], P.v ? own[v] : null].filter((x, i, a) => x != null && a.indexOf(x) === i).map(i => names[i]).join(", ") : "";
-          return `<button class="opt" ${tap(id)} aria-pressed="${sel === id || b.done === id}" ${gone ? "disabled" : ""}><span class="t">${esc(id === m || gone ? P.n : W.village(P.v))}</span><small>${esc(gone ? (P.v ? W.village(P.v) : "") : id === m ? W.kind.m + " · " + W.pts(pts.m) : W.kind.v + " · " + W.pts(pts.v) + " · " + W.inMun(P.n))}</small>${who ? `<i>${esc(who)}</i>` : ""}</button>`;
-        }).join("")}</div>`;
+      const word = p => W.kind[p.k === "r" && p.area ? "area" : p.k], title = p => p.k === "v" ? W.village(p.n) : p.n;
+      /* under the name of a place: what it is, what it is worth or what is at stake, whose it is */
+      const about = (id, p) => { const o = own[id], act = mapCan(M, b, id);
+        return [word(p), act === "claim" ? W.pts(mapVal(b, p)) : act === "attack" ? W.stake(mapVal(b, p)) : "", p.k === "v" ? W.inMun(p.mun) : ""].filter(Boolean).join(" · "); };
+      const p = sel && mapPlace(M, sel), d = b.done && mapPlace(M, b.done), war = p && own[sel] != null;
+      bar = p ? `<div class="mbar on"><span><b>${esc(title(p))}${war ? ` <i>${esc(W.of(names[own[sel]]))}</i>` : ""}</b><small>${esc(about(sel, p))}</small></span><button class="btn${war ? " war" : ""}" data-act="r-ans" data-v="${esc(sel)}">${esc(war ? W.attack : W.choose)}</button></div>`
+        : `<div class="mbar"><span>${d ? `<b>${esc((own[b.done] != null ? W.yoursAttack : W.yours)(tx.t.place(d.k, d.n)))}</b>` : ""}<small>${esc(z == null ? W.hint : W.hintIn)}</small></span></div>`;
+      if (Rz) {
+        /* everything in the opened region: its town, then every municipality and, once that is taken, its village */
+        const row = id => { const q = mapPlace(M, id), o = own[id], act = mapCan(M, b, id);
+          return `<button class="opt${act === "attack" ? " war" : ""}" ${tap(id, true)} aria-pressed="${sel === id || b.done === id}" ${act ? "" : "disabled"}><span class="t">${esc(q.k === "r" && !q.area ? W.town(q.n) : title(q))}</span><small>${esc(about(id, q))}</small>${o != null ? `<i><em class="mdot p${o}"></em>${esc(o === b.me ? W.mine : names[o])}</i>` : ""}</button>`; };
+        list = `<div class="opts two mlist">${row("r" + z)}${Rz.ms.map((P, j) => row("m" + z + "." + j) + (P.v && own["m" + z + "." + j] != null ? row("v" + z + "." + j) : "")).join("")}</div>`;
+      }
       const n = { c: own.c == null ? 1 : 0, r: 0, m: 0, v: 0 };
       M.regs.forEach((R, r) => { if (own["r" + r] == null) return n.r++; R.ms.forEach((P, j) => { if (own["m" + r + "." + j] == null) n.m++; else if (P.v && own["v" + r + "." + j] == null) n.v++; }); });
       free = `<p class="mfree">${esc(W.free(n))}</p>`;
@@ -354,18 +377,19 @@
       <svg viewBox="${vb.map(x => Math.round(x)).join(" ")}" role="img" aria-label="${esc(Rz ? W.region(Rz.n, Rz.area) : gameName(room.st.game))}">${shapes}</svg>
       ${legend}${bar}${list}${free}</section>`;
   }
-  function mapTap(p) {
+  /* A touch on the map (or, with "exact", on the list under it). On the map of the country a taken region opens;
+     the capital and a free region are chosen as they are. In an opened region a municipality stands for itself and
+     for its village: touching it again goes on to the next of the two that can be chosen. */
+  function mapTap(p, exact) {
     const V = room.myView() || {}, { M } = mapOf(), pick = !!(V.input && V.input.k === "map");
     const b = pick ? V.input : (V.blocks || []).concat(V.rest || []).find(x => x.k === "map");
     if (!b || !M) return;
     if (p === "back") { mapUi.zoom = null; return; }
     const own = b.own || {}, pl = mapPlace(M, p); if (!pl) return;
-    if (pl.k === "r" && own[p] != null) { mapUi.zoom = pl.r; return; }      /* a taken region: look inside */
+    if (pl.k === "r" && own[p] != null && mapUi.zoom !== pl.r) { mapUi.zoom = pl.r; return; }      /* a taken region: look inside */
     if (!pick) return;
-    let id = p;
-    if (pl.k === "m" && own[p] != null) { id = "v" + p.slice(1); if (!mapPlace(M, id)) return; }   /* a taken municipality: its village */
-    if (own[id] != null) return;
-    mapUi.sel = mapUi.sel === id ? null : id;
+    const ids = (pl.k === "m" && !exact ? [p, "v" + p.slice(1)] : [p]).filter(id => mapCan(M, b, id));
+    mapUi.sel = ids[ids.indexOf(mapUi.sel) + 1] || null;
   }
   function block(b, color) {
     if (b.k === "map") return mapBlock(b, false);
@@ -576,7 +600,7 @@
       if (c === "rules") ui.rules = true;
       else if (c === "rules-close") { if (b.classList.contains("sheet") && target !== b) return false; ui.rules = false; }
       else if (c === "share") shareStory();
-      else if (c === "map") mapTap(b.dataset.p);
+      else if (c === "map") mapTap(b.dataset.p, !!b.dataset.x);
       else if (c === "open-bottle") { if (!played[b.dataset.k + ":open"]) played[b.dataset.k + ":open"] = Date.now(); }
       else if (c === "shelf") { const k = b.dataset.k, i = +b.dataset.i; ui.shelf[k] = ui.shelf[k] === i ? undefined : i; ui.toLetters = ui.shelf[k] != null; }
       else if (c === "story-close") { if (b.classList.contains("sheet") && target !== b) return false; story.sheet = false; }
@@ -651,7 +675,7 @@
     else if (saved) store.set(null);
   }
 
-  window.MROOM = { view, overlay, click, submit, after, boot, room, ui, mood };
+  window.MROOM = { view, overlay, click, submit, after, boot, room, ui, mood, mapCan: (b, id) => mapCan(mapOf().M, b, id) };
 
   /* ---------- the line between the phones ----------
      open(code, myId, {message(event, data), peers(ids), status("open" | "lost")}) -> {send(event, data), close()}
