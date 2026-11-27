@@ -4,7 +4,8 @@
      { color, icon, game, brand, foot,
        hero: {kind: "ring", big, word, title, names, p} | {kind: "bottle", big, word, title, names} | {kind: "podium", label, top: [{p, b}]}
            | {kind: "name", label, name} | {kind: "title", title},
-       rows: [[label, value]], rank: {head, cols: [title], list: [{p, v: [..]}], colW, plain} | null }
+       rows: [[label, value]], rank: {head, cols: [title], list: [{p, v: [..]}], colW, plain} | null,
+       letters: {q, a: [{from, text}]} | null   (letters in a bottle: the letters of one round, on paper) }
      ring: "p" is how much of the ring is filled, in percent, when "big" is not a percentage itself.
      rank: "colW" is the width of a column when it holds words, not short numbers; "plain" is a list with no places.
    MEIVI.story.make(data) -> Promise<Blob> (a PNG).
@@ -85,7 +86,8 @@
       x.textAlign = "left";
     } else if (h.kind === "bottle") {
       /* a glass bottle with a rolled letter, and the number beside it */
-      const s = 3, bx = W / 2 - 230, by = y + 10;
+      /* with letters under it the bottle is smaller and stands on the left, the number and the names beside it */
+      const L = d.letters, s = L ? 1.6 : 3, bx = L ? PAD + 6 : W / 2 - 230, by = y + (L ? 0 : 10);
       x.save(); x.translate(bx, by); x.scale(s, s);
       x.beginPath(); x.moveTo(14, 52); x.quadraticCurveTo(14, 40, 22, 36); x.lineTo(22, 12); x.lineTo(38, 12); x.lineTo(38, 36); x.quadraticCurveTo(46, 40, 46, 52);
       x.lineTo(46, 126); x.quadraticCurveTo(46, 136, 36, 136); x.lineTo(24, 136); x.quadraticCurveTo(14, 136, 14, 126); x.closePath();
@@ -94,13 +96,21 @@
       x.fillStyle = "#C98F55"; round(x, 20.5, 2, 19, 15, 3.5); x.fill();
       x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 3; x.lineCap = "round"; x.beginPath(); x.moveTo(19, 58); x.lineTo(19, 122); x.stroke(); x.lineCap = "butt";
       x.restore();
-      x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "800 170px " + DISPLAY; x.fillText(h.big, W / 2 - 20, by + 270);
+      x.fillStyle = "#fff"; x.textAlign = "left";
+      if (L) {
+        x.font = "800 104px " + DISPLAY; x.fillText(h.big, bx + 130, by + 112);
+        x.font = "700 30px " + BODY; x.globalAlpha = 0.9; x.fillText(String(h.word).toUpperCase(), bx + 136, by + 162); x.globalAlpha = 1;
+        x.font = "700 40px " + BODY; x.fillText(lines(x, h.names, W - PAD - bx - 136, 1)[0], bx + 136, by + 216);
+        y = by + 140 * s + 50;
+      } else {
+      x.font = "800 170px " + DISPLAY; x.fillText(h.big, W / 2 - 20, by + 270);
       x.font = "700 34px " + BODY; x.fillText(String(h.word).toUpperCase(), W / 2 - 14, by + 330);
       y = by + 420 + 110; x.textAlign = "center";
       const t = fit(x, h.title, "800 #px " + DISPLAY, 64, 44, inner, 2);
       t.lines.forEach(l => { x.fillText(l, W / 2, y); y += t.size * 1.2; });
       x.font = "700 46px " + BODY; x.globalAlpha = 0.95; y += 20; x.fillText(lines(x, h.names, inner, 1)[0], W / 2, y); x.globalAlpha = 1; y += 70;
       x.textAlign = "left";
+      }
     } else if (h.kind === "podium") {
       x.font = "700 34px " + BODY; x.globalAlpha = 0.9; x.fillText(String(h.label).toUpperCase(), PAD, y + 20); x.globalAlpha = 1; y += 70;
       const base = y + 560, colW = (inner - 2 * 28) / 3, order = [[h.top[1], 300, 1], [h.top[0], 430, 0], [h.top[2], 220, 2]];
@@ -122,6 +132,31 @@
       const t = fit(x, text, "800 #px " + DISPLAY, 120, 64, inner, 3);
       t.lines.forEach(l => { x.fillText(l, PAD, y); y += t.size * 1.12; });
       y += 50;
+    }
+
+    /* letters on paper: the beginning of the letter, then each letter in handwriting, as large as the room allows */
+    if (d.letters && d.letters.a && d.letters.a.length) {
+      const Lq = d.letters, tw = inner - 80;
+      x.textAlign = "left"; x.fillStyle = "#fff";
+      const q = fit(x, Lq.q, "700 #px " + BODY, 44, 32, inner, 2);
+      q.lines.forEach(l => { y += q.size * 1.15; x.fillText(l, PAD, y); }); y += 34;
+      const room = H - 210 - y - 26 * (Lq.a.length - 1);
+      const need = (size, max) => { x.font = "700 " + size + "px " + HAND; const p = Lq.a.map(a => lines(x, a.text, tw, max)); return { p, h: p.reduce((n, l) => n + 104 + l.length * size * 1.15, 0) }; };
+      let size = 52, got = need(size, 99);
+      while (got.h > room && size > 32) { size -= 4; got = need(size, 99); }
+      if (got.h > room) { const per = Math.max(1, Math.floor((room / Lq.a.length - 104) / (size * 1.15))); got = need(size, per); }
+      Lq.a.forEach((a, i) => {
+        const lh = size * 1.15, bh = 104 + got.p[i].length * lh, cy = y + bh / 2;
+        x.save(); x.translate(W / 2, cy); x.rotate((i % 2 ? 0.7 : -0.7) * Math.PI / 180); x.translate(-W / 2, -cy);
+        x.fillStyle = "#FBF2DF"; round(x, PAD, y, inner, bh, 22); x.fill();
+        x.strokeStyle = "rgba(150,110,60,.22)"; x.lineWidth = 2;
+        for (let k = 0; k < got.p[i].length; k++) { const ly = y + 76 + (k + 1) * lh + 10; x.beginPath(); x.moveTo(PAD + 24, ly); x.lineTo(PAD + inner - 24, ly); x.stroke(); }
+        x.fillStyle = "#8B6A45"; x.font = "700 26px " + BODY; x.fillText(String(a.from).toUpperCase(), PAD + 40, y + 56);
+        x.fillStyle = "#3B2B1C"; x.font = "700 " + size + "px " + HAND;
+        got.p[i].forEach((l, k) => x.fillText(l, PAD + 40, y + 76 + (k + 1) * lh));
+        x.restore();
+        y += bh + 26;
+      });
     }
 
     /* other titles: two per row */

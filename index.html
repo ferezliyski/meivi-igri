@@ -42,6 +42,9 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
+/* A card that flies in from the side (the deal of a card, the result) must not make the page wider than the phone for a moment:
+   a phone then zooms the whole page out and lets it slide sideways. */
+html,body{overflow-x:clip}
 body{
   background:
     radial-gradient(70% 38% at 100% 0%, #FFDDD0 0, transparent 70%) fixed,
@@ -503,17 +506,33 @@ body.mood-sea{background:
 .paper > span{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8B6A45;line-height:24px}
 .paper p{font-family:var(--hand);font-size:25px;line-height:34px;white-space:pre-wrap;overflow-wrap:anywhere}
 /* the sea, the shore and the bottles */
+/* the sky of a sunset; the horizon is 100px from the top, the sun sits half under it */
 .sea{position:relative;flex:none;height:178px;border-radius:30px;overflow:hidden;
-  background:linear-gradient(180deg,#FFE7CF 0%,#FFCDB2 42%,#A8D4E6 64%,#5C9DC4 100%);box-shadow:0 22px 40px -26px rgba(40,80,120,.7)}
-.sea.shore{background:linear-gradient(180deg,#FFE7CF 0%,#FFCDB2 40%,#A8D4E6 56%,#6FA9CB 68%,#F2D7A8 69%,#E6C38B 100%)}
-.sea .sun{position:absolute;left:50%;top:34px;width:78px;height:78px;margin-left:-39px;border-radius:50%;background:radial-gradient(circle,#FFF6DF 0 30%,#FFC089 66%,rgba(255,192,137,0) 71%)}
-.sea .wave{position:absolute;left:0;width:200%;height:64px;background-repeat:repeat-x;background-size:160px 64px;animation:drift 9s linear infinite}
-.sea .w1{bottom:30px;opacity:.75;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='64'%3E%3Cpath d='M0 18 Q40 4 80 18 T160 18 V64 H0Z' fill='%2378B5D7'/%3E%3C/svg%3E")}
-.sea .w2{z-index:2;bottom:-8px;animation-duration:6s;animation-direction:reverse;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='64'%3E%3Cpath d='M0 20 Q40 8 80 20 T160 20 V64 H0Z' fill='%234D8FBA'/%3E%3C/svg%3E")}
-.sea.shore .w1{bottom:46px;height:30px;background-size:160px 64px}
-.sea.shore .w2{display:none}
+  background:linear-gradient(180deg,#E7C0D6 0%,#F7C6C0 32%,#FFC09E 62%,#FFB487 100%);box-shadow:0 22px 40px -26px rgba(40,80,120,.7)}
+.sea > *{position:absolute}
+.sea .cl{height:7px;border-radius:999px;background:linear-gradient(90deg, transparent, rgba(255,222,214,.95) 30%, rgba(255,205,196,.9) 70%, transparent);animation:cloud 14s ease-in-out infinite alternate}
+.sea .c1{top:30px;left:6%;width:48%}
+.sea .c2{top:48px;right:4%;width:36%;height:5px;opacity:.75;animation-delay:-6s}
+@keyframes cloud{to{transform:translateX(14px)}}
+.sea .sun{left:50%;top:63px;width:74px;height:74px;margin-left:-37px;border-radius:50%;
+  background:radial-gradient(circle at 50% 42%,#FFF8E6 0 26%,#FFD9A0 56%,#FFAA66 100%);
+  box-shadow:0 0 26px 10px rgba(255,196,128,.65), 0 0 80px 34px rgba(255,160,120,.35)}
+.sea .water{left:0;right:0;top:100px;bottom:0;background:linear-gradient(180deg,#F3A792 0%,#C6A3B8 14%,#86AFD0 38%,#5A90BE 100%)}
+.sea .water::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:rgba(255,236,210,.9)}
+/* the sun's light on the water: short bright lines, shimmering */
+.sea .glint{left:50%;top:102px;width:84px;height:44px;margin-left:-42px;
+  background:repeating-linear-gradient(180deg, rgba(255,238,205,.95) 0 2px, transparent 2px 6px);
+  -webkit-mask-image:radial-gradient(ellipse 50% 100% at 50% 0%, #000 30%, transparent 75%);mask-image:radial-gradient(ellipse 50% 100% at 50% 0%, #000 30%, transparent 75%);
+  animation:glint 2.4s ease-in-out infinite alternate}
+@keyframes glint{from{opacity:.65;transform:scaleX(.85)}to{opacity:1;transform:scaleX(1.12)}}
+.sea .sand{left:-10%;right:-10%;top:126px;bottom:0;border-radius:50% 50% 0 0 / 14px 14px 0 0;
+  background:linear-gradient(180deg,#F6E2BD 0%,#EBCB95 100%);box-shadow:0 -3px 0 rgba(255,255,255,.65)}
+.sea .wave{left:0;width:200%;height:64px;background-repeat:repeat-x;background-size:160px 64px;animation:drift 9s linear infinite}
+.sea .w1{bottom:14px;opacity:.7;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='64'%3E%3Cpath d='M0 18 Q40 4 80 18 T160 18 V64 H0Z' fill='%2378B5D7'/%3E%3C/svg%3E")}
+.sea .w2{z-index:2;bottom:-14px;animation-duration:6s;animation-direction:reverse;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='64'%3E%3Cpath d='M0 20 Q40 8 80 20 T160 20 V64 H0Z' fill='%234D8FBA'/%3E%3C/svg%3E")}
+.sea.shore .w1,.sea.shore .w2{display:none}
 @keyframes drift{to{transform:translateX(-160px)}}
-.bot{position:absolute;bottom:22px;width:38px;border:0;background:none;padding:0;display:flex;flex-direction:column-reverse;align-items:center;gap:5px;z-index:1;color:inherit}
+.bot{position:absolute;bottom:20px;width:38px;border:0;background:none;padding:0;display:flex;flex-direction:column-reverse;align-items:center;gap:5px;z-index:1;color:inherit}
 .bot.me{left:calc(30% - 19px)}
 .bot.other{left:calc(70% - 19px)}
 .sea.shore .bot{bottom:12px}
@@ -571,7 +590,15 @@ body.mood-sea{background:
 .pbottle .b-g{fill:rgba(255,255,255,.22);stroke:#fff}
 .pbottle b{display:block;font-family:var(--display);font-weight:800;font-size:64px;line-height:1}
 .pbottle span{display:block;font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.88;margin-top:6px}
-@media (prefers-reduced-motion:reduce){.sea .wave,.bob,.bot,.bot *,.paper,.paper *{animation:none !important}}
+/* with the letters of a bottle on the card: the bottle small on the left, the letters on paper under it */
+.pbottle.sm{justify-content:flex-start;gap:14px}
+.pbottle.sm svg{width:40px}
+.pbottle.sm b{font-size:44px}
+.pbottle i{display:block;font-style:normal;font-weight:700;font-size:15px;margin-top:4px}
+.pletters{display:flex;flex-direction:column;gap:12px}
+.pletters .pq{font-weight:700;font-size:16px;line-height:1.3}
+.pletters .paper p{font-size:23px;line-height:31px}
+@media (prefers-reduced-motion:reduce){.sea .wave,.sea .cl,.sea .glint,.bob,.bot,.bot *,.paper,.paper *{animation:none !important}}
 
 /* The result as a picture, when the phone cannot share it directly */
 .storyimg{display:block;width:min(100%,300px);margin:0 auto;border-radius:22px;box-shadow:var(--sh);-webkit-touch-callout:default}
@@ -712,7 +739,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27f";
+  var MEIVI_RELEASE = "2026-11-27g";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

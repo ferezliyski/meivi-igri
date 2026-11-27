@@ -412,7 +412,7 @@
       /* the letters are for the two of them: the card (and the picture to share) says only how many were written */
       const n = g.log.reduce((sum, e) => sum + e.a.filter(Boolean).length, 0);
       /* in the room: every round a bottle on a shelf, which opens the two letters of that round */
-      const shelf = { k: "bshelf", key: "g" + g.id + "end", hint: t.shelfHint, items: g.log.map(e => ({ q: e.q, a: c.ids.map((id, i) => ({ from: c.name(id), text: e.a[i] || t.empty })) })) };
+      const shelf = { k: "bshelf", key: "g" + g.id + "end", hint: t.shelfHint, hintOpen: t.shelfOpen, items: g.log.map(e => ({ q: e.q, a: c.ids.map((id, i) => ({ from: c.name(id), text: e.a[i] || t.empty })) })) };
       return { blocks, poster: { hero: { kind: "bottle", big: String(n), word: t.written(n), title: t.keepTitle, names: pair(c) } }, rest: [{ k: "h", text: t.keep }, shelf] };
     }
   });

@@ -226,7 +226,8 @@
   const keyOf = k => (room.st.code || "") + ":" + k;
   /* a glass bottle with a rolled letter and a cork (the parts are coloured and moved by the styles) */
   const bottle = () => `<svg viewBox="0 0 60 140" aria-hidden="true"><path class="b-g" d="M14 52Q14 40 22 36V12H38V36Q46 40 46 52V126Q46 136 36 136H24Q14 136 14 126Z"/><path class="b-hl" d="M19 58V122"/><rect class="b-roll" x="22" y="60" width="16" height="58" rx="7"/><rect class="b-rib" x="22" y="85" width="16" height="5"/><rect class="b-cork" x="20.5" y="2" width="19" height="15" rx="3.5"/></svg>`;
-  const waves = (front) => `<span class="sun"></span><i class="wave w1"></i>${front}<i class="wave w2"></i>`;
+  /* the sky with two thin clouds, the sun half under the horizon, its light on the water; on the shore, sand */
+  const waves = (front, shore) => `<i class="cl c1"></i><i class="cl c2"></i><span class="sun"></span><i class="water"></i><i class="glint"></i><i class="wave w1"></i>${shore ? `<i class="sand"></i>` : ""}${front}<i class="wave w2"></i>`;
   /* the letter of the other, written letter by letter */
   function inked(text) {
     const ch = Array.from(String(text)), step = Math.max(12, Math.min(40, Math.round(3000 / Math.max(1, ch.length))));
@@ -243,16 +244,21 @@
       const k = keyOf(b.key), opened = !!played[k + ":open"], ink = inked(b.text), o = opened ? once(k + ":open", ink.ms) : null;
       const st = o ? ` style="--el:-${o.el}ms;--step:${ink.step}ms"` : "";
       return `<div class="sea shore">${waves(`<span class="bot me"><span class="bob">${bottle()}</span><b>${esc(b.me)}</b></span>` +
-          `<button class="bot other tap${opened ? " opened" + o.c : ""}"${st} data-act="r-local" data-c="open-bottle" data-k="${esc(k)}" aria-label="${esc(b.tap)}" ${opened ? "disabled" : ""}><span class="bob">${bottle()}</span><b>${esc(b.other)}</b></button>`)}</div>
+          `<button class="bot other tap${opened ? " opened" + o.c : ""}"${st} data-act="r-local" data-c="open-bottle" data-k="${esc(k)}" aria-label="${esc(b.tap)}" ${opened ? "disabled" : ""}><span class="bob">${bottle()}</span><b>${esc(b.other)}</b></button>`, true)}</div>
         ${opened ? `<article class="paper from${o.c}"${st}><span>${esc(b.from)}</span><p class="type">${ink.html}</p></article>
         <article class="paper mine${o.c}"${st}><span>${esc(b.mineLabel)}</span><p>${esc(b.mine)}</p></article>` : `<p class="note rnote">${esc(b.tap)}</p>`}`;
     }
     if (b.k === "bshelf") {
-      const k = keyOf(b.key), sel = ui.shelf[k], it = b.items[sel];
+      const k = keyOf(b.key), sel = ui.shelf[k];
       return `<div class="bshelf">${b.items.map((x, i) => `<button class="sbot${sel === i ? " on" : ""}" data-act="r-local" data-c="shelf" data-k="${esc(k)}" data-i="${i}" aria-pressed="${sel === i}">${bottle()}<b>${i + 1}</b></button>`).join("")}</div>
-        ${it ? `<p class="rp strong">${esc(it.q)}</p>${it.a.map(a => `<article class="paper"><span>${esc(a.from)}</span><p>${esc(a.text)}</p></article>`).join("")}` : `<p class="note rnote">${esc(b.hint)}</p>`}`;
+        <p class="note rnote">${esc(b.items[sel] ? b.hintOpen : b.hint)}</p>`;
     }
     return "";
+  }
+  /* The letters of the bottle chosen on the shelf: they stand on the card of the result and on the picture to share. */
+  function openedLetters(V) {
+    const s = (V.rest || []).find(b => b.k === "bshelf");
+    return s ? s.items[ui.shelf[keyOf(s.key)]] || null : null;
   }
   function block(b, color) {
     if (b.k === "sea" || b.k === "shore" || b.k === "bshelf") return letterBlock(b);
@@ -271,13 +277,15 @@
   /* The result of a game as one card in the colour of the game: what happened, then who stands where.
      The same data makes the picture to share (story.js), so the card shows exactly what will be shared. */
   const wideRank = r => r.list.some(p => p.v.some(v => String(v).length > 3));
-  function poster(P, top) {
+  function poster(P, top, L) {
     const h = P.hero || {}, r = P.rank;
     let hero;
     if (h.kind === "ring") hero = `<div class="ring" style="--p:${Math.max(0, Math.min(100, +h.p || 0))}"><b${String(h.big).length > 3 ? ` class="sm"` : ""}>${esc(h.big)}</b><span${String(h.word).length > 12 ? ` class="sm"` : ""}>${esc(h.word)}</span></div>
         <p class="ptitle${/\S{15,}/.test(h.title) ? " long" : ""}">${esc(h.title)}</p>
         <p class="pnames">${esc(h.names)}</p>`;
-    else if (h.kind === "bottle") hero = `<div class="pbottle">${bottle()}<div><b>${esc(h.big)}</b><span>${esc(h.word)}</span></div></div>
+    else if (h.kind === "bottle") hero = L
+      ? `<div class="pbottle sm">${bottle()}<div><b>${esc(h.big)}</b><span>${esc(h.word)}</span><i>${esc(h.names)}</i></div></div>`
+      : `<div class="pbottle">${bottle()}<div><b>${esc(h.big)}</b><span>${esc(h.word)}</span></div></div>
         <p class="ptitle">${esc(h.title)}</p><p class="pnames">${esc(h.names)}</p>`;
     else if (h.kind === "name") hero = `<p class="plabel">${esc(h.label)}</p><p class="pname${String(h.name).length > 12 ? " long" : ""}">${esc(h.name)}</p>`;
     else hero = `<p class="pname long">${esc(h.title)}</p>`;
@@ -289,6 +297,7 @@
         <div class="phead"><span class="plogo"><img class="logo" src="logo-ink.png" alt="Meivi"></span><span>${esc(T.brand)}</span></div>
         <p class="pgame"><span aria-hidden="true">${top.icon}</span>${esc(top.title)}</p>
         <div class="phero">${hero}</div>
+        ${L ? `<div class="pletters"><p class="pq">${esc(L.q)}</p>${L.a.map(a => `<article class="paper"><span>${esc(a.from)}</span><p>${esc(a.text)}</p></article>`).join("")}</div>` : ""}
         ${rank}
         <p class="pfoot">${T.playToo(`<b>${esc(CFG.site)}</b>`)}</p>
       </section>`;
@@ -297,10 +306,10 @@
   const story = { key: "", file: null, url: "", sheet: false, wanted: false };
   function prepareStory(V) {
     if (!MEIVI.story || !V || !V.poster) return;
-    const P = V.poster, key = room.st.code + "|" + JSON.stringify(P), game = room.st.game;
+    const P = V.poster, L = openedLetters(V), key = room.st.code + "|" + JSON.stringify(P) + JSON.stringify(L), game = room.st.game;
     if (story.key === key) return;
     Object.assign(story, { key, file: null, url: "", sheet: false, wanted: false });
-    MEIVI.story.make({ color: V.top.color, icon: V.top.icon, game: V.top.title, brand: T.brand, foot: T.playToo(location.host), hero: P.hero, rows: [],
+    MEIVI.story.make({ color: V.top.color, icon: V.top.icon, game: V.top.title, brand: T.brand, foot: T.playToo(location.host), hero: P.hero, rows: [], letters: L,
         rank: P.rank ? Object.assign({}, P.rank, { colW: wideRank(P.rank) ? 300 : 0 }) : null })
       .then(blob => {
         if (!blob || story.key !== key) return;
@@ -403,7 +412,7 @@
       <p class="rsub">${esc(V.sub || "")}</p>
       ${V.bar != null ? `<div class="bar rbar c-${V.top.color}"><i style="width:${+V.bar}%"></i></div>` : ""}
       ${banner ? `<p class="flash">${esc(banner)}</p>` : ""}
-      ${V.poster ? poster(V.poster, V.top) + (V.rest || []).map(b => block(b, V.top.color)).join("") : (V.blocks || []).map(b => block(b, V.top.color)).join("")}
+      ${V.poster ? poster(V.poster, V.top, openedLetters(V)) + (V.rest || []).map(b => block(b, V.top.color)).join("") : (V.blocks || []).map(b => block(b, V.top.color)).join("")}
       ${input(V.input, ui.draft)}
       ${V.note ? `<p class="note rnote">${esc(V.note)}</p>` : ""}
       ${V.party ? `<div class="stack">${V.poster && MEIVI.story ? `<button class="btn" data-act="r-local" data-c="share">${esc(story.wanted && !story.file ? T.shareWait : T.shareStory)}</button>` : ""}${st.game && window.MACC && MACC.gameRating ? MACC.gameRating("m:" + st.game) : ""}</div>` : ""}
@@ -453,7 +462,7 @@
       else if (c === "rules-close") { if (b.classList.contains("sheet") && target !== b) return false; ui.rules = false; }
       else if (c === "share") shareStory();
       else if (c === "open-bottle") { if (!played[b.dataset.k + ":open"]) played[b.dataset.k + ":open"] = Date.now(); }
-      else if (c === "shelf") { const k = b.dataset.k, i = +b.dataset.i; ui.shelf[k] = ui.shelf[k] === i ? undefined : i; }
+      else if (c === "shelf") { const k = b.dataset.k, i = +b.dataset.i; ui.shelf[k] = ui.shelf[k] === i ? undefined : i; ui.toLetters = ui.shelf[k] != null; }
       else if (c === "story-close") { if (b.classList.contains("sheet") && target !== b) return false; story.sheet = false; }
       else if (c === "leave") { room.leave(); MEIVI.app.show("multi"); }
       return true;
@@ -481,6 +490,8 @@
     const box = document.querySelector("[data-qr]");
     if (box && !box.innerHTML) drawQr(box);
     if (room.st.mode) prepareStory(room.myView());
+    /* a bottle opened on the shelf: show its letters on the card above */
+    if (ui.toLetters) { ui.toLetters = false; const el = document.querySelector(".pletters"); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" }); }
     const ta = document.getElementById("rText");
     if (ta) { ta.addEventListener("input", () => { ui.draft = ta.value; }); keepTyping(ta, "typing"); } else ui.typing = false;
     /* the opinion of the game, written on the last screen */
