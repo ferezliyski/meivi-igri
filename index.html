@@ -325,7 +325,6 @@ body.dark{
 body.dark .bar i{background:linear-gradient(90deg, color-mix(in srgb, var(--m, #fff) 45%, #fff), #fff)}
 body.mood-adult{--flashc:#FFD3CB}
 body.dark .card{box-shadow:0 0 0 1px rgba(255,255,255,.1), 0 26px 64px -18px color-mix(in srgb, var(--m, var(--hot)) 80%, transparent)}
-body.dark .card::before{filter:invert(1)}
 body.dark .deck::before{opacity:.3;box-shadow:none}
 body.dark .deck::after{opacity:.16}
 body.dark .opt.other{border-color:rgba(255,255,255,.35)}
@@ -487,7 +486,8 @@ button.mrow:active{transform:scale(.98)}
 .msoon{border:1px dashed #DDBFBE;border-radius:999px;background:rgba(255,255,255,.6);padding:12px 16px;min-height:46px;font-weight:700;font-size:14px;color:var(--muted)}
 .seg button[data-act="mn"]{font-weight:700;font-size:17px}
 
-/* ---------- Letters in a bottle ---------- */
+/* ---------- Letters in a bottle ----------
+   Names of animations here must not repeat names used elsewhere (a later @keyframes of the same name replaces the earlier one everywhere). */
 /* the page: a sea at sunset */
 body.mood-sea{background:
   radial-gradient(70% 32% at 50% 0%, #FFD2AA 0, transparent 70%) fixed,
@@ -567,10 +567,10 @@ body.mood-sea{background:
 .bot.tap:not(.opened) .bob{animation:nudge 1.3s ease-in-out infinite alternate}
 @keyframes nudge{from{transform:rotate(12deg);filter:drop-shadow(0 0 0 rgba(255,255,255,0))}to{transform:rotate(4deg) translateY(-5px);filter:drop-shadow(0 0 10px #fff)}}
 .bot.opened .b-cork,.bot.opened .b-roll,.bot.opened .b-rib{opacity:0}
-.bot.opened.play .b-cork{animation:pop .55s cubic-bezier(.2,.7,.4,1) var(--el,0ms) both}
-@keyframes pop{from{transform:none;opacity:1}to{transform:translate(-26px,-56px) rotate(-200deg);opacity:0}}
-.bot.opened.play .b-roll,.bot.opened.play .b-rib{animation:rise .7s ease-in calc(.35s + var(--el,0ms)) both}
-@keyframes rise{from{transform:none;opacity:1}70%{opacity:1}to{transform:translateY(-90px);opacity:0}}
+.bot.opened.play .b-cork{animation:corkpop .55s cubic-bezier(.2,.7,.4,1) var(--el,0ms) both}
+@keyframes corkpop{from{transform:none;opacity:1}to{transform:translate(-26px,-56px) rotate(-200deg);opacity:0}}
+.bot.opened.play .b-roll,.bot.opened.play .b-rib{animation:rollout .7s ease-in calc(.35s + var(--el,0ms)) both}
+@keyframes rollout{from{transform:none;opacity:1}70%{opacity:1}to{transform:translateY(-90px);opacity:0}}
 .paper.from.play{transform-origin:50% 0;animation:unroll .6s ease-out calc(1s + var(--el,0ms)) both}
 @keyframes unroll{from{transform:rotate(-.8deg) scaleY(.05);opacity:0}to{transform:rotate(-.8deg);opacity:1}}
 .paper.from.play .type span{animation:ink .2s ease-out calc(1.6s + var(--i) * var(--step) + var(--el,0ms)) both}
@@ -745,7 +745,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27k";
+  var MEIVI_RELEASE = "2026-11-27l";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
