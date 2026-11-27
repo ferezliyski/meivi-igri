@@ -252,9 +252,12 @@ function viewRules(){
     </header>
     <p class="how">${g.desc}</p>
     <ol class="rrules">${(g.rules || []).map(r => `<li>${h(r)}</li>`).join("")}</ol>
-    <div class="row rfoot">${first
+    ${first && window.MACC && MACC.locked("s:" + g.id)
+      /* a locked game is unlocked right here, under its rules, as with the games for several phones */
+      ? `<div class="stack rfoot">${MACC.gate("s:" + g.id, "s:" + g.id)}<button class="btn ghost" data-act="rules-close">${T.close}</button></div>`
+      : `<div class="row rfoot">${first
       ? `<button class="btn ghost" data-act="rules-close">${T.close}</button><button class="btn" data-act="rules-go">${T.rulesGo}</button>`
-      : `<button class="btn" data-act="rules-close">${T.rulesOk}</button>`}</div>
+      : `<button class="btn" data-act="rules-close">${T.rulesOk}</button>`}</div>`}
   </div></div>`;
 }
 
@@ -784,7 +787,8 @@ MEIVI.app = {
   /* Back from signing in: to the game the player wanted ("s:<id>" one phone, "m:<id>" multiplayer). */
   open(key){
     const id = String(key).slice(2);
-    if(key[0] === "s" && GAMES.some(g => g.id === id)){ S.g = id; S.screen = "setup"; }
+    /* a one-phone game: its rules, where it is unlocked */
+    if(key[0] === "s" && GAMES.some(g => g.id === id)){ S.g = null; S.screen = "home"; S.rules = id; }
     else if(key[0] === "m" && MULTI){ S.g = null; S.screen = "multi"; if(window.MROOM && MEIVI.mready(id)) MROOM.ui.sheet = { k: "rules", game: id }; }
     render(); window.scrollTo(0,0);
   }
