@@ -15,6 +15,7 @@
    A view is plain data, never HTML:
      { top: {icon, title, color}, sub, bar, blocks: [...], input, note, host: [...], foot: [...] }
      bar     how far the game has come, in percent (a line under the round), when the game counts rounds
+     On the last screen also: poster (the result as one card, see rooms-games.js) and rest (blocks under the card).
      blocks  {k: "h" | "p" | "card" | "rows" | "chips" | "code" | "wait" | "big" | "letter", ...}
      input   {k: "choice", options: [{v, t, sub, dis, tag}], done, pills, cols}
              {k: "text", max, ph, sent} | {k: "btn", t, v}
@@ -83,7 +84,7 @@
       }
       if (st.phase === "end") {
         const f = st.g ? d.final(ctx(), st.g) : { blocks: [] };
-        return { top, sub: X.gameOver, blocks: f.blocks, party: true,
+        return { top, sub: X.gameOver, blocks: f.blocks, poster: f.poster, rest: f.rest, party: true,
           host: isHost ? [{ t: X.again, cmd: "again" }, { t: X.closeRoom, cmd: "close", ghost: true, sure: true }] : null,
           foot: isHost ? null : [{ t: X.leave, local: "leave" }] };
       }
@@ -211,6 +212,52 @@
     if (b.k === "code") return `<section class="rcode"><span>${esc(X.roomCode)}</span><b>${esc(b.code)}</b><div class="qr" data-qr="${esc(b.link)}">${qrCache[b.link] || ""}</div><small>${esc(X.scan(CFG.playAt || location.host))}</small></section>`;
     return "";
   }
+  /* The result of a game as one card in the colour of the game: what happened, then who stands where.
+     The same data makes the picture to share (story.js), so the card shows exactly what will be shared. */
+  const wideRank = r => r.list.some(p => p.v.some(v => String(v).length > 3));
+  function poster(P, top) {
+    const h = P.hero || {}, r = P.rank;
+    let hero;
+    if (h.kind === "ring") hero = `<div class="ring" style="--p:${Math.max(0, Math.min(100, +h.p || 0))}"><b${String(h.big).length > 3 ? ` class="sm"` : ""}>${esc(h.big)}</b><span${String(h.word).length > 12 ? ` class="sm"` : ""}>${esc(h.word)}</span></div>
+        <p class="ptitle${/\S{15,}/.test(h.title) ? " long" : ""}">${esc(h.title)}</p>
+        <p class="pnames">${esc(h.names)}</p>`;
+    else if (h.kind === "name") hero = `<p class="plabel">${esc(h.label)}</p><p class="pname${String(h.name).length > 12 ? " long" : ""}">${esc(h.name)}</p>`;
+    else hero = `<p class="pname long">${esc(h.title)}</p>`;
+    const rank = r ? `<div class="prank${wideRank(r) ? " wide" : ""}" style="--c:${r.cols.length}">
+        <div class="pr ph"><span>${esc(r.head)}</span>${r.cols.map(t => `<span>${esc(t)}</span>`).join("")}</div>
+        ${r.list.map((p, i) => `<div class="pr"><span>${r.plain ? "" : `<i>${i + 1}</i>`}${esc(p.p)}</span>${p.v.map(v => `<span>${esc(v)}</span>`).join("")}</div>`).join("")}
+      </div>` : "";
+    return `<section class="poster c-${top.color}">
+        <div class="phead"><span class="plogo"><img class="logo" src="logo-ink.png" alt="Meivi"></span><span>${esc(T.brand)}</span></div>
+        <p class="pgame"><span aria-hidden="true">${top.icon}</span>${esc(top.title)}</p>
+        <div class="phero">${hero}</div>
+        ${rank}
+        <p class="pfoot">${T.playToo(`<b>${esc(CFG.site)}</b>`)}</p>
+      </section>`;
+  }
+  /* The card as a picture for a story. It is made as soon as the last screen shows, so that "share" can open the phone's menu at once. */
+  const story = { key: "", file: null, url: "", sheet: false, wanted: false };
+  function prepareStory(V) {
+    if (!MEIVI.story || !V || !V.poster) return;
+    const P = V.poster, key = room.st.code + "|" + JSON.stringify(P), game = room.st.game;
+    if (story.key === key) return;
+    Object.assign(story, { key, file: null, url: "", sheet: false, wanted: false });
+    MEIVI.story.make({ color: V.top.color, icon: V.top.icon, game: V.top.title, brand: T.brand, foot: T.playToo(location.host), hero: P.hero, rows: [],
+        rank: P.rank ? Object.assign({}, P.rank, { colW: wideRank(P.rank) ? 300 : 0 }) : null })
+      .then(blob => {
+        if (!blob || story.key !== key) return;
+        story.file = new File([blob], "meivi-" + game + ".png", { type: "image/png" }); story.url = URL.createObjectURL(blob);
+        if (story.wanted && MEIVI.app) MEIVI.app.refresh();
+      }).catch(() => {});
+  }
+  function shareStory() {
+    if (!story.file) { story.wanted = true; return; }
+    story.wanted = false;
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [story.file] })) { navigator.share({ files: [story.file], text: T.shareText(gameName(room.st.game), location.origin) }).catch(() => {}); return; }
+    } catch (e) {}
+    story.sheet = true;   /* no sharing of pictures on this phone: show it, to be kept by hand */
+  }
   function input(i, draft) {
     if (!i) return "";
     if (i.k === "choice") {
@@ -297,14 +344,18 @@
       <p class="rsub">${esc(V.sub || "")}</p>
       ${V.bar != null ? `<div class="bar rbar c-${V.top.color}"><i style="width:${+V.bar}%"></i></div>` : ""}
       ${banner ? `<p class="flash">${esc(banner)}</p>` : ""}
-      ${(V.blocks || []).map(b => block(b, V.top.color)).join("")}
+      ${V.poster ? poster(V.poster, V.top) + (V.rest || []).map(b => block(b, V.top.color)).join("") : (V.blocks || []).map(b => block(b, V.top.color)).join("")}
       ${input(V.input, ui.draft)}
       ${V.note ? `<p class="note rnote">${esc(V.note)}</p>` : ""}
-      ${V.party && st.game && window.MACC && MACC.gameRating ? `<div class="stack">${MACC.gameRating("m:" + st.game)}</div>` : ""}
-      ${V.host ? `<div class="stack rhost">${V.host.map(b => btn(b, "r-cmd")).join("")}</div>` : ""}
+      ${V.party ? `<div class="stack">${V.poster && MEIVI.story ? `<button class="btn" data-act="r-local" data-c="share">${esc(story.wanted && !story.file ? T.shareWait : T.shareStory)}</button>` : ""}${st.game && window.MACC && MACC.gameRating ? MACC.gameRating("m:" + st.game) : ""}</div>` : ""}
+      ${V.host ? `<div class="stack rhost">${V.host.map(b => btn(V.poster ? Object.assign({ ghost: true }, b) : b, "r-cmd")).join("")}</div>` : ""}
       ${V.foot ? `<div class="stack rhost">${V.foot.map(b => btn(Object.assign({ ghost: true }, b), "r-local")).join("")}</div>` : ""}
       ${ui.rules && st.game ? `<div class="sheet rsheet" data-act="r-local" data-c="rules-close"><div role="dialog">${rulesHtml(st.game)}<div class="stack rfoot"><button class="btn" data-act="r-local" data-c="rules-close">${esc(X.close)}</button></div></div></div>` : ""}
-      ${V.party && window.MACC && MACC.ratingSheet ? MACC.ratingSheet() : ""}`;
+      ${V.party && window.MACC && MACC.ratingSheet ? MACC.ratingSheet() : ""}
+      ${V.poster && story.sheet && story.url ? `<div class="sheet" data-act="r-local" data-c="story-close"><div role="dialog" aria-label="${esc(T.shareTitle)}">
+        <h1 class="rsheet-h">${esc(T.shareTitle)}</h1><img class="storyimg" src="${story.url}" alt=""><p class="note">${esc(T.shareKeep)}</p>
+        <a class="btn" href="${story.url}" download="meivi-${esc(st.game)}.png">${esc(T.shareSave)}</a>
+        <button class="btn ghost" data-act="r-local" data-c="story-close">${esc(X.close)}</button></div></div>` : ""}`;
   }
   /* The mood of the page while a game is played in the room (the styles "mood-<name>", set by app.js):
      a game for two has the mood of the couples' games, an adult one the dark one, a game for a company the friends' one.
@@ -340,6 +391,8 @@
     if (act === "r-local") {
       if (c === "rules") ui.rules = true;
       else if (c === "rules-close") { if (b.classList.contains("sheet") && target !== b) return false; ui.rules = false; }
+      else if (c === "share") shareStory();
+      else if (c === "story-close") { if (b.classList.contains("sheet") && target !== b) return false; story.sheet = false; }
       else if (c === "leave") { room.leave(); MEIVI.app.show("multi"); }
       return true;
     }
@@ -365,6 +418,7 @@
   function after() {
     const box = document.querySelector("[data-qr]");
     if (box && !box.innerHTML) drawQr(box);
+    if (room.st.mode) prepareStory(room.myView());
     const ta = document.getElementById("rText");
     if (ta) { ta.addEventListener("input", () => { ui.draft = ta.value; }); keepTyping(ta, "typing"); } else ui.typing = false;
     /* the opinion of the game, written on the last screen */

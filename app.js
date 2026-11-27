@@ -579,7 +579,7 @@ function viewEnd(){
   const g = game(), s = summary(), n = S.players.length;
   let rows = s.rows.slice(), hero;
   if(s.big){
-    hero = `<div class="ring" style="--p:${parseInt(s.big, 10)}"><b>${s.big}</b><span>${T.matchWord}</span></div>
+    hero = `<div class="ring" style="--p:${parseInt(s.big, 10)}"><b${String(s.big).length > 3 ? ` class="sm"` : ""}>${s.big}</b><span>${T.matchWord}</span></div>
       <p class="ptitle${/\S{15,}/.test(s.title) ? " long" : ""}">${h(s.title)}</p>
       <p class="pnames">${h(S.players[0])} <i>${T.and}</i> ${h(S.players[1])}</p>`;
   }else if(g.eng==="quiz" && n > 1 && rows.length){

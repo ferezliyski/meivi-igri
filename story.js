@@ -2,9 +2,11 @@
    Meivi games: the result as a picture for a story (1080 × 1920), drawn on a canvas.
    app.js hands over plain data (no language here):
      { color, icon, game, brand, foot,
-       hero: {kind: "ring", big, word, title, names} | {kind: "podium", label, top: [{p, b}]}
+       hero: {kind: "ring", big, word, title, names, p} | {kind: "podium", label, top: [{p, b}]}
            | {kind: "name", label, name} | {kind: "title", title},
-       rows: [[label, value]], rank: {head, cols: [title], list: [{p, v: [..]}]} | null }
+       rows: [[label, value]], rank: {head, cols: [title], list: [{p, v: [..]}], colW, plain} | null }
+     ring: "p" is how much of the ring is filled, in percent, when "big" is not a percentage itself.
+     rank: "colW" is the width of a column when it holds words, not short numbers; "plain" is a list with no places.
    MEIVI.story.make(data) -> Promise<Blob> (a PNG).
    ===================================================================== */
 (function () {
@@ -66,10 +68,12 @@
     const h = d.hero, inner = W - 2 * PAD;
     x.fillStyle = "#fff";
     if (h.kind === "ring") {
-      const cx = W / 2, cy = y + 260, R = 240, p = Math.max(0, Math.min(100, parseInt(h.big, 10) || 0)) / 100;
+      const cx = W / 2, cy = y + 260, R = 240, p = Math.max(0, Math.min(100, (h.p != null ? +h.p : parseInt(h.big, 10)) || 0)) / 100;
       x.lineWidth = 46; x.strokeStyle = "rgba(255,255,255,.22)"; x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.stroke();
       x.strokeStyle = "#fff"; x.lineCap = "round"; x.beginPath(); x.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); x.stroke(); x.lineCap = "butt";
-      x.textAlign = "center"; x.fillStyle = "#fff"; x.font = "800 150px " + DISPLAY; x.fillText(h.big, cx, cy + 40);
+      x.textAlign = "center"; x.fillStyle = "#fff";
+      x.font = "800 " + (String(h.big).length > 3 ? 112 : 150) + "px " + DISPLAY;   /* "100%" and "10/10" must stay inside the ring */
+      x.fillText(h.big, cx, cy + 40);
       x.font = "700 34px " + BODY; x.fillText(String(h.word).toUpperCase(), cx, cy + 110);
       y = cy + R + 110;
       const t = fit(x, h.title, "800 #px " + DISPLAY, 64, 44, inner, 2);
@@ -121,14 +125,17 @@
       const rowH = 74, show = Math.max(1, Math.min(r.list.length, Math.floor((room - 110) / rowH)));
       const boxH = 90 + show * rowH;
       x.fillStyle = "rgba(255,255,255,.13)"; round(x, PAD, y, inner, boxH, 34); x.fill();
-      const colX = i => W - PAD - 40 - (r.cols.length - 1 - i) * 130;
+      const colW = r.colW || 130, colX = i => W - PAD - 40 - (r.cols.length - 1 - i) * colW;
       x.fillStyle = "#fff"; x.font = "700 24px " + BODY; x.globalAlpha = 0.85; x.fillText(String(r.head).toUpperCase(), PAD + 32, y + 56);
       x.textAlign = "right"; r.cols.forEach((t, i) => x.fillText(String(t).toUpperCase(), colX(i), y + 56)); x.textAlign = "left"; x.globalAlpha = 1;
       r.list.slice(0, show).forEach((p, i) => {
         const t = y + 90 + i * rowH;
-        x.fillStyle = i === 0 ? "#fff" : "rgba(255,255,255,.25)"; x.beginPath(); x.arc(PAD + 56, t + 36, 22, 0, 7); x.fill();
-        x.fillStyle = i === 0 ? m : "#fff"; x.textAlign = "center"; x.font = "700 24px " + BODY; x.fillText(String(i + 1), PAD + 56, t + 45);
-        x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "700 36px " + BODY; x.fillText(lines(x, p.p, colX(0) - 130 - PAD - 100, 1)[0], PAD + 100, t + 49);
+        const left = r.plain ? PAD + 32 : PAD + 100;
+        if (!r.plain) {
+          x.fillStyle = i === 0 ? "#fff" : "rgba(255,255,255,.25)"; x.beginPath(); x.arc(PAD + 56, t + 36, 22, 0, 7); x.fill();
+          x.fillStyle = i === 0 ? m : "#fff"; x.textAlign = "center"; x.font = "700 24px " + BODY; x.fillText(String(i + 1), PAD + 56, t + 45);
+        }
+        x.fillStyle = "#fff"; x.textAlign = "left"; x.font = "700 36px " + BODY; x.fillText(lines(x, p.p, colX(0) - colW - left, 1)[0], left, t + 49);
         x.textAlign = "right"; p.v.forEach((v, j) => x.fillText(String(v), colX(j), t + 49)); x.textAlign = "left";
       });
     }

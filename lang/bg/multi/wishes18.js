@@ -23,6 +23,8 @@ MEIVI.mtext("wishes18", {
       none: "Тази идея остава настрана. Играта не издава кой какво е отговорил."
     },
     matches: "общи желания",
+    /* the card on the last screen: only how many, never which */
+    shareTitle: "Кои са, остава между вас",
     maybeTitle: "Струва си да поговорите",
     nothing: "Този път нямате общи желания. Пробвайте пак: идеите ще са други."
   },

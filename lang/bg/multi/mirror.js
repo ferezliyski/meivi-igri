@@ -19,6 +19,7 @@ MEIVI.mtext("mirror", {
     answerOf: name => `${name} отговори`,
     guessOf: name => `${name} предположи`,
     scoreTitle: "Кой кого познава",
+    word: "познати",
     guessed: (hit, all) => `${hit} от ${all}`,
     tier: percent => percent >= 85 ? "Четете си мислите" : percent >= 65 ? "Познавате се отлично" : percent >= 40 ? "Има още какво да откриете" : "Пълни сте с изненади един за друг"
   },

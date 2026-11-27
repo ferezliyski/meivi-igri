@@ -15,7 +15,10 @@ MEIVI.mtext("letters", {
     secret: "Другият няма да види писмото ти, докато не изпрати своето.",
     otherSent: name => `${name} вече пусна писмото си в бутилката.`,
     empty: "(празно писмо)",
-    keep: "Вашите писма"
+    keep: "Вашите писма",
+    /* the card on the last screen: only how many letters, never what they say */
+    written: n => n === 1 ? "написано писмо" : "написани писма",
+    keepTitle: "Писмата остават между вас"
   },
   prompts: [
     "Първото, което забелязах у теб, беше…",

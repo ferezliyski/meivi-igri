@@ -21,6 +21,17 @@
   const best = (c, score) => { const top = Math.max(...c.ids.map(id => score[id])); return c.ids.filter(id => score[id] === top).map(c.name); };
   const order = (c, list) => c.shuffle(list.map((_, i) => i));
   const over = g => !!g.end;
+  /* The last screen of a game is one card, and the same card is the picture a player can share (story.js).
+     final() gives:
+       poster  {hero, rank}: only what may be shown to other people
+               hero  {kind: "name", label, name} | {kind: "ring", big, p, word, title, names} | {kind: "title", title}
+               rank  {head, cols: [title], list: [{p: name, v: [value]}], plain}: best first; "plain" is a list with no places
+       rest    blocks under the card, seen in the room only (the letters, the wishes, a table that does not fit the card)
+       blocks  the same end for a phone that still runs an older version of the app */
+  const ranked = (c, score, head, col) => ({ head, cols: [col], list: c.ids.slice().sort((a, b) => score[b] - score[a]).map(id => ({ p: c.name(id), v: [score[id]] })) });
+  const listed = (c, head, ids, show, plain) => ({ head, cols: [""], plain: !!plain, list: ids.map(id => ({ p: c.name(id), v: [show(id)] })) });
+  const sorted = (c, score) => c.ids.slice().sort((a, b) => score[b] - score[a]);
+  const pair = c => c.ids.map(c.name).join(" " + c.ui.and + " ");
 
   /* ---------- 1. The mole: everyone knows the word except one ---------- */
   G("mole", {
@@ -77,7 +88,11 @@
       else if (name === "skip" && g.phase === "guess") this.finish(c, g, "caught");
       else if (name === "next" && g.phase === "result") { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); }
     },
-    final(c, g) { return { blocks: [{ k: "big", text: best(c, g.score).join(", "), sub: c.ui.winner }, table(c, g.score, c.ui.scores)] }; }
+    final(c, g) {
+      const win = best(c, g.score).join(", ");
+      return { blocks: [{ k: "big", text: win, sub: c.ui.winner }, table(c, g.score, c.ui.scores)],
+        poster: { hero: { kind: "name", label: c.ui.winner, name: win }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) } };
+    }
   });
 
   /* ---------- 2. Conquer the country: a region is yours only if nobody else reached for it ----------
@@ -120,8 +135,9 @@
     },
     final(c, g) {
       const lands = id => c.tx.regions.filter((r, i) => g.owner[i] === id).map(r => r[0]).join(", ") || c.tx.t.noLand;
-      return { blocks: [{ k: "big", text: best(c, g.score).join(", "), sub: c.tx.t.ruler }, table(c, g.score, c.ui.scores),
-        { k: "rows", title: c.tx.t.lands, rows: c.ids.map(id => ({ l: c.name(id), r: lands(id) })) }] };
+      const win = best(c, g.score).join(", "), owned = { k: "rows", title: c.tx.t.lands, rows: c.ids.map(id => ({ l: c.name(id), r: lands(id) })) };
+      return { blocks: [{ k: "big", text: win, sub: c.tx.t.ruler }, table(c, g.score, c.ui.scores), owned],
+        poster: { hero: { kind: "name", label: c.tx.t.ruler, name: win }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) }, rest: [owned] };
     }
   });
 
@@ -153,7 +169,11 @@
       if (name === "skip" && g.phase === "vote") { fillIn(g, c.ids); this.count(c, g); }
       else if (name === "next" && g.phase === "result") { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); }
     },
-    final(c, g) { return { blocks: [{ k: "big", text: best(c, g.pointed).join(", "), sub: c.tx.t.mostPointed }, table(c, g.score, c.tx.t.scoreTitle)] }; }
+    final(c, g) {
+      const top = best(c, g.pointed).join(", ");
+      return { blocks: [{ k: "big", text: top, sub: c.tx.t.mostPointed }, table(c, g.score, c.tx.t.scoreTitle)],
+        poster: { hero: { kind: "name", label: c.tx.t.mostPointed, name: top }, rank: ranked(c, g.score, c.tx.t.scoreTitle, c.ui.scores) } };
+    }
   });
 
   /* ---------- 4. The bomb: say a word, pass it on, do not hold it when it goes off ---------- */
@@ -189,8 +209,10 @@
     },
     final(c, g) {
       const low = Math.min(...c.ids.map(id => g.strikes[id])), names = c.ids.filter(id => g.strikes[id] === low).map(c.name);
+      const order = c.ids.slice().sort((a, b) => g.strikes[a] - g.strikes[b]);
       return { blocks: [{ k: "big", text: names.join(", "), sub: c.tx.t.survivor },
-        { k: "rows", title: c.tx.t.strikesTitle, rows: c.ids.slice().sort((a, b) => g.strikes[a] - g.strikes[b]).map(id => ({ l: c.name(id), r: String(g.strikes[id]) })) }] };
+        { k: "rows", title: c.tx.t.strikesTitle, rows: order.map(id => ({ l: c.name(id), r: String(g.strikes[id]) })) }],
+        poster: { hero: { kind: "name", label: c.tx.t.survivor, name: names.join(", ") }, rank: listed(c, c.tx.t.strikesTitle, order, id => g.strikes[id]) } };
     }
   });
 
@@ -270,8 +292,10 @@
     final(c, g) {
       const t = c.tx.t, e = g.event || {};
       const last = e.victim ? t.killed(c.name(e.victim)) : e.arrested ? t.arrested(c.name(e.arrested)) : "";
-      return { blocks: [{ k: "big", text: g.winner === "good" ? t.goodWin : g.winner === "bad" ? t.badWin : t.stopped, sub: last },
-        { k: "rows", title: t.whoWas, rows: c.ids.map(id => ({ l: c.name(id), r: t.roles[g.roles[id]], hot: g.roles[id] === "killer", dim: !g.alive.includes(id) })) }] };
+      const out = g.winner === "good" ? t.goodWin : g.winner === "bad" ? t.badWin : t.stopped;
+      return { blocks: [{ k: "big", text: out, sub: last },
+        { k: "rows", title: t.whoWas, rows: c.ids.map(id => ({ l: c.name(id), r: t.roles[g.roles[id]], hot: g.roles[id] === "killer", dim: !g.alive.includes(id) })) }],
+        poster: { hero: last ? { kind: "name", label: last, name: out } : { kind: "title", title: out }, rank: listed(c, t.whoWas, c.ids, id => t.roles[g.roles[id]], true) } };
     }
   });
 
@@ -310,7 +334,8 @@
     },
     final(c, g) {
       const t = c.tx.t, hit = c.ids.reduce((n, id) => n + g.score[id], 0), all = c.ids.reduce((n, id) => n + g.asked[id], 0), pct = all ? Math.round(hit / all * 100) : 0;
-      return { blocks: [{ k: "big", text: pct + "%", sub: t.tier(pct) }, { k: "rows", title: t.scoreTitle, rows: c.ids.map(id => ({ l: c.name(id), r: t.guessed(g.score[id], g.asked[id]) })) }] };
+      return { blocks: [{ k: "big", text: pct + "%", sub: t.tier(pct) }, { k: "rows", title: t.scoreTitle, rows: c.ids.map(id => ({ l: c.name(id), r: t.guessed(g.score[id], g.asked[id]) })) }],
+        poster: { hero: { kind: "ring", big: pct + "%", p: pct, word: t.word, title: t.tier(pct), names: pair(c) }, rank: listed(c, t.scoreTitle, sorted(c, g.score), id => t.guessed(g.score[id], g.asked[id])) } };
     }
   });
 
@@ -338,7 +363,11 @@
       if (name === "skip" && g.phase === "ask") { fillIn(g, c.ids); this.compare(c, g); }
       else if (name === "next" && g.phase === "result") { if (g.round >= g.rounds) g.end = true; else this.deal(c, g); }
     },
-    final(c, g) { const t = c.tx.t; return { blocks: [{ k: "big", text: g.hits + " / " + g.rounds, sub: g.hits >= g.goal ? t.won : t.lost }, { k: "p", text: t.tier(g.hits) }] }; }
+    final(c, g) {
+      const t = c.tx.t, out = g.hits >= g.goal ? t.won : t.lost;
+      return { blocks: [{ k: "big", text: g.hits + " / " + g.rounds, sub: out }, { k: "p", text: t.tier(g.hits) }],
+        poster: { hero: { kind: "ring", big: g.hits + "/" + g.rounds, p: Math.round(g.hits / g.rounds * 100), word: out, title: t.tier(g.hits), names: pair(c) } } };
+    }
   });
 
   /* ---------- 8. The deal (for two): share, or take it all ---------- */
@@ -372,7 +401,10 @@
     },
     final(c, g) {
       const t = c.tx.t, names = best(c, g.score);
-      return { blocks: [{ k: "big", text: names.length > 1 ? t.draw : names[0], sub: names.length > 1 ? t.drawSub : t.winnerSub }, table(c, g.score, c.ui.scores), { k: "p", text: t.prize }] };
+      const draw = names.length > 1;
+      return { blocks: [{ k: "big", text: draw ? t.draw : names[0], sub: draw ? t.drawSub : t.winnerSub }, table(c, g.score, c.ui.scores), { k: "p", text: t.prize }],
+        poster: { hero: draw ? { kind: "name", label: t.drawSub, name: t.draw } : { kind: "name", label: c.ui.winner, name: names[0] }, rank: ranked(c, g.score, c.ui.ranking, c.ui.scores) },
+        rest: [{ k: "p", text: t.prize }] };
     }
   });
 
@@ -401,7 +433,9 @@
     final(c, g) {
       const t = c.tx.t, blocks = [{ k: "h", text: t.keep }];
       g.log.forEach(e => { blocks.push({ k: "p", strong: true, text: e.q }); c.ids.forEach((id, i) => blocks.push({ k: "letter", from: c.name(id), text: e.a[i] || t.empty })); });
-      return { blocks };
+      /* the letters are for the two of them: the card (and the picture to share) says only how many were written */
+      const n = g.log.reduce((sum, e) => sum + e.a.filter(Boolean).length, 0);
+      return { blocks, poster: { hero: { kind: "ring", big: String(n), p: 100, word: t.written(n), title: t.keepTitle, names: pair(c) } }, rest: blocks };
     }
   });
 
@@ -436,11 +470,14 @@
     cmd(c, g, name) { if (name === "skip") { g.skipped[g.turn]++; this.step(c, g); } },
     final(c, g) {
       const t = c.tx.t, top = Math.max(...c.ids.map(id => g.told[id])), tops = c.ids.filter(id => g.told[id] === top);
+      const draw = tops.length > 1;
       return { blocks: [
-        { k: "big", text: tops.length > 1 ? t.draw : c.name(tops[0]), sub: tops.length > 1 ? t.drawSub : t.award },
+        { k: "big", text: draw ? t.draw : c.name(tops[0]), sub: draw ? t.drawSub : t.award },
         { k: "rows", title: t.tableTitle, rows: c.ids.map(id => ({ l: c.name(id), r: t.counts(g.told[id], g.skipped[id]) })) },
         { k: "p", text: t.bye }
-      ] };
+      ], poster: { hero: draw ? { kind: "name", label: t.drawSub, name: t.draw } : { kind: "name", label: t.award, name: c.name(tops[0]) },
+                   rank: listed(c, t.tableTitle, sorted(c, g.told), id => t.counts(g.told[id], g.skipped[id])) },
+         rest: [{ k: "p", text: t.bye }] };
     }
   });
 
@@ -472,7 +509,8 @@
       g.yes.forEach(q => blocks.push({ k: "p", strong: true, text: q }));
       if (g.maybe.length) { blocks.push({ k: "h", text: t.maybeTitle }); g.maybe.forEach(q => blocks.push({ k: "p", text: q })); }
       if (!g.yes.length && !g.maybe.length) blocks.push({ k: "p", text: t.nothing });
-      return { blocks };
+      /* what the wishes are stays between the two: the card (and the picture to share) says only how many they share */
+      return { blocks, poster: { hero: { kind: "ring", big: String(g.yes.length), p: Math.round(g.yes.length / g.rounds * 100), word: t.matches, title: t.shareTitle, names: pair(c) } }, rest: blocks.slice(1) };
     }
   });
 })();

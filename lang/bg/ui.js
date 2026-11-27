@@ -236,7 +236,10 @@ MEIVI.ui = {
     toEnd: "Виж крайния резултат",
     skipWait: "Продължи без чакане",
     scores: "Точки",
-    winner: "Победител"
+    winner: "Победител",
+    /* the card on the last screen */
+    ranking: "Класиране",
+    and: "и"
   },
 
   /* ---------- the player's account: sign-in, credits, locked games ---------- */

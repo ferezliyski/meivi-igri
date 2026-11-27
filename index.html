@@ -377,6 +377,9 @@ a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important
 .ring > *{position:relative;grid-area:1/1;text-align:center}
 .ring b{font-family:var(--display);font-weight:800;font-size:50px;line-height:1;margin-top:-14px}
 .ring span{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.88;margin-top:52px}
+/* a result of four signs or more ("100%", "10/10") is written smaller, so it stays inside the ring; and a longer word under it */
+.ring b.sm{font-size:38px}
+.ring span.sm{font-size:10.5px;letter-spacing:.05em;max-width:150px}
 .ptitle{font-family:var(--display);font-weight:800;font-size:23px;line-height:1.15;text-align:center;text-wrap:balance;overflow-wrap:anywhere}
 .ptitle.long{font-size:min(23px, calc((100vw - 84px) / 17))}
 .pnames{text-align:center;font-weight:700;font-size:17px;opacity:.95;overflow-wrap:anywhere}
@@ -400,6 +403,9 @@ a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important
 .pr > span:first-child{text-align:left;display:flex;align-items:center;gap:9px;overflow-wrap:anywhere;min-width:0}
 .pr i{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.2);font-style:normal;font-size:12.5px}
 .pr:nth-child(2) i{background:#fff;color:var(--m)}
+/* a ranking that holds words ("3 от 5", a role) instead of short numbers */
+.prank.wide .pr{grid-template-columns:minmax(0,1fr) auto}
+.prank.wide .pr > span:last-child{max-width:150px;overflow-wrap:anywhere}
 .pr.ph{border-top:0;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;padding:8px 0 6px}
 .pfoot{text-align:center;font-size:14px;opacity:.92}
 .pfoot b{font-weight:700}
@@ -617,7 +623,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27c";
+  var MEIVI_RELEASE = "2026-11-27d";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>
