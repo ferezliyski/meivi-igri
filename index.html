@@ -577,12 +577,16 @@ body.mood-sea{background:
 @keyframes ink{from{opacity:0}to{opacity:1}}
 .paper.mine.play{animation:ink .6s ease-out calc(1.6s + var(--el,0ms)) both}
 /* the end: all bottles on a shelf */
-.bshelf{position:relative;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px;padding:16px 16px 0;border-radius:24px;background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.25))}
-.bshelf::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:12px;border-radius:6px;background:linear-gradient(180deg,#C18A55,#8E5B2E);box-shadow:0 8px 14px -8px rgba(80,40,10,.7)}
-.sbot{border:0;background:none;padding:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .2s}
+.bshelf{position:relative;display:flex;justify-content:center;flex-wrap:wrap;row-gap:14px;padding:16px 12px 14px;border-radius:24px;background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.25))}
+.sbot{position:relative;flex:0 0 16.66%;border:0;background:none;padding:0 0 16px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.sbot::after{content:"";position:absolute;left:-1px;right:-1px;bottom:0;height:11px;background:linear-gradient(180deg,#C18A55,#8E5B2E);box-shadow:0 8px 12px -8px rgba(80,40,10,.7)}
+.sbot:first-child::after,.sbot:nth-child(6n+1)::after{border-radius:6px 0 0 6px;left:0}
+.sbot:last-child::after,.sbot:nth-child(6n)::after{border-radius:0 6px 6px 0;right:0}
+.sbot:only-child::after{border-radius:6px}
+.sbot > *{transition:transform .2s}
 .sbot svg{width:30px;height:auto;display:block;overflow:visible}
 .sbot b{font-size:12px;font-weight:700;color:#7A5333}
-.sbot[aria-pressed="true"]{transform:translateY(-8px)}
+.sbot[aria-pressed="true"] > *{transform:translateY(-8px)}
 .sbot[aria-pressed="true"] svg{filter:drop-shadow(0 0 8px rgba(255,190,110,.95))}
 /* the bottle on the card of the result */
 .pbottle{display:flex;align-items:center;justify-content:center;gap:18px}
@@ -739,7 +743,7 @@ textarea{font:inherit;color:inherit}
 <script>
   /* One label for the whole release. Change it whenever any file below changes,
      so that no phone mixes old and new files. */
-  var MEIVI_RELEASE = "2026-11-27g";
+  var MEIVI_RELEASE = "2026-11-27h";
   document.write(["config.js", "catalog.js"].map(function (f) { return '<script src="' + f + '?v=' + MEIVI_RELEASE + '"><\/script>'; }).join(""));
 </script>
 <script>

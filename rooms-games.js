@@ -379,9 +379,14 @@
   /* ---------- 9. Letters in a bottle (for two): both write, both read at the same moment ---------- */
   G("letters", {
     min: 2, max: 2, over,
+    /* three modes, chosen by the host: how many letters a game has, and from which beginnings (never more than there are) */
+    modes: [{ id: "light", rounds: 20 }, { id: "medium", rounds: 14 }, { id: "deep", rounds: 7 }],
     /* g.id tells one game from the next in the same room, so that every animation plays once (rooms.js) */
-    setup(c) { const g = { id: c.rnd(1e9), round: 0, rounds: 6, log: [], order: order(c, c.tx.prompts) }; this.deal(c, g); return g; },
-    deal(c, g) { g.round++; g.q = c.tx.prompts[g.order[(g.round - 1) % g.order.length]]; g.phase = "write"; g.in = {}; },
+    setup(c) {
+      const m = this.modes.find(x => x.id === (c.opts && c.opts.mode)) || this.modes[0], list = c.tx.prompts[m.id];
+      const g = { id: c.rnd(1e9), mode: m.id, round: 0, rounds: Math.min(m.rounds, list.length), log: [], order: order(c, list) }; this.deal(c, g); return g;
+    },
+    deal(c, g) { const list = c.tx.prompts[g.mode]; g.round++; g.q = list[g.order[(g.round - 1) % g.order.length]]; g.phase = "write"; g.in = {}; },
     /* Writing on a sheet of paper; a sent letter goes into a bottle on the sea, and the bottle of the other floats in when it is sent.
        When both are in, each opens the bottle of the other on the shore (see the blocks "sea" and "shore" in rooms.js). */
     view(c, g, pid) {

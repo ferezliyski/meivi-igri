@@ -26,6 +26,7 @@
    cmd(c, g, name), over(g), final(c, g) and, if it uses a timer, wake(c, g). Its state g must be plain data.
    A game may also give rounds: [15, 30, 50] and pool(c) (how many questions it has): the host then chooses the number
    of rounds before the game, among those the questions can fill, and the game reads it as c.opts.rounds.
+   Or modes: [{id}, ...] with their names in the text (t.modes[id] = {name, sub}): the host chooses one, the game reads c.opts.mode.
    No text of any language is in this file: words come from T.rooms and from lang/<lang>/multi/<id>.js.
    ===================================================================== */
 (function () {
@@ -69,6 +70,7 @@
       Object.assign(st, { mode: "host", game, code: String(10000 + rnd(90000)), me: { id: newId(), name }, late: [], phase: "lobby", g: null, seq: 0, snap: null, closed: false, online: false, wasOn: false, hostOn: true });
       st.players = [{ id: st.me.id, name, on: true }];
       st.opts = {}; const r = roundChoices(); if (r.length) st.opts.rounds = r[0];
+      const d0 = def(); if (d0 && d0.modes) st.opts.mode = d0.modes[0].id;
       st.link = env.link(st.code);
       open(); publish();
     }
@@ -88,6 +90,10 @@
         const rounds = !rc.length ? [] : isHost && rc.length > 1
           ? [{ k: "h", text: X.roundsAsk }, { k: "pick", cmd: true, options: rc.map(r => ({ v: "rounds:" + r, t: String(r) })), done: "rounds:" + st.opts.rounds }]
           : [{ k: "p", text: X.roundsAre(st.opts.rounds) }];
+        /* the mode of the game: the host chooses it, the others see it */
+        const M = d.modes && (ctx().tx.t || {}).modes, mode = M && M[st.opts.mode];
+        if (M && isHost) rounds.push({ k: "h", text: X.modeAsk }, { k: "pick", cmd: true, options: d.modes.map(m => ({ v: "mode:" + m.id, t: M[m.id].name, sub: M[m.id].sub })), done: "mode:" + st.opts.mode });
+        else if (mode) rounds.push({ k: "p", text: X.modeIs(mode.name + " · " + mode.sub) });
         return { top, sub: X.room(st.code), blocks: [
             { k: "code", code: st.code, link: st.link },
             { k: "chips", title: X.inRoom(n), items: st.players.map(p => ({ t: p.name, sub: p.id === st.me.id ? X.hostTag : "", dim: !p.on })) }
@@ -122,6 +128,8 @@
       if (c === "start" && st.phase === "lobby") {
         const n = st.players.length; if (n < d.min || n > d.max) return;
         st.g = d.setup(ctx()); st.phase = "play"; settle();
+      } else if (/^mode:\w+$/.test(c) && st.phase === "lobby") {
+        const m = c.slice(5); if ((d.modes || []).some(x => x.id === m)) { st.opts.mode = m; publish(); }
       } else if (/^rounds:\d+$/.test(c) && st.phase === "lobby") {
         const r = +c.slice(7); if (roundChoices().includes(r)) { st.opts.rounds = r; publish(); }
       } else if (c === "again" && st.phase === "end") {
@@ -265,7 +273,7 @@
     if (b.k === "h") return `<h2 class="rh">${esc(b.text)}</h2>`;
     if (b.k === "p") return `<p class="rp${b.strong ? " strong" : ""}">${esc(b.text)}</p>`;
     if (b.k === "card") return `<div class="deck still rdeck"><article class="card rcard c-${b.color || color}${b.secret ? " secret" : ""}"><span class="tag">${esc(b.tag)}</span><p class="q${qSize(b.text)}">${esc(b.text)}</p>${b.sub ? `<p class="rule">${esc(b.sub)}</p>` : ""}</article></div>`;
-    if (b.k === "pick") return `<div class="seg">${b.options.map(o => `<button data-act="${b.cmd ? "r-cmd" : "r-ans"}" data-c="${esc(o.v)}" data-v="${esc(o.v)}" aria-pressed="${String(b.done) === String(o.v)}">${esc(o.t)}</button>`).join("")}</div>`;
+    if (b.k === "pick") return `<div class="seg${b.options.some(o => o.sub) ? " times" : ""}">${b.options.map(o => `<button data-act="${b.cmd ? "r-cmd" : "r-ans"}" data-c="${esc(o.v)}" data-v="${esc(o.v)}" aria-pressed="${String(b.done) === String(o.v)}">${o.sub ? `<b>${esc(o.t)}</b><small>${esc(o.sub)}</small>` : esc(o.t)}</button>`).join("")}</div>`;
     if (b.k === "letter") return `<article class="letter"><span>${esc(b.from)}</span><p>${esc(b.text)}</p></article>`;
     if (b.k === "big") return `<div class="rbig c-${color}"><b>${esc(b.text)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}</div>`;
     if (b.k === "wait") return b.names.length ? `<p class="note rwait">${esc(X.waiting(b.names.join(", ")))}</p>` : "";

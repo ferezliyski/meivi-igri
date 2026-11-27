@@ -240,6 +240,9 @@ MEIVI.ui = {
     /* the number of rounds, chosen by the host before the game */
     roundsAsk: "Колко рунда?",
     roundsAre: n => `Рундове: ${n}`,
+    /* the mode of a game, chosen by the host before the game */
+    modeAsk: "Какъв режим?",
+    modeIs: mode => `Режим: ${mode}`,
     /* the card on the last screen */
     ranking: "Класиране",
     and: "и"
