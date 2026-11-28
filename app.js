@@ -14,6 +14,7 @@
    Match: text (a choice between the two names), [question, [a, b]],
           or [about myself, about the other with {n}, [options]].
           A game's "extra" list (e.g. "И двете", "Нито едното") is added under every [question, [a, b]].
+   A cards game's "last" (the text of one of its cards) makes that card the last one of every game.
    ===================================================================== */
 const CFG = MEIVI.config, T = MEIVI.ui;
 const SHELVES = MEIVI.catalog.categories;
@@ -110,9 +111,13 @@ function begin(){
   S.stats = S.players.map(() => ({a:0,b:0,pass:0}));
   if(g.eng === "cards"){
     let deck = poolOf(g).map(([k,t,l]) => ({k,t,l}));
-    const R = Math.min(S.rounds, deck.length);
+    /* a game's "last" card (its text) always ends the game, whatever the number of cards */
+    const fin = g.last ? deck.find(c => c.t === g.last) : null;
+    if(fin) deck = deck.filter(c => c !== fin);
+    const R = Math.min(S.rounds - (fin ? 1 : 0), deck.length);
     if(g.ordered) deck = Array.from({length:R}, (_,i) => deck[R > 1 ? Math.round(i*(deck.length-1)/(R-1)) : 0]);
     else deck = shuffle(deck).slice(0, R);
+    if(fin) deck.push(fin);
     let turn = g.ordered ? 0 : rand(n);
     deck.forEach(c => {
       if(c.k==="Q" || c.k==="D"){
